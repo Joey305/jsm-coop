@@ -5,20 +5,19 @@
 </p>
 
 <p align="center">
-  <em>A custom Flask rebuild of the JSM Cooperative website, replacing the old WordPress/Page Builder setup with a clean, portable, Markdown-powered platform for books, blogs, donations, newsletters, and community impact.</em>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Framework-Flask-blue?style=for-the-badge&logo=flask" alt="Flask">
-  <img src="https://img.shields.io/badge/Blog-Markdown-success?style=for-the-badge&logo=markdown" alt="Markdown Blog">
-  <img src="https://img.shields.io/badge/Database-SQLite-lightgrey?style=for-the-badge&logo=sqlite" alt="SQLite">
-  <img src="https://img.shields.io/badge/Status-Rebuild%20in%20Progress-orange?style=for-the-badge" alt="Rebuild in Progress">
+  <em>A custom Flask website for JSM Cooperative Corporation, built to publish stories, support book campaigns, share community updates, and connect readers with nonprofit impact.</em>
 </p>
 
 <p align="center">
   <a href="https://jsmcoop.com">
-    <img src="https://img.shields.io/badge/Website-JSMCoop.com-00eaff?style=for-the-badge&logo=googlechrome" alt="JSMCoop.com">
+    <img src="https://img.shields.io/badge/Website-jsmcoop.com-00eaff?style=for-the-badge&logo=googlechrome" alt="JSMCoop.com">
   </a>
+  <img src="https://img.shields.io/badge/Framework-Flask-blue?style=for-the-badge&logo=flask" alt="Flask">
+  <img src="https://img.shields.io/badge/Blog-Markdown-success?style=for-the-badge&logo=markdown" alt="Markdown Blog">
+  <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Active">
+</p>
+
+<p align="center">
   <a href="https://www.instagram.com/jsm.cooperative/">
     <img src="https://img.shields.io/badge/Instagram-jsm.cooperative-E4405F?style=for-the-badge&logo=instagram" alt="Instagram">
   </a>
@@ -32,173 +31,286 @@
 
 ---
 
-## 🚀 Overview
+## Overview
 
-**JSM Cooperative Flask Site** is the custom web platform for **JSM Cooperative Corporation**.
+**JSM Cooperative Flask Site** is the public website codebase for **JSM Cooperative Corporation**.
 
-The site was rebuilt outside WordPress to create a faster, cleaner, more flexible foundation for:
+JSM Cooperative uses storytelling, publishing, and community-centered creative campaigns to support meaningful nonprofit impact. This site provides a lightweight, maintainable Flask foundation for the organization’s public-facing pages, book updates, blog posts, newsletter flow, donation pathway, and community resources.
 
-- publishing books and creative campaigns
-- hosting a Markdown-powered blog archive
-- showcasing *The Man in the Ball Cap*
-- collecting newsletter subscribers
-- receiving contact form submissions
-- supporting PayPal donation flows
-- managing recovered WordPress content
-- building future admin and analytics tools
-
-This project is designed to replace the old WordPress/Page Builder setup with a site that is easier to version-control, customize, deploy, and expand.
+The project was rebuilt from a previous WordPress/Page Builder setup into a cleaner Flask structure that is easier to version-control, customize, deploy, and expand.
 
 ---
 
-## 🧭 Repository Navigation
-
-- [Project Summary](#-project-summary)
-- [Current Site Features](#-current-site-features)
-- [Repository Structure](#-repository-structure)
-- [Important Static Assets](#-important-static-assets)
-- [Installation](#-installation)
-- [Environment Variables](#-environment-variables)
-- [Run Locally](#-run-locally)
-- [Markdown Blog System](#-markdown-blog-system)
-- [Database](#-database)
-- [Admin Area](#-admin-area)
-- [WordPress Recovery Archive](#-wordpress-recovery-archive)
-- [Deployment Notes](#-deployment-notes)
-- [Pre-Launch Checklist](#-pre-launch-checklist)
-- [Common Commands](#-common-commands)
-- [Roadmap](#-roadmap)
-- [License](#-license)
-
----
-
-## 📖 Project Summary
-
-JSM Cooperative Corporation uses storytelling, publishing, and community campaigns to support mission-aligned nonprofit impact.
-
-This Flask site is built around the current JSM ecosystem:
-
-| Area | Purpose |
-|---|---|
-| Homepage | High-impact public landing page for the Co-op mission |
-| Book page | Public page for *The Man in the Ball Cap* |
-| Purchase modal | Clean popup for Amazon, Barnes & Noble, and Spanish edition purchase options |
-| Blog archive | Filterable Markdown-powered blog archive |
-| Blog detail pages | Polished long-form article layout with inline image support |
-| Newsletter page | Camino newsletter signup and Mailchimp integration path |
-| Novel subscription page | Camino subscription concept and support pathway |
-| Donate page | PayPal donation integration |
-| Contact page | Contact form and email action buttons |
-| Team page | Public-facing JSM Cooperative team page |
-| Admin area | Login-protected dashboard for contacts, subscribers, drafts, and analytics |
-| WordPress archive | Local recovery folder for old raw WordPress pages/posts |
-
----
-
-## ✨ Current Site Features
-
-### Public-facing features
+## Current Features
 
 - Flask-powered routing
+- Responsive public website layout
 - Global header and footer
-- Tron-inspired visual design language
-- Responsive desktop/mobile navigation
-- Purchase modal for book buying options
-- Kindle preview embed support
-- Markdown blog cards and article pages
-- Blog filtering, search, and 6-post pagination
-- Inline blog images with polished formatting
-- Newsletter signup flow
-- Contact form
+- Public homepage for the JSM Cooperative mission
+- Book page for *The Man in the Ball Cap*
+- Purchase modal for book links
+- Markdown-powered blog archive
+- Individual blog detail pages
+- Newsletter signup page
 - Donation page
-- Privacy and terms pages
+- Contact page
+- Team page
+- Privacy policy and terms pages
 - Custom 404 page
-
-### Admin/back-office features
-
-- Simple admin login
-- SQLite-backed contacts table
-- SQLite-backed newsletter subscribers table
-- Campaign notes table
-- Blog draft/admin templates
-- Analytics admin template placeholder
-
-### Recovery/migration features
-
-- Old WordPress export preserved
-- Raw recovered pages stored locally
-- Raw recovered posts stored locally
-- Rewritten blog posts converted into clean Markdown
-- Selected image assets migrated into `static/images/`
+- Static assets for branding, books, team images, and page visuals
+- Basic deployment support through `Procfile` and `passenger_wsgi.py`
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```text
-JSMCoop-Flask-Starter/
+jsm-coop/
 ├── app.py
 ├── passenger_wsgi.py
+├── Procfile
 ├── requirements.txt
 ├── README.md
 ├── blogs/
-│   ├── welcome-to-jsm-cooperative.md
-│   ├── the-man-in-the-ballcap.md
-│   ├── the-camino.md
-│   ├── the-man-in-the-ballcap-goes-spanish-a-new-chapter-in-our-journey.md
-│   ├── empowering-change-how-every-book-purchase-fuels-our-mission.md
-│   ├── marching-together-the-power-of-community-in-the-fight-against-alzheimers.md
-│   ├── turning-pages-making-changes-jsm-cooperatives-leap-to-tax-exempt-status.md
-│   ├── embracing-the-journey.md
-│   ├── thanks-from-the-jsm-cooperative.md
-│   ├── first-blog-post-for-jsm-cooperative-announcing-the-man-in-the-ballcap.md
-│   ├── el-hombre-con-la-gorra.md
-│   └── ...
+│   └── Markdown blog posts
 ├── data/
-│   └── jsmcoop.db
+│   └── .gitkeep
 ├── static/
 │   ├── css/
-│   │   ├── styles.css
-│   │   └── admin.css
-│   ├── js/
-│   │   └── main.js
+│   │   ├── admin.css
+│   │   └── styles.css
 │   ├── images/
 │   │   ├── BOOK3D.png
-│   │   ├── camino.png
 │   │   ├── Logo.png
+│   │   ├── camino.png
 │   │   ├── jsm-placeholder.svg
 │   │   └── team/
-│   │       ├── esther-cora-rivera.jpg
-│   │       ├── j-michael-schulz.jpeg
-│   │       ├── jack-herman.jpg
-│   │       ├── jack-scilla.jpg
-│   │       ├── jacob-geller.png
-│   │       ├── robert-suchor.gif
-│   │       └── sdg.png
+│   ├── js/
+│   │   └── main.js
 │   └── uploads/
+│       └── .gitkeep
 ├── templates/
+│   ├── 404.html
+│   ├── about.html
 │   ├── base.html
-│   ├── index.html
-│   ├── book.html
-│   ├── blogs.html
 │   ├── blog_detail.html
+│   ├── blogs.html
+│   ├── book.html
+│   ├── chapter_readings.html
+│   ├── contact.html
+│   ├── donate.html
+│   ├── index.html
 │   ├── newsletter.html
 │   ├── novel_subscription.html
-│   ├── donate.html
-│   ├── contact.html
-│   ├── team.html
 │   ├── privacy.html
+│   ├── projects.html
+│   ├── social.html
+│   ├── team.html
 │   ├── terms.html
-│   ├── 404.html
-│   ├── partials/
-│   │   └── purchase_modal.html
-│   └── admin/
-│       ├── login.html
-│       ├── dashboard.html
-│       ├── blog_form.html
-│       └── analytics.html
+│   ├── admin/
+│   └── partials/
 └── wordpress_export/
     ├── pages_raw/
     ├── posts_raw/
     ├── RECOVERED_SITE_AUDIT.md
-    └── wordpress_content_audit.csv# jsm-coop
+    └── wordpress_content_audit.csv
+```
+
+---
+
+## Public Pages
+
+The site currently includes templates for:
+
+- Home
+- About
+- Book
+- Blog archive
+- Blog detail
+- Chapter readings
+- Contact
+- Donate
+- Newsletter
+- Novel subscription
+- Privacy
+- Projects
+- Social links
+- Team
+- Terms
+- 404
+
+---
+
+## WordPress Recovery Archive
+
+The `wordpress_export/` folder contains recovered public-facing WordPress content from the previous site migration.
+
+It is kept in this repository as a reference archive for rebuilding, auditing, and preserving public site content during the transition from WordPress to Flask.
+
+Before publishing future migration exports, make sure no private drafts, credentials, customer data, contact submissions, or personal information are included.
+
+---
+
+## Local Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Joey305/jsm-coop.git
+cd jsm-coop
+```
+
+Create and activate a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Run the app locally:
+
+```bash
+python app.py
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5000
+```
+
+If your app uses a custom port in `app.py`, use that port instead.
+
+---
+
+## Environment Variables
+
+Create a `.env` file locally for deployment-specific settings.
+
+Example:
+
+```env
+SECRET_KEY=replace-with-a-long-random-secret
+FLASK_ENV=development
+MAILCHIMP_API_KEY=your-mailchimp-api-key
+MAILCHIMP_SERVER_PREFIX=us00
+MAILCHIMP_AUDIENCE_ID=your-mailchimp-audience-id
+PAYPAL_DONATE_URL=https://www.paypal.com/donate/your-donation-link
+CONTACT_EMAIL=books@jsmcoop.com
+```
+
+Do **not** commit `.env` or production secrets.
+
+A safe `.env.example` may be committed to show required variable names without exposing real credentials.
+
+---
+
+## Recommended `.gitignore`
+
+The repository should ignore local secrets, runtime databases, generated files, and operating system artifacts.
+
+```gitignore
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Flask/runtime
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Local uploads/runtime data
+static/uploads/*
+!static/uploads/.gitkeep
+data/*
+!data/.gitkeep
+
+# Environment/secrets
+.env
+.env.*
+!.env.example
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+```
+
+---
+
+## Deployment Notes
+
+This repository includes basic deployment files:
+
+- `Procfile` for process-based hosting
+- `passenger_wsgi.py` for Passenger/cPanel-style Flask hosting
+- `requirements.txt` for Python package installation
+
+Deployment settings may vary by host. Make sure production secrets are configured through the hosting provider’s environment variable system and not committed to GitHub.
+
+---
+
+## Public Repository Safety Checklist
+
+Before making this repository public, confirm:
+
+- No `.env` file is committed
+- No API keys, passwords, tokens, or private credentials are committed
+- No real SQLite database is committed
+- `data/` contains only `.gitkeep` unless intentionally publishing public data
+- `static/uploads/` contains only `.gitkeep` unless intentionally publishing public files
+- `wordpress_export/` contains only public website recovery content
+- `.DS_Store` files are removed
+- Contact forms and newsletter integrations do not expose private keys in frontend code
+- Admin routes do not contain hardcoded credentials
+
+Useful checks:
+
+```bash
+git status
+git ls-files
+grep -RniE "password|secret|token|api_key|apikey|mailchimp|private|gmail|subscriber|contact|admin" .
+```
+
+Remove macOS `.DS_Store` files before publishing:
+
+```bash
+find . -name ".DS_Store" -delete
+git add -A
+git commit -m "Remove macOS system files"
+```
+
+---
+
+## License
+
+All website code, written content, branding assets, and recovered site materials in this repository are maintained by **JSM Cooperative Corporation**, unless otherwise noted.
+
+Reuse of organization-specific branding, copy, book materials, logos, images, and campaign content requires permission from JSM Cooperative Corporation.
+
+---
+
+## Contact
+
+For public inquiries, visit:
+
+**https://jsmcoop.com**
+
+For book, publishing, or JSM Cooperative inquiries, use the contact options provided on the website.
