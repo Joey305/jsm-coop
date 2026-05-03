@@ -1,37 +1,161 @@
-# JSM Cooperative Flask Starter
+# 🎭 JSM Cooperative Flask Site
 
-A clean full-stack Flask starter for rebuilding **JSMCoop.com** outside WordPress.
+<p align="center">
+  <strong>Stories that fund a better world.</strong>
+</p>
 
-This project includes:
+<p align="center">
+  <em>A custom Flask rebuild of the JSM Cooperative website, replacing the old WordPress/Page Builder setup with a clean, portable, Markdown-powered platform for books, blogs, donations, newsletters, and community impact.</em>
+</p>
 
-- Flask backend in `app.py`
-- reusable templates with a global header/footer
-- static assets in `static/css`, `static/js`, and `static/images`
-- Markdown-based blog system in `blogs/`
-- blog listing and blog detail pages
-- contact form stored in SQLite
-- newsletter signup stored in SQLite and optionally submitted to Mailchimp later
-- simple admin login
-- admin dashboard for contact submissions, subscribers, and blog drafts
-- custom 404 page
-- PayPal donation form placeholder using the existing hosted button ID
-- deployment-friendly `passenger_wsgi.py`
+<p align="center">
+  <img src="https://img.shields.io/badge/Framework-Flask-blue?style=for-the-badge&logo=flask" alt="Flask">
+  <img src="https://img.shields.io/badge/Blog-Markdown-success?style=for-the-badge&logo=markdown" alt="Markdown Blog">
+  <img src="https://img.shields.io/badge/Database-SQLite-lightgrey?style=for-the-badge&logo=sqlite" alt="SQLite">
+  <img src="https://img.shields.io/badge/Status-Rebuild%20in%20Progress-orange?style=for-the-badge" alt="Rebuild in Progress">
+</p>
 
-## Project structure
+<p align="center">
+  <a href="https://jsmcoop.com">
+    <img src="https://img.shields.io/badge/Website-JSMCoop.com-00eaff?style=for-the-badge&logo=googlechrome" alt="JSMCoop.com">
+  </a>
+  <a href="https://www.instagram.com/jsm.cooperative/">
+    <img src="https://img.shields.io/badge/Instagram-jsm.cooperative-E4405F?style=for-the-badge&logo=instagram" alt="Instagram">
+  </a>
+  <a href="https://www.tiktok.com/@jsm.cooperative">
+    <img src="https://img.shields.io/badge/TikTok-jsm.cooperative-black?style=for-the-badge&logo=tiktok" alt="TikTok">
+  </a>
+  <a href="https://www.youtube.com/@JSm.cooperative">
+    <img src="https://img.shields.io/badge/YouTube-JSM%20Cooperative-red?style=for-the-badge&logo=youtube" alt="YouTube">
+  </a>
+</p>
+
+---
+
+## 🚀 Overview
+
+**JSM Cooperative Flask Site** is the custom web platform for **JSM Cooperative Corporation**.
+
+The site was rebuilt outside WordPress to create a faster, cleaner, more flexible foundation for:
+
+- publishing books and creative campaigns
+- hosting a Markdown-powered blog archive
+- showcasing *The Man in the Ball Cap*
+- collecting newsletter subscribers
+- receiving contact form submissions
+- supporting PayPal donation flows
+- managing recovered WordPress content
+- building future admin and analytics tools
+
+This project is designed to replace the old WordPress/Page Builder setup with a site that is easier to version-control, customize, deploy, and expand.
+
+---
+
+## 🧭 Repository Navigation
+
+- [Project Summary](#-project-summary)
+- [Current Site Features](#-current-site-features)
+- [Repository Structure](#-repository-structure)
+- [Important Static Assets](#-important-static-assets)
+- [Installation](#-installation)
+- [Environment Variables](#-environment-variables)
+- [Run Locally](#-run-locally)
+- [Markdown Blog System](#-markdown-blog-system)
+- [Database](#-database)
+- [Admin Area](#-admin-area)
+- [WordPress Recovery Archive](#-wordpress-recovery-archive)
+- [Deployment Notes](#-deployment-notes)
+- [Pre-Launch Checklist](#-pre-launch-checklist)
+- [Common Commands](#-common-commands)
+- [Roadmap](#-roadmap)
+- [License](#-license)
+
+---
+
+## 📖 Project Summary
+
+JSM Cooperative Corporation uses storytelling, publishing, and community campaigns to support mission-aligned nonprofit impact.
+
+This Flask site is built around the current JSM ecosystem:
+
+| Area | Purpose |
+|---|---|
+| Homepage | High-impact public landing page for the Co-op mission |
+| Book page | Public page for *The Man in the Ball Cap* |
+| Purchase modal | Clean popup for Amazon, Barnes & Noble, and Spanish edition purchase options |
+| Blog archive | Filterable Markdown-powered blog archive |
+| Blog detail pages | Polished long-form article layout with inline image support |
+| Newsletter page | Camino newsletter signup and Mailchimp integration path |
+| Novel subscription page | Camino subscription concept and support pathway |
+| Donate page | PayPal donation integration |
+| Contact page | Contact form and email action buttons |
+| Team page | Public-facing JSM Cooperative team page |
+| Admin area | Login-protected dashboard for contacts, subscribers, drafts, and analytics |
+| WordPress archive | Local recovery folder for old raw WordPress pages/posts |
+
+---
+
+## ✨ Current Site Features
+
+### Public-facing features
+
+- Flask-powered routing
+- Global header and footer
+- Tron-inspired visual design language
+- Responsive desktop/mobile navigation
+- Purchase modal for book buying options
+- Kindle preview embed support
+- Markdown blog cards and article pages
+- Blog filtering, search, and 6-post pagination
+- Inline blog images with polished formatting
+- Newsletter signup flow
+- Contact form
+- Donation page
+- Privacy and terms pages
+- Custom 404 page
+
+### Admin/back-office features
+
+- Simple admin login
+- SQLite-backed contacts table
+- SQLite-backed newsletter subscribers table
+- Campaign notes table
+- Blog draft/admin templates
+- Analytics admin template placeholder
+
+### Recovery/migration features
+
+- Old WordPress export preserved
+- Raw recovered pages stored locally
+- Raw recovered posts stored locally
+- Rewritten blog posts converted into clean Markdown
+- Selected image assets migrated into `static/images/`
+
+---
+
+## 📁 Repository Structure
 
 ```text
 JSMCoop-Flask-Starter/
 ├── app.py
 ├── passenger_wsgi.py
 ├── requirements.txt
-├── .env.example
 ├── README.md
 ├── blogs/
 │   ├── welcome-to-jsm-cooperative.md
 │   ├── the-man-in-the-ballcap.md
-│   └── the-camino.md
+│   ├── the-camino.md
+│   ├── the-man-in-the-ballcap-goes-spanish-a-new-chapter-in-our-journey.md
+│   ├── empowering-change-how-every-book-purchase-fuels-our-mission.md
+│   ├── marching-together-the-power-of-community-in-the-fight-against-alzheimers.md
+│   ├── turning-pages-making-changes-jsm-cooperatives-leap-to-tax-exempt-status.md
+│   ├── embracing-the-journey.md
+│   ├── thanks-from-the-jsm-cooperative.md
+│   ├── first-blog-post-for-jsm-cooperative-announcing-the-man-in-the-ballcap.md
+│   ├── el-hombre-con-la-gorra.md
+│   └── ...
 ├── data/
-│   └── .gitkeep
+│   └── jsmcoop.db
 ├── static/
 │   ├── css/
 │   │   ├── styles.css
@@ -39,107 +163,42 @@ JSMCoop-Flask-Starter/
 │   ├── js/
 │   │   └── main.js
 │   ├── images/
-│   │   └── jsm-placeholder.svg
+│   │   ├── BOOK3D.png
+│   │   ├── camino.png
+│   │   ├── Logo.png
+│   │   ├── jsm-placeholder.svg
+│   │   └── team/
+│   │       ├── esther-cora-rivera.jpg
+│   │       ├── j-michael-schulz.jpeg
+│   │       ├── jack-herman.jpg
+│   │       ├── jack-scilla.jpg
+│   │       ├── jacob-geller.png
+│   │       ├── robert-suchor.gif
+│   │       └── sdg.png
 │   └── uploads/
-│       └── .gitkeep
-└── templates/
-    ├── base.html
-    ├── index.html
-    ├── about.html
-    ├── book.html
-    ├── blogs.html
-    ├── blog_detail.html
-    ├── projects.html
-    ├── donate.html
-    ├── contact.html
-    ├── privacy.html
-    ├── terms.html
-    ├── 404.html
-    └── admin/
-        ├── login.html
-        ├── dashboard.html
-        ├── blog_form.html
-        └── analytics.html
-```
-
-## Run locally
-
-```bash
-cd JSMCoop-Flask-Starter
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python app.py
-```
-
-Then open:
-
-```text
-http://127.0.0.1:5000
-```
-
-Admin:
-
-```text
-http://127.0.0.1:5000/admin
-```
-
-Default admin credentials come from `.env.example`; change them before deploying.
-
-## Add a blog post
-
-Create a new Markdown file inside `blogs/`.
-
-Example:
-
-```markdown
----
-title: My New Update
-date: 2026-05-02
-author: JSM Cooperative
-excerpt: A short teaser that appears on the blog listing.
-cover: /static/images/jsm-placeholder.svg
-tags: Camino, Books, Nonprofit
----
-
-Your blog content goes here.
-```
-
-## Contact form and newsletter data
-
-The app creates a SQLite database at:
-
-```text
-data/jsmcoop.db
-```
-
-Tables:
-
-- `contacts`
-- `newsletter_subscribers`
-- `campaign_notes`
-
-## Notes for Hostinger or another host
-
-This package includes `passenger_wsgi.py`, which is commonly used by Python app hosting panels that run WSGI apps. Hosting setups vary, so verify your exact hosting plan supports Python/Flask before deploying.
-
-For VPS deployment, use Gunicorn + Nginx.
-
-Example:
-
-```bash
-pip install gunicorn
-gunicorn -w 3 -b 127.0.0.1:8000 app:app
-```
-
-## Next build steps
-
-Recommended next steps:
-
-1. Replace placeholder SVG/image assets with real JSM visuals.
-2. Move any recovered WordPress page copy into the matching templates.
-3. Add a real database-backed blog editor if you want richer CMS behavior.
-4. Add Google Analytics / Google Ads conversion tracking once the domain is live.
-5. Build a Google Ads reporting sync module later using the Google Ads API.
-6. Add email sending for the contact form through Gmail SMTP, SendGrid, Mailgun, or Hostinger email.
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   ├── book.html
+│   ├── blogs.html
+│   ├── blog_detail.html
+│   ├── newsletter.html
+│   ├── novel_subscription.html
+│   ├── donate.html
+│   ├── contact.html
+│   ├── team.html
+│   ├── privacy.html
+│   ├── terms.html
+│   ├── 404.html
+│   ├── partials/
+│   │   └── purchase_modal.html
+│   └── admin/
+│       ├── login.html
+│       ├── dashboard.html
+│       ├── blog_form.html
+│       └── analytics.html
+└── wordpress_export/
+    ├── pages_raw/
+    ├── posts_raw/
+    ├── RECOVERED_SITE_AUDIT.md
+    └── wordpress_content_audit.csv# jsm-coop
