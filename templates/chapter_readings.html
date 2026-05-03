@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <div class="container hero-grid">
+    <div>
+      <p class="eyebrow">The Man in the Ball Cap</p>
+      <h1>Chapter readings, story drops, and the mystery of Pepe Miguel.</h1>
+      <p class="hero-lede">This page preserves the spirit of the original chapter readings area for <em>The Man in the Ball Cap</em>. We can use it for audio, embedded readings, chapter previews, and purchase/support links.</p>
+      <div class="hero-actions"><a class="btn btn-primary" href="{{ url_for('blogs') }}">Read updates</a><a class="btn btn-donate" href="{{ url_for('donate') }}">Support the mission</a></div>
+    </div>
+    <div class="book-cover large"><span>The Man in the</span><strong>Ball Cap</strong><em>Pepe Miguel</em></div>
+  </div>
+</section>
+<section class="section">
+  <div class="container card-grid three">
+    <article class="glass-card"><div class="card-icon">🎧</div><h3>Audio readings</h3><p>Placeholder area for embedded chapter audio or video readings.</p></article>
+    <article class="glass-card"><div class="card-icon">📚</div><h3>Chapter previews</h3><p>Use this section for excerpts, sample chapters, or serialized releases.</p></article>
+    <article class="glass-card"><div class="card-icon">🧢</div><h3>Pepe’s case file</h3><p>Character notes, mystery clues, and worldbuilding from the novel.</p></article>
+  </div>
+</section>
+{% endblock %}

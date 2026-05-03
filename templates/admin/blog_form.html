@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+{% block content %}
+<section class="admin-layout">
+  <div class="container narrow">
+    <p class="eyebrow">Blog Editor</p>
+    <h1>{{ "Edit Blog Post" if post else "New Blog Post" }}</h1>
+    <form class="admin-form" method="post">
+      <label>Title<input name="title" value="{{ post.title if post else '' }}" required></label>
+      {% if not post %}
+      <label>Slug<input name="slug" placeholder="my-blog-post"></label>
+      {% endif %}
+      <label>Author<input name="author" value="{{ post.author if post else 'JSM Cooperative' }}"></label>
+      <label>Excerpt<textarea name="excerpt" rows="3">{{ post.excerpt if post else '' }}</textarea></label>
+      <label>Tags<input name="tags" value="{{ post.tags|join(', ') if post else '' }}" placeholder="Camino, Books, Impact"></label>
+      <label>Body<textarea name="body" rows="18" required>{{ post.body if post else '' }}</textarea></label>
+      <button class="btn btn-primary" type="submit">Save Post</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

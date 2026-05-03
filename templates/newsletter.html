@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set mc_action = mailchimp_action_url or "https://jsmcoop.us22.list-manage.com/subscribe/post?u=b3afd63e7b494ede9597fbc61&amp;id=c75e7b3730&amp;f_id=008cd8e1f0" %}
+{% set mc_honeypot = mailchimp_honeypot_name or "b_b3afd63e7b494ede9597fbc61_c75e7b3730" %}
+
+<section class="page-hero newsletter-hero jsm-newsletter-page">
+  <div class="orb orb-one"></div>
+  <div class="orb orb-two"></div>
+
+  <div class="container hero-grid newsletter-hero-grid">
+    <div class="newsletter-copy reveal">
+      <p class="eyebrow">The Camino · Newsletter</p>
+
+      <h1>Subscribe, Support &amp; Walk the Camino With Us</h1>
+
+      <p class="hero-lede">
+        <strong>The Camino</strong> is the JSM Cooperative newsletter: book updates,
+        chapter drops, nonprofit impact, community campaigns, and behind-the-scenes
+        notes from the people building stories that fund a better world.
+      </p>
+
+      <div class="pill-row">
+        <span>📬 Biweekly updates</span>
+        <span>💙 Nonprofit impact</span>
+        <span>📚 Book milestones</span>
+        <span>🌎 SDG-aligned work</span>
+      </div>
+
+      <div class="newsletter-actions">
+        <a class="btn btn-secondary" href="#join-the-camino">
+          📬 Join The Camino
+        </a>
+
+        <form action="https://www.paypal.com/donate" method="post" target="_blank" class="inline-paypal-form">
+          <input type="hidden" name="hosted_button_id" value="TLWCSL2KJDZQU">
+          <button class="btn btn-primary" type="submit">
+            ☕ Buy the Co-op a Coffee
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="hero-card newsletter-signup-card reveal" id="join-the-camino">
+      <div class="card-kicker">Free Newsletter</div>
+
+      <h2>Join The Camino</h2>
+
+      <p>
+        Subscribe for updates from JSM Cooperative: new writing, publishing milestones,
+        community calls to action, nonprofit partnerships, and ways to help move the
+        mission forward.
+      </p>
+
+      <form
+        class="newsletter-panel mailchimp-newsletter-form"
+        action="{{ mc_action|safe }}"
+        method="post"
+        target="mailchimp-hidden-submit"
+        data-mailchimp-form
+      >
+        <div class="form-row">
+          <label for="mce-FNAME">
+            First name
+            <input
+              type="text"
+              name="FNAME"
+              id="mce-FNAME"
+              placeholder="First name"
+              required
+            >
+          </label>
+
+          <label for="mce-LNAME">
+            Last name
+            <input
+              type="text"
+              name="LNAME"
+              id="mce-LNAME"
+              placeholder="Last name"
+              required
+            >
+          </label>
+        </div>
+
+        <label for="mce-EMAIL">
+          Email address
+          <input
+            type="email"
+            name="EMAIL"
+            id="mce-EMAIL"
+            placeholder="you@example.com"
+            required
+          >
+        </label>
+
+        <label for="mce-PHONE">
+          Phone number <span class="small-muted">optional</span>
+          <input
+            type="tel"
+            name="PHONE"
+            id="mce-PHONE"
+            placeholder="+1 000 000 0000"
+          >
+        </label>
+
+        <!-- Mailchimp anti-bot field. Do not remove. -->
+        <div aria-hidden="true" class="mc-hidden-field">
+          <input type="text" name="{{ mc_honeypot }}" tabindex="-1" value="">
+        </div>
+
+        <button
+          class="btn btn-primary large newsletter-submit-btn"
+          type="submit"
+          name="subscribe"
+          id="mc-embedded-subscribe"
+        >
+          ✨ Subscribe to The Camino
+        </button>
+
+        <p class="small-muted newsletter-privacy-note">
+          Your information is sent securely to our Mailchimp newsletter list.
+        </p>
+      </form>
+
+      <iframe
+        name="mailchimp-hidden-submit"
+        title="Mailchimp newsletter submission"
+        class="mailchimp-hidden-frame"
+      ></iframe>
+
+      <div
+        class="newsletter-success-state"
+        data-newsletter-success
+        hidden
+        tabindex="-1"
+        aria-live="polite"
+      >
+        <div class="success-icon">✨</div>
+
+        <h3>Thank you<span data-success-name></span>!</h3>
+
+        <p>
+          You’re now walking <strong>The Camino</strong> with us. We’ll send book updates,
+          nonprofit impact notes, community calls, and behind-the-scenes milestones
+          straight to your inbox.
+        </p>
+
+        <button
+          class="btn btn-secondary"
+          type="button"
+          data-reset-newsletter
+        >
+          Subscribe another email
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section newsletter-mission-section">
+  <div class="container card-grid three">
+    <article class="glass-card reveal">
+      <div class="card-icon">📖</div>
+      <h3>Story updates</h3>
+      <p>
+        New chapters, book milestones, author notes, and the ongoing journey of
+        <em>The Man in the Ball Cap</em>.
+      </p>
+    </article>
+
+    <article class="glass-card reveal delay-1">
+      <div class="card-icon">🌎</div>
+      <h3>Impact updates</h3>
+      <p>
+        How storytelling, publishing, and community support connect back to
+        SDG-aligned nonprofit work.
+      </p>
+    </article>
+
+    <article class="glass-card reveal delay-2">
+      <div class="card-icon">🤝</div>
+      <h3>Community calls</h3>
+      <p>
+        Ways to read, share, volunteer, support, donate, and help move the
+        Camino forward.
+      </p>
+    </article>
+  </div>
+</section>
+
+<section class="section newsletter-donate-section">
+  <div class="container">
+    <div class="glass-card donate-wide-card reveal">
+      <div>
+        <p class="eyebrow">Support the Mission</p>
+        <h2>Help Stories Fund a Better World</h2>
+        <p>
+          Every donation helps JSM Cooperative write, publish, distribute, and
+          grow the mission behind the work. Your support keeps the Camino moving:
+          one story, one reader, one nonprofit partnership at a time.
+        </p>
+      </div>
+
+      <div class="donate-button-group">
+        <form action="https://www.paypal.com/donate" method="post" target="_blank">
+          <input type="hidden" name="hosted_button_id" value="TLWCSL2KJDZQU">
+          <button class="btn btn-primary large" type="submit">
+            💙 Donate to JSM Cooperative
+          </button>
+        </form>
+
+        <form action="https://www.paypal.com/donate" method="post" target="_blank">
+          <input type="hidden" name="hosted_button_id" value="TLWCSL2KJDZQU">
+          <button class="btn btn-secondary large" type="submit">
+            ☕ Buy the Co-op a Coffee
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .jsm-newsletter-page {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .newsletter-hero-grid {
+    align-items: stretch;
+    gap: clamp(2rem, 4vw, 4rem);
+  }
+
+  .newsletter-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .newsletter-copy h1 {
+    max-width: 780px;
+  }
+
+  .newsletter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-top: 1.6rem;
+    align-items: center;
+  }
+
+  .inline-paypal-form {
+    margin: 0;
+  }
+
+  .newsletter-signup-card {
+    position: relative;
+    z-index: 2;
+    padding: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  .newsletter-signup-card h2 {
+    margin-bottom: 0.7rem;
+  }
+
+  .card-kicker {
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid rgba(78, 254, 220, 0.35);
+    border-radius: 999px;
+    color: var(--accent, #4efedc);
+    background: rgba(15, 23, 42, 0.72);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .mailchimp-newsletter-form {
+    margin-top: 1.15rem;
+  }
+
+  .mailchimp-newsletter-form.is-submitted {
+    display: none;
+  }
+
+  .mailchimp-newsletter-form label {
+    display: grid;
+    gap: 0.45rem;
+    color: rgba(229, 231, 235, 0.92);
+    font-weight: 700;
+  }
+
+  .mailchimp-newsletter-form input {
+    width: 100%;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 14px;
+    background: rgba(2, 6, 23, 0.72);
+    color: #f8fafc;
+    padding: 0.92rem 1rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .mailchimp-newsletter-form input::placeholder {
+    color: rgba(148, 163, 184, 0.72);
+  }
+
+  .mailchimp-newsletter-form input:focus {
+    border-color: rgba(78, 254, 220, 0.75);
+    box-shadow: 0 0 0 4px rgba(78, 254, 220, 0.12);
+    background: rgba(2, 6, 23, 0.92);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .mc-hidden-field {
+    position: absolute;
+    left: -5000px;
+  }
+
+  .newsletter-submit-btn {
+    width: 100%;
+    margin-top: 0.35rem;
+  }
+
+  .newsletter-privacy-note {
+    margin-top: 0.8rem;
+    text-align: center;
+  }
+
+  .mailchimp-hidden-frame {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .newsletter-success-state[hidden] {
+    display: none !important;
+  }
+
+  .newsletter-success-state {
+    margin-top: 1.25rem;
+    padding: 1.5rem;
+    border-radius: 22px;
+    border: 1px solid rgba(78, 254, 220, 0.35);
+    background:
+      radial-gradient(circle at top left, rgba(78, 254, 220, 0.14), transparent 42%),
+      rgba(2, 6, 23, 0.78);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    text-align: center;
+  }
+
+  .newsletter-success-state .success-icon {
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 0.85rem;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(0, 198, 255, 0.28), rgba(78, 254, 220, 0.22));
+    border: 1px solid rgba(78, 254, 220, 0.45);
+    font-size: 1.6rem;
+    box-shadow: 0 0 28px rgba(78, 254, 220, 0.22);
+  }
+
+  .newsletter-success-state h3 {
+    margin: 0 0 0.65rem;
+  }
+
+  .newsletter-success-state p {
+    margin-bottom: 1.1rem;
+  }
+
+  .newsletter-mission-section {
+    position: relative;
+    z-index: 1;
+  }
+
+  .newsletter-donate-section {
+    padding-top: 0;
+  }
+
+  .donate-wide-card {
+    display: grid;
+    grid-template-columns: 1.4fr 0.9fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: center;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .donate-wide-card h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .donate-button-group {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .donate-button-group form {
+    margin: 0;
+  }
+
+  .donate-button-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  @media (max-width: 800px) {
+    .form-row,
+    .donate-wide-card {
+      grid-template-columns: 1fr;
+    }
+
+    .newsletter-actions {
+      align-items: stretch;
+    }
+
+    .newsletter-actions .btn,
+    .newsletter-actions form {
+      width: 100%;
+    }
+
+    .newsletter-actions .btn {
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("[data-mailchimp-form]");
+    const successState = document.querySelector("[data-newsletter-success]");
+    const resetButton = document.querySelector("[data-reset-newsletter]");
+    const successName = document.querySelector("[data-success-name]");
+
+    if (!form || !successState) return;
+
+    form.addEventListener("submit", function (event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        form.reportValidity();
+        return;
+      }
+
+      const firstNameInput = form.querySelector('[name="FNAME"]');
+      const submitButton = form.querySelector('button[type="submit"]');
+      const firstName = firstNameInput ? firstNameInput.value.trim() : "";
+
+      if (successName) {
+        successName.textContent = firstName ? ", " + firstName : "";
+      }
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Sending...";
+      }
+
+      setTimeout(function () {
+        form.reset();
+        form.classList.add("is-submitted");
+        successState.hidden = false;
+        successState.focus({ preventScroll: true });
+
+        successState.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }, 450);
+    });
+
+    if (resetButton) {
+      resetButton.addEventListener("click", function () {
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        successState.hidden = true;
+        form.classList.remove("is-submitted");
+        form.reset();
+
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "✨ Subscribe to The Camino";
+        }
+
+        const emailInput = form.querySelector('[name="EMAIL"]');
+        if (emailInput) {
+          emailInput.focus();
+        }
+      });
+    }
+  });
+</script>
+
+{% endblock %}

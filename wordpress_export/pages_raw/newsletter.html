@@ -1,0 +1,950 @@
+<!-- wp:group {"align":"full","layout":{"contentSize":"360px","type":"constrained"}} -->
+<div class="wp-block-group alignfull"><!-- wp:site-logo {"width":120,"shouldSyncIcon":false,"align":"center","className":"is-style-rounded"} /-->
+
+<!-- wp:site-title {"textAlign":"center","style":{"typography":{"fontStyle":"normal","fontWeight":"700","lineHeight":"1.3"}},"fontSize":"x-large"} /-->
+
+<!-- wp:group {"style":{"spacing":{"blockGap":"40px"}}} -->
+<div class="wp-block-group"><!-- wp:site-tagline {"textAlign":"center","fontSize":"small"} /--></div>
+<!-- /wp:group -->
+
+<!-- wp:html -->
+<!-- 🌌 JSM Cooperative – Premium Subscribe & Donate Section -->
+<div class="jsm-subscribe-page">
+
+  <style>
+    :root {
+      --jsm-bg-body: radial-gradient(circle at top, #111827 0, #020617 55%, #020305 100%);
+      --jsm-bg-card: radial-gradient(circle at top, rgba(31,41,55,0.98), rgba(15,23,42,0.99));
+      --jsm-accent: #00c6ff;
+      --jsm-accent-soft: #4efedc;
+      --jsm-accent-warm: #ffb44f;
+      --jsm-text-main: #e5e7eb;
+      --jsm-text-soft: #9ca3af;
+      --jsm-border-soft: rgba(148,163,184,0.55);
+      --jsm-radius-lg: 24px;
+      --jsm-shadow-lg: 0 18px 40px rgba(0,0,0,0.55);
+      --jsm-max-width: 960px;
+    }
+
+    .jsm-subscribe-page {
+      margin: 0 auto;
+      max-width: var(--jsm-max-width);
+      padding: 40px 18px 60px;
+      background: var(--jsm-bg-body);
+      border-radius: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      color: var(--jsm-text-main);
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Soft animated glow edge */
+    .jsm-subscribe-page::before {
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background: radial-gradient(circle at top,
+        rgba(0,198,255,0.18),
+        transparent 40%,
+        rgba(78,254,220,0.18),
+        transparent 75%);
+      opacity:0.7;
+      pointer-events:none;
+    }
+
+    .jsm-subscribe-inner {
+      position: relative;
+      z-index: 1;
+      background: var(--jsm-bg-card);
+      border-radius: 22px;
+      padding: 32px 22px 30px;
+      border: 1px solid var(--jsm-border-soft);
+      box-shadow: var(--jsm-shadow-lg);
+    }
+
+    .jsm-flex {
+      display:flex;
+      flex-wrap:wrap;
+      gap:26px;
+      align-items:center;
+    }
+
+    .jsm-col {
+      flex:1 1 280px;
+      min-width:260px;
+    }
+
+    .jsm-kicker {
+      text-transform:uppercase;
+      letter-spacing:0.16em;
+      font-size:11px;
+      color: var(--jsm-accent-soft);
+      margin-bottom:6px;
+    }
+
+    .jsm-title {
+      font-size:28px;
+      margin:6px 0 10px;
+      background: linear-gradient(120deg,#ffffff,#e0f2fe,#a5b4fc,#f9a8d4);
+      background-size: 240% 240%;
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      animation: jsmTitleShift 9s ease-in-out infinite;
+    }
+
+    .jsm-subtitle {
+      font-size:16px;
+      color:var(--jsm-text-soft);
+      max-width:560px;
+      line-height:1.7;
+    }
+
+    .jsm-photo-wrap {
+      text-align:center;
+    }
+
+    .jsm-photo {
+      width:100%;
+      max-width:320px;
+      border-radius:20px;
+      box-shadow:0 18px 40px rgba(0,0,0,0.85);
+      border: 1px solid rgba(148,163,184,0.7);
+      opacity: 0;
+      transform: translateY(18px);
+      animation: jsmFloat 8s ease-in-out infinite;
+      animation-play-state: paused;
+      transition: opacity .7s ease-out, transform .7s ease-out;
+    }
+
+    .jsm-photo-caption {
+      font-size:12px;
+      color:var(--jsm-text-soft);
+      margin-top:8px;
+    }
+
+    .jsm-pill-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:14px;
+    }
+
+    .jsm-pill {
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.7);
+      font-size:11px;
+      background:rgba(15,23,42,0.9);
+      color:var(--jsm-text-soft);
+      white-space:nowrap;
+    }
+
+    /* Donate + Subscribe cards */
+    .jsm-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:20px;
+      margin-top:26px;
+      align-items:stretch;
+    }
+
+    .jsm-card {
+      background:rgba(15,23,42,0.98);
+      border-radius:18px;
+      padding:20px 18px 18px;
+      border:1px solid var(--jsm-border-soft);
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      opacity:0;
+      transform: translateY(18px);
+      transition: opacity .7s ease-out, transform .7s ease-out, box-shadow .2s ease-out, border-color .2s ease-out;
+    }
+
+    .jsm-card::before {
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius:inherit;
+      background: conic-gradient(
+        from 130deg,
+        rgba(0,198,255,0.0),
+        rgba(0,198,255,0.5),
+        rgba(78,254,220,0.0),
+        rgba(255,180,79,0.6),
+        rgba(0,198,255,0.0)
+      );
+      mix-blend-mode:screen;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .4s ease-out;
+      z-index:-1;
+    }
+
+    .jsm-card h3 {
+      margin:0 0 6px;
+      font-size:18px;
+    }
+
+    .jsm-card p {
+      margin:0 0 10px;
+      font-size:14px;
+      line-height:1.7;
+      color:var(--jsm-text-soft);
+    }
+
+    .jsm-card-tag {
+      position:absolute;
+      top:10px;
+      right:12px;
+      font-size:11px;
+      padding:3px 9px;
+      border-radius:999px;
+      background:rgba(15,23,42,0.95);
+      border:1px solid rgba(148,163,184,0.6);
+      color:var(--jsm-accent-soft);
+    }
+
+    .jsm-card:hover {
+      box-shadow:0 20px 40px rgba(0,0,0,0.85);
+      border-color:rgba(148,163,184,0.9);
+      transform: translateY(-4px);
+    }
+
+    .jsm-card:hover::before {
+      opacity:0.8;
+    }
+
+    /* Glowing PayPal-style button */
+    .jsm-donate-btn {
+      display:inline-block;
+      margin-top:6px;
+      padding:13px 26px;
+      border-radius:999px;
+      border:none;
+      background:linear-gradient(120deg,#facc15,#f97316,#fb923c);
+      color:#111827;
+      font-weight:800;
+      font-size:15px;
+      letter-spacing:0.03em;
+      cursor:pointer;
+      box-shadow:0 0 20px rgba(251,191,36,0.8);
+      transition:transform .2s, box-shadow .2s, filter .2s;
+      text-shadow:0 1px 2px rgba(255,255,255,0.6);
+    }
+
+    .jsm-donate-btn:hover {
+      transform:translateY(-2px) scale(1.02);
+      box-shadow:0 0 30px rgba(251,191,36,1);
+      filter:brightness(1.05);
+    }
+
+    /* Newsletter “shell” where Mailchimp goes */
+    .jsm-mailchimp-shell {
+      margin-top:8px;
+      padding:12px;
+      border-radius:14px;
+      border:1px dashed rgba(148,163,184,0.8);
+      background:rgba(15,23,42,0.95);
+      color:var(--jsm-text-soft);
+      font-size:12px;
+      max-height:360px; /* keeps card similar height to Donate card */
+      overflow:auto;
+    }
+
+    .jsm-mailchimp-shell p {
+      font-size:12px;
+      margin:0 0 4px;
+    }
+
+    .jsm-mailchimp-shell code {
+      font-size:11px;
+      background:rgba(15,23,42,0.9);
+      padding:2px 6px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.4);
+    }
+
+    /* Footer line */
+    .jsm-sub-footer {
+      margin-top:26px;
+      font-size:12px;
+      color:var(--jsm-text-soft);
+      text-align:center;
+    }
+
+    /* Animations */
+    @keyframes jsmTitleShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes jsmFloat {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(0.5deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+
+    /* Reveal-on-scroll state */
+    .jsm-in-view {
+      opacity:1 !important;
+      transform: translateY(0) !important;
+    }
+
+    .jsm-photo.jsm-in-view {
+      animation-play-state: running;
+    }
+
+    /* Responsive tweak */
+    @media (max-width: 640px) {
+      .jsm-subscribe-page {
+        padding:24px 10px 40px;
+        border-radius:20px;
+      }
+      .jsm-subscribe-inner {
+        padding:24px 18px 22px;
+      }
+      .jsm-title {
+        font-size:24px;
+      }
+    }
+  </style>
+
+  <div class="jsm-subscribe-inner">
+    <!-- TOP: Hero + SDG Photo -->
+    <div class="jsm-flex">
+      <div class="jsm-col">
+        <div class="jsm-kicker">The Camino · JSM Cooperative Corporation</div>
+        <h1 class="jsm-title">Subscribe, Support & Walk the Camino With Us</h1>
+        <p class="jsm-subtitle">
+          Join our mission to turn stories into real-world impact. Your support helps us fund
+          <strong>SDG-aligned nonprofits</strong>, cover publishing costs, and keep
+          <em>The Camino</em> newsletter free for readers around the world.
+          Every subscription, every donation, and every shared email brings us one step closer
+          to a healthier, more hopeful future.
+        </p>
+
+        <div class="jsm-pill-row">
+          <span class="jsm-pill">UN SDGs · Global Impact</span>
+          <span class="jsm-pill">Stories that fund change</span>
+          <span class="jsm-pill">Community-powered publishing</span>
+        </div>
+      </div>
+
+      <div class="jsm-col jsm-photo-wrap">
+        <img
+          src="https://i0.wp.com/jsmcoop.com/wp-content/uploads/2024/04/IMG_2904.jpg?resize=1024%2C768&ssl=1"
+          alt="Joseph-Michael, Founder of JSM Cooperative in front of UN Sustainable Development Goals at the Capitol in Washington, D.C."
+          class="jsm-photo"
+        />
+        <div class="jsm-photo-caption">
+          Founder of JSM Cooperative Corporation at the U.S. Capitol,
+          championing the <strong>UN Sustainable Development Goals</strong>.
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Donate + Newsletter Cards -->
+    <div class="jsm-grid" style="margin-top:30px;">
+      <!-- DONATE CARD -->
+      <div class="jsm-card">
+        <div class="jsm-card-tag">Tax-deductible support</div>
+        <h3>💙 Make a One-Time Donation</h3>
+        <p>
+          Your gift fuels our ability to <strong>write, publish, and donate</strong> —
+          supporting nonprofits whose work aligns with the United Nations Sustainable Development Goals.
+          Together, we can use storytelling to create tangible, measurable impact.
+        </p>
+        <p>
+          Every contribution helps us cover editing, printing, and distribution, so that
+          <strong>100% of novel profits</strong> can flow directly to mission-driven partners.
+        </p>
+
+        <!-- 🔵 Custom PayPal Donate Button -->
+        <form action="https://www.paypal.com/donate" method="post" target="_top" style="margin-top:8px;">
+          <input type="hidden" name="hosted_button_id" value="TLWCSL2KJDZQU" />
+          <button type="submit" class="jsm-donate-btn" title="Donate securely with PayPal">
+            ✨ Donate Now – Fuel the Camino
+          </button>
+          <img alt="" border="0"
+               src="https://www.paypal.com/en_US/i/scr/pixel.gif"
+               width="1" height="1"
+               style="display:none !important;" />
+        </form>
+
+        <p style="font-size:11px; margin-top:10px; color:var(--jsm-text-soft);">
+          Secure checkout powered by PayPal. Your support helps keep our stories – and our impact –
+          moving forward.
+        </p>
+      </div>
+
+      <!-- NEWSLETTER CARD -->
+      <div class="jsm-card">
+        <div class="jsm-card-tag">Free newsletter</div>
+        <h3>📬 Subscribe to <em>The Camino</em></h3>
+        <p>
+          <strong>The Camino</strong> is our biweekly newsletter where we share:
+        </p>
+        <ul style="margin:4px 0 10px 18px; padding:0; color:var(--jsm-text-soft); font-size:14px; line-height:1.7;">
+          <li>Behind-the-scenes insights from our authors &amp; creative team</li>
+          <li>Updates on fundraising campaigns and nonprofit partners</li>
+          <li>Exclusive previews, chapter drops, and Camino milestones</li>
+        </ul>
+        <p style="margin-bottom:10px;">
+          It’s the easiest way to walk with us — step by step, story by story.
+        </p>
+
+        
+          <!-- MAILCHIMP EMBED START -->
+         <div id="mc_embed_shell">
+      <link href="//cdn-images.mailchimp.com/embedcode/classic-061523.css" rel="stylesheet" type="text/css">
+  <style type="text/css">
+        #mc_embed_signup{background:#fff; false;clear:left; font:14px Helvetica,Arial,sans-serif; width: 100%;  max-width: 480px;}
+        /* Add your own Mailchimp form style overrides in your site stylesheet or in this style block.
+           We recommend moving this block and the preceding CSS link to the HEAD of your HTML file. */
+</style>
+<div id="mc_embed_signup">
+    <form action="https://jsmcoop.us22.list-manage.com/subscribe/post?u=b3afd63e7b494ede9597fbc61&amp;id=c75e7b3730&amp;f_id=008cd8e1f0" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank">
+        <div id="mc_embed_signup_scroll"><h2>Subscribe</h2>
+            <div class="indicates-required"><span class="asterisk">*</span> indicates required</div>
+            <div class="mc-field-group"><label for="mce-EMAIL">Email Address <span class="asterisk">*</span></label><input type="email" name="EMAIL" class="required email" id="mce-EMAIL" required="" value=""></div><div class="mc-field-group"><label for="mce-FNAME">First Name <span class="asterisk">*</span></label><input type="text" name="FNAME" class="required text" id="mce-FNAME" required="" value=""></div><div class="mc-field-group"><label for="mce-LNAME">Last Name <span class="asterisk">*</span></label><input type="text" name="LNAME" class="required text" id="mce-LNAME" required="" value=""></div><div class="mc-field-group"><label for="mce-PHONE">Phone Number </label><input type="text" name="PHONE" class="REQ_CSS" id="mce-PHONE" value=""></div>
+        <div id="mce-responses" class="clear">
+            <div class="response" id="mce-error-response" style="display: none;"></div>
+            <div class="response" id="mce-success-response" style="display: none;"></div>
+        </div><div aria-hidden="true" style="position: absolute; left: -5000px;"><input type="text" name="b_b3afd63e7b494ede9597fbc61_c75e7b3730" tabindex="-1" value=""></div><div class="clear"><input type="submit" name="subscribe" id="mc-embedded-subscribe" class="button" value="Subscribe"></div>
+    </div>
+</form>
+</div>
+<script type="text/javascript" src="//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js"></script><script type="text/javascript">(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[4]='PHONE';ftypes[4]='phone';fnames[3]='ADDRESS';ftypes[3]='address';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);
+    // SMS Phone Multi-Country Functionality
+    if(!window.MC) {
+      window.MC = {};
+    }
+    window.MC.smsPhoneData = {
+      defaultCountryCode: 'US',
+      programs: [],
+      smsProgramDataCountryNames: []
+    };
+
+    function getCountryUnicodeFlag(countryCode) {
+       return countryCode.toUpperCase().replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 127397))
+    };
+
+    // HTML sanitization function to prevent XSS
+    function sanitizeHtml(str) {
+      if (typeof str !== 'string') return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;');
+    }
+
+    // URL sanitization function to prevent javascript: and data: URLs
+    function sanitizeUrl(url) {
+      if (typeof url !== 'string') return '';
+      const trimmedUrl = url.trim().toLowerCase();
+      if (trimmedUrl.startsWith('javascript:') || trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('vbscript:')) {
+        return '#';
+      }
+      return url;
+    }
+
+    const getBrowserLanguage = () => {
+      if (!window?.navigator?.language?.split('-')[1]) {
+        return window?.navigator?.language?.toUpperCase();
+      }
+      return window?.navigator?.language?.split('-')[1];
+    };
+
+    function getDefaultCountryProgram(defaultCountryCode, smsProgramData) {
+      if (!smsProgramData || smsProgramData.length === 0) {
+        return null;
+      }
+
+      const browserLanguage = getBrowserLanguage();
+
+      if (browserLanguage) {
+        const foundProgram = smsProgramData.find(
+          (program) => program?.countryCode === browserLanguage,
+        );
+        if (foundProgram) {
+          return foundProgram;
+        }
+      }
+
+      if (defaultCountryCode) {
+        const foundProgram = smsProgramData.find(
+          (program) => program?.countryCode === defaultCountryCode,
+        );
+        if (foundProgram) {
+          return foundProgram;
+        }
+      }
+
+      return smsProgramData[0];
+    }
+
+    function updateSmsLegalText(countryCode, fieldName) {
+      if (!countryCode || !fieldName) {
+        return;
+      }
+      
+      const programs = window?.MC?.smsPhoneData?.programs;
+      if (!programs || !Array.isArray(programs)) {
+        return;
+      }
+      
+      const program = programs.find(program => program?.countryCode === countryCode);
+      if (!program || !program.requiredTemplate) {
+        return;
+      }
+      
+      const legalTextElement = document.querySelector('#legal-text-' + fieldName);
+      if (!legalTextElement) {
+        return;
+      }
+      
+      // Remove HTML tags and clean up the text
+      const divRegex = new RegExp('</?[div][^>]*>', 'gi');
+      const fullAnchorRegex = new RegExp('<a.*?</a>', 'g');
+      const anchorRegex = new RegExp('<a href="(.*?)" target="(.*?)">(.*?)</a>');
+      
+      const requiredLegalText = program.requiredTemplate
+        .replace(divRegex, '')
+        .replace(fullAnchorRegex, '')
+        .slice(0, -1);
+      
+      const anchorMatches = program.requiredTemplate.match(anchorRegex);
+      
+      if (anchorMatches && anchorMatches.length >= 4) {
+        // Create link element safely using DOM methods instead of innerHTML
+        const linkElement = document.createElement('a');
+        linkElement.href = sanitizeUrl(anchorMatches[1]);
+        linkElement.target = sanitizeHtml(anchorMatches[2]);
+        linkElement.textContent = sanitizeHtml(anchorMatches[3]);
+        
+        legalTextElement.textContent = requiredLegalText + ' ';
+        legalTextElement.appendChild(linkElement);
+        legalTextElement.appendChild(document.createTextNode('.'));
+      } else {
+        legalTextElement.textContent = requiredLegalText + '.';
+      }
+    }
+
+    function generateDropdownOptions(smsProgramData) {
+      if (!smsProgramData || smsProgramData.length === 0) {
+        return '';
+      }
+      
+      return smsProgramData.map(program => {
+        const flag = getCountryUnicodeFlag(program.countryCode);
+        const countryName = getCountryName(program.countryCode);
+        const callingCode = program.countryCallingCode || '';
+        // Sanitize all values to prevent XSS
+        const sanitizedCountryCode = sanitizeHtml(program.countryCode || '');
+        const sanitizedCountryName = sanitizeHtml(countryName || '');
+        const sanitizedCallingCode = sanitizeHtml(callingCode || '');
+        return '<option value="' + sanitizedCountryCode + '">' + sanitizedCountryName + ' ' + sanitizedCallingCode + '</option>';
+      }).join('');
+    }
+
+    function getCountryName(countryCode) {
+      if (window.MC?.smsPhoneData?.smsProgramDataCountryNames && Array.isArray(window.MC.smsPhoneData.smsProgramDataCountryNames)) {
+        for (let i = 0; i < window.MC.smsPhoneData.smsProgramDataCountryNames.length; i++) {
+          if (window.MC.smsPhoneData.smsProgramDataCountryNames[i].code === countryCode) {
+            return window.MC.smsPhoneData.smsProgramDataCountryNames[i].name;
+          }
+        }
+      }
+      return countryCode;
+    }
+
+    function getDefaultPlaceholder(countryCode) {
+      if (!countryCode || typeof countryCode !== 'string') {
+        return '+1 000 000 0000'; // Default US placeholder
+      }
+      
+      const mockPlaceholders = [
+        {
+      countryCode: 'US',
+      placeholder: '+1 000 000 0000',
+      helpText: 'Include the US country code +1 before the phone number',
+    },
+    {
+      countryCode: 'GB',
+      placeholder: '+44 0000 000000',
+      helpText: 'Include the GB country code +44 before the phone number',
+    },
+    {
+      countryCode: 'CA',
+      placeholder: '+1 000 000 0000',
+      helpText: 'Include the CA country code +1 before the phone number',
+    },
+    {
+      countryCode: 'AU',
+      placeholder: '+61 000 000 000',
+      helpText: 'Include the AU country code +61 before the phone number',
+    },
+    {
+      countryCode: 'DE',
+      placeholder: '+49 000 0000000',
+      helpText: 'Fügen Sie vor der Telefonnummer die DE-Ländervorwahl +49 ein',
+    },
+    {
+      countryCode: 'FR',
+      placeholder: '+33 0 00 00 00 00',
+      helpText: 'Incluez le code pays FR +33 avant le numéro de téléphone',
+    },
+    {
+      countryCode: 'ES',
+      placeholder: '+34 000 000 000',
+      helpText: 'Incluya el código de país ES +34 antes del número de teléfono',
+    },
+    {
+      countryCode: 'NL',
+      placeholder: '+31 0 00000000',
+      helpText: 'Voeg de NL-landcode +31 toe vóór het telefoonnummer',
+    },
+    {
+      countryCode: 'BE',
+      placeholder: '+32 000 00 00 00',
+      helpText: 'Incluez le code pays BE +32 avant le numéro de téléphone',
+    },
+    {
+      countryCode: 'CH',
+      placeholder: '+41 00 000 00 00',
+      helpText: 'Fügen Sie vor der Telefonnummer die CH-Ländervorwahl +41 ein',
+    },
+    {
+      countryCode: 'AT',
+      placeholder: '+43 000 000 0000',
+      helpText: 'Fügen Sie vor der Telefonnummer die AT-Ländervorwahl +43 ein',
+    },
+    {
+      countryCode: 'IE',
+      placeholder: '+353 00 000 0000',
+      helpText: 'Include the IE country code +353 before the phone number',
+    },
+    {
+      countryCode: 'IT',
+      placeholder: '+39 000 000 0000',
+      helpText:
+        'Includere il prefisso internazionale IT +39 prima del numero di telefono',
+    },
+      ];
+
+      const selectedPlaceholder = mockPlaceholders.find(function(item) {
+        return item && item.countryCode === countryCode;
+      });
+      
+      return selectedPlaceholder ? selectedPlaceholder.placeholder : mockPlaceholders[0].placeholder;
+    }
+
+    function updatePlaceholder(countryCode, fieldName) {
+      if (!countryCode || !fieldName) {
+        return;
+      }
+      
+      const phoneInput = document.querySelector('#mce-' + fieldName);
+      if (!phoneInput) {
+        return;
+      }
+      
+      const placeholder = getDefaultPlaceholder(countryCode);
+      if (placeholder) {
+        phoneInput.placeholder = placeholder;
+      }
+    }
+
+    function updateCountryCodeInstruction(countryCode, fieldName) {
+      updatePlaceholder(countryCode, fieldName);
+      
+    }
+
+    function getDefaultHelpText(countryCode) {
+      const mockPlaceholders = [
+        {
+          countryCode: 'US',
+          placeholder: '+1 000 000 0000',
+          helpText: 'Include the US country code +1 before the phone number',
+        },
+        {
+          countryCode: 'GB',
+          placeholder: '+44 0000 000000',
+          helpText: 'Include the GB country code +44 before the phone number',
+        },
+        {
+          countryCode: 'CA',
+          placeholder: '+1 000 000 0000',
+          helpText: 'Include the CA country code +1 before the phone number',
+        },
+        {
+          countryCode: 'AU',
+          placeholder: '+61 000 000 000',
+          helpText: 'Include the AU country code +61 before the phone number',
+        },
+        {
+          countryCode: 'DE',
+          placeholder: '+49 000 0000000',
+          helpText: 'Fügen Sie vor der Telefonnummer die DE-Ländervorwahl +49 ein',
+        },
+        {
+          countryCode: 'FR',
+          placeholder: '+33 0 00 00 00 00',
+          helpText: 'Incluez le code pays FR +33 avant le numéro de téléphone',
+        },
+        {
+          countryCode: 'ES',
+          placeholder: '+34 000 000 000',
+          helpText: 'Incluya el código de país ES +34 antes del número de teléfono',
+        },
+        {
+          countryCode: 'NL',
+          placeholder: '+31 0 00000000',
+          helpText: 'Voeg de NL-landcode +31 toe vóór het telefoonnummer',
+        },
+        {
+          countryCode: 'BE',
+          placeholder: '+32 000 00 00 00',
+          helpText: 'Incluez le code pays BE +32 avant le numéro de téléphone',
+        },
+        {
+          countryCode: 'CH',
+          placeholder: '+41 00 000 00 00',
+          helpText: 'Fügen Sie vor der Telefonnummer die CH-Ländervorwahl +41 ein',
+        },
+        {
+          countryCode: 'AT',
+          placeholder: '+43 000 000 0000',
+          helpText: 'Fügen Sie vor der Telefonnummer die AT-Ländervorwahl +43 ein',
+        },
+        {
+          countryCode: 'IE',
+          placeholder: '+353 00 000 0000',
+          helpText: 'Include the IE country code +353 before the phone number',
+        },
+        {
+          countryCode: 'IT',
+          placeholder: '+39 000 000 0000',
+          helpText: 'Includere il prefisso internazionale IT +39 prima del numero di telefono',
+        },
+      ];
+      
+      if (!countryCode || typeof countryCode !== 'string') {
+        return mockPlaceholders[0].helpText;
+      }
+      
+      const selectedHelpText = mockPlaceholders.find(function(item) {
+          return item && item.countryCode === countryCode;
+        });
+        
+        return selectedHelpText ? selectedHelpText.helpText : mockPlaceholders[0].helpText;
+    }
+
+    function setDefaultHelpText(countryCode) {
+      const helpTextSpan = document.querySelector('#help-text');
+      if (!helpTextSpan) {
+        return;
+      }
+
+        
+    }
+
+    function updateHelpTextCountryCode(countryCode, fieldName) {
+      if (!countryCode || !fieldName) {
+        return;
+      }
+      
+      setDefaultHelpText(countryCode);
+    }
+
+    function initializeSmsPhoneDropdown(fieldName) {
+      if (!fieldName || typeof fieldName !== 'string') {
+        return;
+      }
+      
+      const dropdown = document.querySelector('#country-select-' + fieldName);
+      const displayFlag = document.querySelector('#flag-display-' + fieldName);
+      
+      if (!dropdown || !displayFlag) {
+        return;
+      }
+
+      const smsPhoneData = window.MC?.smsPhoneData;
+      if (smsPhoneData && smsPhoneData.programs && Array.isArray(smsPhoneData.programs)) {
+        dropdown.innerHTML = generateDropdownOptions(smsPhoneData.programs);
+      }
+
+      const defaultProgram = getDefaultCountryProgram(smsPhoneData?.defaultCountryCode, smsPhoneData?.programs);
+      if (defaultProgram && defaultProgram.countryCode) {
+        dropdown.value = defaultProgram.countryCode;
+        
+        const flagSpan = displayFlag?.querySelector('#flag-emoji-' + fieldName);
+        if (flagSpan) {
+          flagSpan.textContent = getCountryUnicodeFlag(defaultProgram.countryCode);
+          flagSpan.setAttribute('aria-label', sanitizeHtml(defaultProgram.countryCode) + ' flag');
+        }
+        
+        updateSmsLegalText(defaultProgram.countryCode, fieldName);
+        updatePlaceholder(defaultProgram.countryCode, fieldName);
+        updateCountryCodeInstruction(defaultProgram.countryCode, fieldName);
+      }
+
+     
+      var smsNotRequiredRemoveCountryCodeEnabled = true;
+      var smsField = Object.values({"EMAIL":{"name":"EMAIL","label":"Email Address","helper_text":"","type":"email","required":true,"audience_field_name":"Email Address","merge_id":0,"help_text_enabled":false,"enabled":true,"order":"0","field_type":"merge"},"FNAME":{"name":"FNAME","label":"First Name","helper_text":"","type":"text","required":true,"audience_field_name":"First Name","merge_id":1,"help_text_enabled":false,"enabled":true,"order":"1","field_type":"merge"},"LNAME":{"name":"LNAME","label":"Last Name","helper_text":"","type":"text","required":true,"audience_field_name":"Last Name","merge_id":2,"help_text_enabled":false,"enabled":true,"order":"2","field_type":"merge"},"PHONE":{"name":"PHONE","label":"Phone Number","helper_text":"","type":"phone","required":false,"audience_field_name":"Phone Number","phoneformat":"","merge_id":4,"help_text_enabled":false,"enabled":true,"order":"3","field_type":"merge"},"ADDRESS":{"name":"ADDRESS","label":"Address","helper_text":"","type":"address","required":false,"audience_field_name":"Address","enabled":false,"order":null,"field_type":"merge","merge_id":3,"countries":{"2":"Albania","3":"Algeria","4":"Andorra","5":"Angola","6":"Argentina","7":"Armenia","8":"Australia","9":"Austria","10":"Azerbaijan","11":"Bahamas","12":"Bahrain","13":"Bangladesh","14":"Barbados","15":"Belarus","16":"Belgium","17":"Belize","18":"Benin","19":"Bermuda","20":"Bhutan","21":"Bolivia","22":"Bosnia and Herzegovina","23":"Botswana","24":"Brazil","25":"Bulgaria","26":"Burkina Faso","27":"Burundi","28":"Cambodia","29":"Cameroon","30":"Canada","31":"Cape Verde","32":"Cayman Islands","33":"Central African Republic","34":"Chad","35":"Chile","36":"China","37":"Colombia","38":"Congo","40":"Croatia","41":"Cyprus","42":"Czech Republic","43":"Denmark","44":"Djibouti","45":"Ecuador","46":"Egypt","47":"El Salvador","48":"Equatorial Guinea","49":"Eritrea","50":"Estonia","51":"Ethiopia","52":"Fiji","53":"Finland","54":"France","56":"Gabon","57":"Gambia","58":"Georgia","59":"Germany","60":"Ghana","61":"Greece","62":"Guam","63":"Guinea","64":"Guinea-Bissau","65":"Guyana","66":"Honduras","67":"Hong Kong","68":"Hungary","69":"Iceland","70":"India","71":"Indonesia","74":"Ireland","75":"Israel","76":"Italy","78":"Japan","79":"Jordan","80":"Kazakhstan","81":"Kenya","82":"Kuwait","83":"Kyrgyzstan","84":"Lao People's Democratic Republic","85":"Latvia","86":"Lebanon","87":"Lesotho","88":"Liberia","90":"Liechtenstein","91":"Lithuania","92":"Luxembourg","93":"Macedonia","94":"Madagascar","95":"Malawi","96":"Malaysia","97":"Maldives","98":"Mali","99":"Malta","100":"Mauritania","101":"Mexico","102":"Moldova","103":"Monaco","104":"Mongolia","105":"Morocco","106":"Mozambique","107":"Namibia","108":"Nepal","109":"Netherlands","110":"Netherlands Antilles","111":"New Zealand","112":"Nicaragua","113":"Niger","114":"Nigeria","116":"Norway","117":"Oman","118":"Pakistan","119":"Panama","120":"Paraguay","121":"Peru","122":"Philippines","123":"Poland","124":"Portugal","126":"Qatar","127":"Reunion","128":"Romania","129":"Russia","130":"Rwanda","132":"Samoa (Independent)","133":"Saudi Arabia","134":"Senegal","135":"Seychelles","136":"Sierra Leone","137":"Singapore","138":"Slovakia","139":"Slovenia","140":"Somalia","141":"South Africa","142":"South Korea","143":"Spain","144":"Sri Lanka","146":"Suriname","147":"Swaziland","148":"Sweden","149":"Switzerland","152":"Taiwan","153":"Tanzania","154":"Thailand","155":"Togo","156":"Tunisia","157":"Turkiye","158":"Turkmenistan","159":"Uganda","161":"Ukraine","162":"United Arab Emirates","163":"Uruguay","164":"USA","165":"Uzbekistan","166":"Vatican City State (Holy See)","167":"Venezuela","168":"Vietnam","169":"Virgin Islands (British)","170":"Yemen","173":"Zambia","174":"Zimbabwe","175":"Antigua And Barbuda","176":"Anguilla","178":"American Samoa","179":"Aruba","180":"Brunei Darussalam","181":"Bouvet Island","183":"Cook Islands","185":"Christmas Island","187":"Dominican Republic","188":"Western Sahara","189":"Falkland Islands","191":"Faroe Islands","192":"Grenada","193":"French Guiana","194":"Gibraltar","195":"Greenland","196":"Guadeloupe","198":"Guatemala","200":"Haiti","202":"Jamaica","203":"Kiribati","204":"Comoros","205":"Saint Kitts and Nevis","206":"Saint Lucia","207":"Marshall Islands","208":"Macau","210":"Martinique","212":"Mauritius","213":"New Caledonia","214":"Norfolk Island","215":"Nauru","217":"Niue","219":"Papua New Guinea","221":"Pitcairn","222":"Palau","223":"Solomon Islands","225":"Svalbard and Jan Mayen Islands","227":"San Marino","232":"Tonga","233":"Timor-Leste","234":"Trinidad and Tobago","235":"Tuvalu","237":"Saint Vincent and the Grenadines","238":"Virgin Islands (U.S.)","239":"Vanuatu","241":"Mayotte","242":"Myanmar","255":"Sao Tome and Principe","257":"South Georgia and the South Sandwich Islands","260":"Tajikistan","262":"United Kingdom","268":"Costa Rica","270":"Guernsey","272":"North Korea","274":"Afghanistan","275":"Cote D'Ivoire","276":"Cuba","277":"French Polynesia","278":"Iran","279":"Iraq","281":"Libya","282":"Palestine","285":"Syria","286":"Aaland Islands","287":"Turks & Caicos Islands","288":"Jersey  (Channel Islands)","289":"Dominica","290":"Montenegro","293":"Sudan","294":"Montserrat","298":"Curacao","302":"Sint Maarten","311":"South Sudan","315":"Republic of Kosovo","318":"Congo, Democratic Republic of the","323":"Isle of Man","324":"Saint Martin","325":"Bonaire, Saint Eustatius and Saba","326":"Serbia"},"defaultcountry":164},"BIRTHDAY":{"name":"BIRTHDAY","label":"Birthday","helper_text":"","type":"birthday","required":false,"audience_field_name":"Birthday","dateformat":"MM/DD","enabled":false,"order":null,"field_type":"merge","merge_id":5}}).find(function(f) { return f.name === fieldName && f.type === 'smsphone'; });
+      var isRequired = smsField ? smsField.required : false;
+      var shouldAppendCountryCode = smsNotRequiredRemoveCountryCodeEnabled ? isRequired : true;
+      
+      var phoneInput = document.querySelector('#mce-' + fieldName);
+      if (phoneInput && defaultProgram.countryCallingCode && shouldAppendCountryCode) {
+        phoneInput.value = defaultProgram.countryCallingCode;
+      }
+      
+
+
+      displayFlag?.addEventListener('click', function(e) {
+        dropdown.focus();
+      });
+
+
+      dropdown?.addEventListener('change', function() {
+        const selectedCountry = this.value;
+        
+        if (!selectedCountry || typeof selectedCountry !== 'string') {
+          return;
+        }
+        
+        const flagSpan = displayFlag?.querySelector('#flag-emoji-' + fieldName);
+        if (flagSpan) {
+          flagSpan.textContent = getCountryUnicodeFlag(selectedCountry);
+          flagSpan.setAttribute('aria-label', sanitizeHtml(selectedCountry) + ' flag');
+        }
+
+         
+        const selectedProgram = window.MC?.smsPhoneData?.programs.find(function(program) {
+          return program && program.countryCode === selectedCountry;
+        });
+
+        var smsNotRequiredRemoveCountryCodeEnabled = true;
+        var smsField = Object.values({"EMAIL":{"name":"EMAIL","label":"Email Address","helper_text":"","type":"email","required":true,"audience_field_name":"Email Address","merge_id":0,"help_text_enabled":false,"enabled":true,"order":"0","field_type":"merge"},"FNAME":{"name":"FNAME","label":"First Name","helper_text":"","type":"text","required":true,"audience_field_name":"First Name","merge_id":1,"help_text_enabled":false,"enabled":true,"order":"1","field_type":"merge"},"LNAME":{"name":"LNAME","label":"Last Name","helper_text":"","type":"text","required":true,"audience_field_name":"Last Name","merge_id":2,"help_text_enabled":false,"enabled":true,"order":"2","field_type":"merge"},"PHONE":{"name":"PHONE","label":"Phone Number","helper_text":"","type":"phone","required":false,"audience_field_name":"Phone Number","phoneformat":"","merge_id":4,"help_text_enabled":false,"enabled":true,"order":"3","field_type":"merge"},"ADDRESS":{"name":"ADDRESS","label":"Address","helper_text":"","type":"address","required":false,"audience_field_name":"Address","enabled":false,"order":null,"field_type":"merge","merge_id":3,"countries":{"2":"Albania","3":"Algeria","4":"Andorra","5":"Angola","6":"Argentina","7":"Armenia","8":"Australia","9":"Austria","10":"Azerbaijan","11":"Bahamas","12":"Bahrain","13":"Bangladesh","14":"Barbados","15":"Belarus","16":"Belgium","17":"Belize","18":"Benin","19":"Bermuda","20":"Bhutan","21":"Bolivia","22":"Bosnia and Herzegovina","23":"Botswana","24":"Brazil","25":"Bulgaria","26":"Burkina Faso","27":"Burundi","28":"Cambodia","29":"Cameroon","30":"Canada","31":"Cape Verde","32":"Cayman Islands","33":"Central African Republic","34":"Chad","35":"Chile","36":"China","37":"Colombia","38":"Congo","40":"Croatia","41":"Cyprus","42":"Czech Republic","43":"Denmark","44":"Djibouti","45":"Ecuador","46":"Egypt","47":"El Salvador","48":"Equatorial Guinea","49":"Eritrea","50":"Estonia","51":"Ethiopia","52":"Fiji","53":"Finland","54":"France","56":"Gabon","57":"Gambia","58":"Georgia","59":"Germany","60":"Ghana","61":"Greece","62":"Guam","63":"Guinea","64":"Guinea-Bissau","65":"Guyana","66":"Honduras","67":"Hong Kong","68":"Hungary","69":"Iceland","70":"India","71":"Indonesia","74":"Ireland","75":"Israel","76":"Italy","78":"Japan","79":"Jordan","80":"Kazakhstan","81":"Kenya","82":"Kuwait","83":"Kyrgyzstan","84":"Lao People's Democratic Republic","85":"Latvia","86":"Lebanon","87":"Lesotho","88":"Liberia","90":"Liechtenstein","91":"Lithuania","92":"Luxembourg","93":"Macedonia","94":"Madagascar","95":"Malawi","96":"Malaysia","97":"Maldives","98":"Mali","99":"Malta","100":"Mauritania","101":"Mexico","102":"Moldova","103":"Monaco","104":"Mongolia","105":"Morocco","106":"Mozambique","107":"Namibia","108":"Nepal","109":"Netherlands","110":"Netherlands Antilles","111":"New Zealand","112":"Nicaragua","113":"Niger","114":"Nigeria","116":"Norway","117":"Oman","118":"Pakistan","119":"Panama","120":"Paraguay","121":"Peru","122":"Philippines","123":"Poland","124":"Portugal","126":"Qatar","127":"Reunion","128":"Romania","129":"Russia","130":"Rwanda","132":"Samoa (Independent)","133":"Saudi Arabia","134":"Senegal","135":"Seychelles","136":"Sierra Leone","137":"Singapore","138":"Slovakia","139":"Slovenia","140":"Somalia","141":"South Africa","142":"South Korea","143":"Spain","144":"Sri Lanka","146":"Suriname","147":"Swaziland","148":"Sweden","149":"Switzerland","152":"Taiwan","153":"Tanzania","154":"Thailand","155":"Togo","156":"Tunisia","157":"Turkiye","158":"Turkmenistan","159":"Uganda","161":"Ukraine","162":"United Arab Emirates","163":"Uruguay","164":"USA","165":"Uzbekistan","166":"Vatican City State (Holy See)","167":"Venezuela","168":"Vietnam","169":"Virgin Islands (British)","170":"Yemen","173":"Zambia","174":"Zimbabwe","175":"Antigua And Barbuda","176":"Anguilla","178":"American Samoa","179":"Aruba","180":"Brunei Darussalam","181":"Bouvet Island","183":"Cook Islands","185":"Christmas Island","187":"Dominican Republic","188":"Western Sahara","189":"Falkland Islands","191":"Faroe Islands","192":"Grenada","193":"French Guiana","194":"Gibraltar","195":"Greenland","196":"Guadeloupe","198":"Guatemala","200":"Haiti","202":"Jamaica","203":"Kiribati","204":"Comoros","205":"Saint Kitts and Nevis","206":"Saint Lucia","207":"Marshall Islands","208":"Macau","210":"Martinique","212":"Mauritius","213":"New Caledonia","214":"Norfolk Island","215":"Nauru","217":"Niue","219":"Papua New Guinea","221":"Pitcairn","222":"Palau","223":"Solomon Islands","225":"Svalbard and Jan Mayen Islands","227":"San Marino","232":"Tonga","233":"Timor-Leste","234":"Trinidad and Tobago","235":"Tuvalu","237":"Saint Vincent and the Grenadines","238":"Virgin Islands (U.S.)","239":"Vanuatu","241":"Mayotte","242":"Myanmar","255":"Sao Tome and Principe","257":"South Georgia and the South Sandwich Islands","260":"Tajikistan","262":"United Kingdom","268":"Costa Rica","270":"Guernsey","272":"North Korea","274":"Afghanistan","275":"Cote D'Ivoire","276":"Cuba","277":"French Polynesia","278":"Iran","279":"Iraq","281":"Libya","282":"Palestine","285":"Syria","286":"Aaland Islands","287":"Turks & Caicos Islands","288":"Jersey  (Channel Islands)","289":"Dominica","290":"Montenegro","293":"Sudan","294":"Montserrat","298":"Curacao","302":"Sint Maarten","311":"South Sudan","315":"Republic of Kosovo","318":"Congo, Democratic Republic of the","323":"Isle of Man","324":"Saint Martin","325":"Bonaire, Saint Eustatius and Saba","326":"Serbia"},"defaultcountry":164},"BIRTHDAY":{"name":"BIRTHDAY","label":"Birthday","helper_text":"","type":"birthday","required":false,"audience_field_name":"Birthday","dateformat":"MM/DD","enabled":false,"order":null,"field_type":"merge","merge_id":5}}).find(function(f) { return f.name === fieldName && f.type === 'smsphone'; });
+        var isRequired = smsField ? smsField.required : false;
+        var shouldAppendCountryCode = smsNotRequiredRemoveCountryCodeEnabled ? isRequired : true;
+        
+        var phoneInput = document.querySelector('#mce-' + fieldName);
+        if (phoneInput && selectedProgram.countryCallingCode && shouldAppendCountryCode) {
+          phoneInput.value = selectedProgram.countryCallingCode;
+        }
+        
+        
+        updateSmsLegalText(selectedCountry, fieldName);
+        updatePlaceholder(selectedCountry, fieldName);
+        updateCountryCodeInstruction(selectedCountry, fieldName);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const smsPhoneFields = document.querySelectorAll('[id^="country-select-"]');
+      
+      smsPhoneFields.forEach(function(dropdown) {
+        const fieldName = dropdown?.id.replace('country-select-', '');
+        initializeSmsPhoneDropdown(fieldName);
+      });
+    });
+    </script></div>
+
+          <!-- MAILCHIMP EMBED END -->
+        </div>
+
+        <p style="font-size:11px; margin-top:8px; color:var(--jsm-text-soft);">
+          Prefer a direct link?
+          <a href="https://jsmcoop.com/newsletter/" target="_blank" style="color:var(--jsm-accent-soft);">
+            Manage your subscription on our dedicated newsletter page.
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <!-- BOTTOM: Footer line -->
+    <div class="jsm-sub-footer">
+      Thank you for being part of the JSM Cooperative story.
+      Together, we’re proving that <strong>stories can fund a better world.</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Reveal-on-scroll for cards + photo
+  document.addEventListener('DOMContentLoaded', function() {
+    const revealEls = document.querySelectorAll('.jsm-card, .jsm-photo');
+
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('jsm-in-view');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.18 });
+
+    revealEls.forEach(el => observer.observe(el));
+  });
+</script>
+<!-- /wp:html -->
+
+<!-- wp:html -->
+<a href="#camino-posts" class="camino-scroll-link">
+  <div class="camino-scroll-container">
+    <span class="camino-scroll-text">Read all posts from The Camino</span>
+    <span class="camino-scroll-arrow">↓</span>
+  </div>
+</a>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"tagName":"main","align":"full","layout":{"contentSize":"1000px","type":"constrained"}} -->
+<main class="wp-block-group alignfull" id="posts"><!-- wp:query {"queryId":0,"query":{"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false,"perPage":3},"align":"wide"} -->
+<div class="wp-block-query alignwide"><!-- wp:post-template {"layout":{"type":"default"}} -->
+<!-- wp:separator {"opacity":"css","className":"is-style-wide","backgroundColor":"tertiary"} -->
+<hr class="wp-block-separator has-text-color has-tertiary-color has-css-opacity has-tertiary-background-color has-background is-style-wide"/>
+<!-- /wp:separator -->
+
+<!-- wp:cover {"customOverlayColor":"rgba(0,0,0,0)","isUserOverlayColor":true,"minHeight":178,"style":{"spacing":{"padding":{"top":"0px","right":"0px","bottom":"0px","left":"0px"}}}} -->
+<div class="wp-block-cover" style="padding-top:0px;padding-right:0px;padding-bottom:0px;padding-left:0px;min-height:178px"><span aria-hidden="true" class="wp-block-cover__background has-background-dim-100 has-background-dim" style="background-color:rgba(0,0,0,0)"></span><div class="wp-block-cover__inner-container"><!-- wp:columns {"verticalAlignment":"center","align":"wide","style":{"spacing":{"padding":{"top":"0px","right":"0px","bottom":"0px","left":"0px"},"margin":{"top":"var( \u002d\u002dwp\u002d\u002dstyle\u002d\u002dblock-gap )","bottom":"0.5em"}},"elements":{"link":{"color":{"text":"var:preset|color|foreground"}}}},"textColor":"foreground"} -->
+<div class="wp-block-columns alignwide are-vertically-aligned-center has-foreground-color has-text-color has-link-color" style="margin-top:var( --wp--style--block-gap );margin-bottom:0.5em;padding-top:0px;padding-right:0px;padding-bottom:0px;padding-left:0px"><!-- wp:column {"verticalAlignment":"center","width":"10%"} -->
+<div class="wp-block-column is-vertically-aligned-center" style="flex-basis:10%"><!-- wp:post-date {"format":"M j","metadata":{"bindings":{"datetime":{"source":"core/post-data","args":{"key":"date"}}}},"style":{"typography":{"textTransform":"uppercase"}},"fontSize":"small"} /--></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"verticalAlignment":"center","width":"70%","style":{"spacing":{"padding":{"top":"0px","right":"0px","bottom":"0px","left":"0px"}}}} -->
+<div class="wp-block-column is-vertically-aligned-center" style="padding-top:0px;padding-right:0px;padding-bottom:0px;padding-left:0px;flex-basis:70%"><!-- wp:post-title {"textAlign":"left","isLink":true,"style":{"typography":{"fontSize":"xx-large","fontStyle":"normal","fontWeight":"700","lineHeight":"1.3"},"spacing":{"margin":{"top":"0px","bottom":"0px"}}}} /--></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"width":"144px"} -->
+<div class="wp-block-column" style="flex-basis:144px"><!-- wp:post-featured-image {"isLink":true,"width":"100%","height":"144px","style":{"spacing":{"margin":{"top":"0px","right":"0px","bottom":"0px","left":"0px"}}}} /--></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns --></div></div>
+<!-- /wp:cover -->
+<!-- /wp:post-template -->
+
+<!-- wp:separator {"opacity":"css","className":"is-style-wide","backgroundColor":"tertiary"} -->
+<hr class="wp-block-separator has-text-color has-tertiary-color has-css-opacity has-tertiary-background-color has-background is-style-wide"/>
+<!-- /wp:separator -->
+
+<!-- wp:spacer {"height":"5px"} -->
+<div style="height:5px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
+<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"space-between"}} -->
+<!-- wp:query-pagination-previous {"fontSize":"small"} /-->
+
+<!-- wp:query-pagination-next {"fontSize":"small"} /-->
+<!-- /wp:query-pagination --></div>
+<!-- /wp:query --></main>
+<!-- /wp:group -->

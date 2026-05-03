@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+{% block content %}
+<section class="admin-shell">
+  <div class="admin-card">
+    <p class="eyebrow">Admin</p>
+    <h1>JSM Command Center</h1>
+    <form method="post">
+      <label>Username<input name="username" required></label>
+      <label>Password<input type="password" name="password" required></label>
+      <button class="btn btn-primary" type="submit">Log In</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

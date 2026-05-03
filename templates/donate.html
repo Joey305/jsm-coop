@@ -1,0 +1,892 @@
+{% extends "base.html" %}
+
+{% block title %}Donate | JSM Cooperative Corporation{% endblock %}
+
+{% block extra_head %}
+<style>
+  .donate-page-redesign {
+    position: relative;
+    padding: 78px 0 90px;
+    overflow: hidden;
+  }
+
+  .donate-page-redesign::before {
+    content: "";
+    position: fixed;
+    inset: -35%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 18% 10%, rgba(0,234,255,.18), transparent 34%),
+      radial-gradient(circle at 86% 18%, rgba(255,59,106,.20), transparent 32%),
+      radial-gradient(circle at 50% 100%, rgba(34,197,94,.16), transparent 34%);
+    opacity: .92;
+  }
+
+  .donate-shell {
+    position: relative;
+    max-width: 1320px;
+    margin: 0 auto;
+    border-radius: 34px;
+    padding: 34px;
+    background:
+      linear-gradient(145deg, rgba(15,23,42,.94), rgba(2,6,23,.88)),
+      radial-gradient(circle at top, rgba(78,254,220,.10), transparent 60%);
+    border: 1px solid rgba(148,163,184,.34);
+    box-shadow: 0 30px 90px rgba(0,0,0,.55);
+    overflow: hidden;
+  }
+
+  .donate-shell::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from 160deg,
+      rgba(0,234,255,.32),
+      rgba(78,254,220,.05),
+      rgba(250,204,21,.28),
+      rgba(255,59,106,.26),
+      rgba(0,234,255,.32)
+    );
+    opacity: .34;
+    pointer-events: none;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    padding: 1px;
+  }
+
+  .donate-hero-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(330px, .92fr);
+    gap: 28px;
+    align-items: stretch;
+  }
+
+  .donate-hero-copy,
+  .impact-orb-card,
+  .donate-story-card,
+  .donate-action-card,
+  .camino-newsletter-card {
+    border-radius: 26px;
+    background: rgba(15,23,42,.78);
+    border: 1px solid rgba(148,163,184,.24);
+    box-shadow: 0 20px 50px rgba(0,0,0,.32);
+    backdrop-filter: blur(18px);
+  }
+
+  .donate-hero-copy {
+    padding: 34px;
+    min-height: 520px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .donate-kicker {
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--mint);
+  }
+
+  .donate-title {
+    margin: 0;
+    font-size: clamp(42px, 6vw, 78px);
+    line-height: .92;
+    letter-spacing: -.07em;
+    background: linear-gradient(120deg, #ffffff, #a5f3fc, #4efedc, #f9a8d4, #ffffff);
+    background-size: 260% 260%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: donateTitleShift 10s ease-in-out infinite;
+  }
+
+  .donate-subtitle {
+    margin: 22px 0 0;
+    max-width: 780px;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1.75;
+  }
+
+  .donate-highlight {
+    color: var(--mint);
+    font-weight: 900;
+  }
+
+  .donate-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 26px;
+  }
+
+  .donate-pill-row span {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,.36);
+    background: rgba(2,6,23,.55);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .hero-button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .coffee-button-link,
+  .newsletter-anchor-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 12px 18px;
+    text-decoration: none;
+    font-weight: 950;
+    font-size: 14px;
+    border: 1px solid rgba(148,163,184,.34);
+    transition: transform .2s, box-shadow .2s, filter .2s;
+  }
+
+  .coffee-button-link {
+    color: #020617;
+    background: linear-gradient(120deg, var(--gold), var(--orange));
+    box-shadow: 0 0 24px rgba(250,204,21,.26);
+  }
+
+  .newsletter-anchor-link {
+    color: var(--text);
+    background: rgba(2,6,23,.55);
+  }
+
+  .coffee-button-link:hover,
+  .newsletter-anchor-link:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+    filter: brightness(1.04);
+  }
+
+  .impact-orb-card {
+    position: relative;
+    padding: 26px;
+    overflow: hidden;
+    display: grid;
+    align-content: center;
+  }
+
+  .impact-orb-card::before {
+    content: "";
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    right: -86px;
+    top: -68px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,234,255,.34), rgba(78,254,220,.12), transparent 68%);
+    filter: blur(2px);
+    animation: donateFloat 9s ease-in-out infinite;
+  }
+
+  .impact-orb-card::after {
+    content: "";
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    left: -78px;
+    bottom: -70px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(250,204,21,.24), rgba(255,59,106,.16), transparent 70%);
+    filter: blur(3px);
+  }
+
+  .impact-orb-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .impact-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    color: #020617;
+    background: linear-gradient(120deg, var(--gold), var(--orange));
+    font-size: 12px;
+    font-weight: 950;
+    box-shadow: 0 0 24px rgba(250,204,21,.34);
+  }
+
+  .impact-orb-card h2 {
+    margin: 18px 0 10px;
+    font-size: clamp(28px, 4vw, 44px);
+  }
+
+  .impact-orb-card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.72;
+  }
+
+  .main-paypal-form {
+    margin-top: 24px;
+  }
+
+  .main-donate-button {
+    position: relative;
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 22px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 950;
+    color: #020617;
+    background: conic-gradient(from 160deg, var(--ruby), var(--blue), var(--green), var(--gold), var(--ruby));
+    box-shadow: 0 0 34px rgba(0,234,255,.34), 0 0 22px rgba(250,204,21,.24);
+    overflow: hidden;
+    transition: transform .2s, filter .2s, box-shadow .2s;
+  }
+
+  .main-donate-button::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: inherit;
+    background: radial-gradient(circle at top, rgba(255,255,255,.98), rgba(226,232,240,.96));
+  }
+
+  .main-donate-button span {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .main-donate-button:hover {
+    transform: translateY(-3px) scale(1.015);
+    filter: brightness(1.04);
+    box-shadow: 0 0 44px rgba(78,254,220,.48), 0 0 30px rgba(250,204,21,.34);
+  }
+
+  .donate-heart {
+    display: inline-block;
+    animation: donateHeartBeat 1.7s ease-in-out infinite;
+  }
+
+  .secure-note {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .donate-section-title {
+    position: relative;
+    z-index: 1;
+    margin: 44px 0 16px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .donate-section-title h2 {
+    margin-bottom: 6px;
+  }
+
+  .donate-section-title p {
+    max-width: 680px;
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .donate-story-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .donate-story-card {
+    position: relative;
+    padding: 22px;
+    overflow: hidden;
+    transition: transform .22s, border-color .22s, box-shadow .22s;
+  }
+
+  .donate-story-card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(130deg, rgba(0,234,255,.20), transparent 42%, rgba(250,204,21,.17));
+    opacity: 0;
+    transition: opacity .25s;
+  }
+
+  .donate-story-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(78,254,220,.48);
+    box-shadow: 0 24px 60px rgba(0,0,0,.38);
+  }
+
+  .donate-story-card:hover::before {
+    opacity: 1;
+  }
+
+  .donate-story-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .donate-step-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, rgba(0,234,255,.20), rgba(255,59,106,.18));
+    border: 1px solid rgba(78,254,220,.34);
+    font-size: 24px;
+  }
+
+  .donate-story-card h3,
+  .donate-action-card h3,
+  .camino-newsletter-card h3 {
+    margin-bottom: 8px;
+  }
+
+  .donate-action-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(250px, 1fr));
+    gap: 22px;
+  }
+
+  .donate-action-card {
+    position: relative;
+    padding: 26px 26px 24px;
+    overflow: hidden;
+    min-height: 290px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .donate-card-tag {
+    position: static;
+    align-self: flex-end;
+    width: fit-content;
+    margin: 0 0 16px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    color: var(--mint);
+    border: 1px solid rgba(148,163,184,.36);
+    background: rgba(2,6,23,.78);
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 0 18px rgba(78,254,220,.14);
+  }
+
+  .donate-action-card p {
+    margin-top: 0;
+    font-size: 14px;
+  }
+
+  .mini-paypal-form {
+    margin-top: 18px;
+  }
+
+  .donate-mini-button {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 13px 16px;
+    color: #020617;
+    font-weight: 950;
+    cursor: pointer;
+    background: linear-gradient(120deg, var(--cyan), var(--mint));
+    transition: transform .2s, box-shadow .2s, filter .2s;
+  }
+
+  .donate-mini-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 24px rgba(0,234,255,.38);
+    filter: brightness(1.05);
+  }
+
+  .donate-mini-button.gold {
+    background: linear-gradient(120deg, var(--gold), var(--orange));
+  }
+
+  .donate-mini-button.green {
+    background: linear-gradient(120deg, var(--green), var(--cyan), var(--mint));
+  }
+
+  .donate-mini-button.rainbow {
+    background: linear-gradient(60deg, #f97316, #facc15, #22c55e, #0ea5e9, #6366f1, #ec4899, #f97316);
+    background-size: 300% 300%;
+    animation: donateRainbow 4s linear infinite;
+  }
+
+  .donate-newsletter-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, .86fr);
+    gap: 18px;
+    margin-top: 18px;
+  }
+
+  .camino-newsletter-card {
+    padding: 24px;
+  }
+
+  .camino-newsletter-card ul {
+    margin: 12px 0 0 20px;
+    padding: 0;
+    color: var(--muted);
+    line-height: 1.75;
+  }
+
+  .newsletter-form-redesign {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .newsletter-form-redesign .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .newsletter-form-redesign input {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid rgba(148,163,184,.35);
+    background: rgba(2,6,23,.55);
+    color: var(--text);
+    padding: 13px 14px;
+    outline: none;
+  }
+
+  .newsletter-form-redesign input:focus {
+    border-color: rgba(78,254,220,.75);
+    box-shadow: 0 0 0 3px rgba(78,254,220,.10);
+  }
+
+  .newsletter-form-redesign button {
+    border: none;
+    border-radius: 999px;
+    padding: 13px 18px;
+    background: linear-gradient(120deg, var(--cyan), var(--mint));
+    color: #020617;
+    font-weight: 950;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s, filter .2s;
+  }
+
+  .newsletter-form-redesign button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 24px rgba(0,234,255,.36);
+    filter: brightness(1.04);
+  }
+
+  .newsletter-privacy-note {
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .mailchimp-honeypot {
+    position: absolute;
+    left: -5000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .donate-bottom-line {
+    position: relative;
+    z-index: 1;
+    margin-top: 34px;
+    padding: 20px;
+    border-radius: 22px;
+    text-align: center;
+    border: 1px dashed rgba(148,163,184,.38);
+    background: rgba(2,6,23,.44);
+  }
+
+  .donate-bottom-line p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  @keyframes donateTitleShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes donateFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-14px) rotate(3deg); }
+  }
+
+  @keyframes donateHeartBeat {
+    0%,100% { transform: scale(1); }
+    25% { transform: scale(1.20); }
+    50% { transform: scale(.96); }
+    75% { transform: scale(1.13); }
+  }
+
+  @keyframes donateRainbow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @media (max-width: 1280px) {
+    .donate-action-grid {
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+    }
+  }
+
+  @media (max-width: 1080px) {
+    .donate-hero-grid,
+    .donate-newsletter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .donate-story-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .donate-hero-copy {
+      min-height: auto;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .donate-page-redesign {
+      padding: 46px 0 64px;
+    }
+
+    .donate-shell {
+      padding: 14px;
+      border-radius: 26px;
+    }
+
+    .donate-hero-copy,
+    .impact-orb-card,
+    .donate-story-card,
+    .donate-action-card,
+    .camino-newsletter-card {
+      border-radius: 22px;
+      padding: 20px;
+    }
+
+    .donate-title {
+      font-size: 42px;
+    }
+
+    .donate-subtitle {
+      font-size: 16px;
+    }
+
+    .donate-section-title {
+      display: block;
+      margin-top: 32px;
+    }
+
+    .donate-story-grid,
+    .donate-action-grid,
+    .newsletter-form-redesign .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .donate-card-tag {
+      align-self: flex-start;
+      margin-bottom: 14px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="donate-page-redesign">
+  <div class="container donate-shell reveal">
+
+    <div class="donate-hero-grid">
+      <div class="donate-hero-copy">
+        <p class="donate-kicker">The Camino · JSM Cooperative Corporation</p>
+
+        <h1 class="donate-title">Fuel stories that fund a better world.</h1>
+
+        <p class="donate-subtitle">
+          JSM Cooperative Corporation uses literature, creative campaigns, community storytelling,
+          and mission-driven publishing to turn imagination into real-world support.
+          Your gift helps us <span class="donate-highlight">write, publish, share, and give back</span>.
+        </p>
+
+        <p class="donate-subtitle">
+          Every contribution helps keep the Camino moving — from editing and design to outreach,
+          chapter readings, campaign tools, and the creative infrastructure behind every story we build.
+        </p>
+
+        <div class="donate-pill-row" aria-label="JSM impact principles">
+          <span>UN SDG aligned</span>
+          <span>100% of novel profits donated</span>
+          <span>Storytelling-as-solidarity</span>
+          <span>#JOINTHECAMINO</span>
+        </div>
+
+        <div class="hero-button-row">
+          <a class="coffee-button-link" href="#support-options">
+            ☕ Buy the Co-op a Coffee!
+          </a>
+
+          <a class="newsletter-anchor-link" href="#camino-newsletter">
+            📬 Join The Camino Newsletter
+          </a>
+        </div>
+      </div>
+
+      <aside class="impact-orb-card" aria-label="Donate through PayPal">
+        <div class="impact-orb-inner">
+          <span class="impact-badge">💙 Secure PayPal Donation</span>
+
+          <h2>Light a beacon on the Camino.</h2>
+
+          <p>
+            A donation to JSM is a spark. It supports the creative work, helps stories reach readers,
+            and strengthens the community that makes our nonprofit partnerships possible.
+          </p>
+
+          <form class="main-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+            <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
+            <button type="submit" class="main-donate-button" title="Donate securely with PayPal">
+              <span><span class="donate-heart">💙</span> Donate Now — Fuel the Camino</span>
+            </button>
+            <img alt="" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" style="display:none!important;">
+          </form>
+
+          <p class="secure-note">
+            Secure checkout powered by PayPal. Thank you for helping stories become impact.
+          </p>
+        </div>
+      </aside>
+    </div>
+
+    <div class="donate-section-title">
+      <div>
+        <p class="donate-kicker">Why it matters</p>
+        <h2>How your support moves through the system</h2>
+      </div>
+
+      <p>
+        JSM Cooperative exists to prove that stories can do more than entertain.
+        They can gather people, move resources, and help fund work that matters.
+      </p>
+    </div>
+
+    <div class="donate-story-grid">
+      <article class="donate-story-card reveal">
+        <div class="donate-step-icon">💡</div>
+        <h3>1. Fuel the creative engine</h3>
+        <p>
+          Donations support the practical costs behind the mission: writing, editing, design,
+          web tools, outreach, campaign materials, and community-building.
+        </p>
+      </article>
+
+      <article class="donate-story-card reveal delay-1">
+        <div class="donate-step-icon">📚</div>
+        <h3>2. Turn stories into reach</h3>
+        <p>
+          JSM uses books, blogs, newsletters, chapter readings, and social campaigns to connect
+          readers with causes and communities that deserve more attention.
+        </p>
+      </article>
+
+      <article class="donate-story-card reveal delay-2">
+        <div class="donate-step-icon">🌍</div>
+        <h3>3. Convert reach into impact</h3>
+        <p>
+          The model is simple: creative work grows the community, the community supports the mission,
+          and that momentum flows back toward mission-aligned nonprofit impact.
+        </p>
+      </article>
+    </div>
+
+    <div class="donate-section-title" id="support-options">
+      <div>
+        <p class="donate-kicker">Choose your path</p>
+        <h2>Support JSM Cooperative</h2>
+      </div>
+
+      <p>
+        Every option below takes you to the same secure PayPal donation flow.
+        Choose the message that feels most like your reason for walking with us.
+      </p>
+    </div>
+
+    <div class="donate-action-grid">
+
+      <article class="donate-action-card reveal">
+        <span class="donate-card-tag">Coffee</span>
+        <div>
+          <h3>☕ Buy the Co-op a Coffee!</h3>
+          <p>
+            A small gift that helps cover the tiny recurring costs that keep the Cooperative alive:
+            tools, hosting, design assets, and the everyday fuel behind the mission.
+          </p>
+        </div>
+
+        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+          <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
+          <button type="submit" class="donate-mini-button gold">Buy the Co-op a Coffee!</button>
+        </form>
+      </article>
+
+      <article class="donate-action-card reveal delay-1">
+        <span class="donate-card-tag">Reader</span>
+        <div>
+          <h3>📖 Back the book mission</h3>
+          <p>
+            Help us promote <em>The Man in the Ball Cap</em>, chapter readings, future releases,
+            and the larger story universe growing around JSM Cooperative.
+          </p>
+        </div>
+
+        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+          <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
+          <button type="submit" class="donate-mini-button">Back the Stories</button>
+        </form>
+      </article>
+
+      <article class="donate-action-card reveal delay-2">
+        <span class="donate-card-tag">Impact</span>
+        <div>
+          <h3>🌱 Support SDG impact</h3>
+          <p>
+            Support campaigns that connect storytelling with health, education, community,
+            dignity, sustainability, and nonprofit-centered action.
+          </p>
+        </div>
+
+        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+          <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
+          <button type="submit" class="donate-mini-button green">Support the SDGs</button>
+        </form>
+      </article>
+
+      <article class="donate-action-card reveal delay-2">
+        <span class="donate-card-tag">Camino</span>
+        <div>
+          <h3>✨ Join the Camino</h3>
+          <p>
+            Become part of the beautiful chaos: readers, writers, donors, builders,
+            dreamers, and nonprofits moving together.
+          </p>
+        </div>
+
+        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+          <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
+          <button type="submit" class="donate-mini-button rainbow">Join the Camino</button>
+        </form>
+      </article>
+
+    </div>
+
+    <div class="donate-newsletter-grid" id="camino-newsletter">
+      <article class="camino-newsletter-card reveal">
+        <p class="donate-kicker">Free newsletter</p>
+        <h2>Walk with us through <em>The Camino</em>.</h2>
+
+        <p>
+          The Camino is where we share behind-the-scenes updates, fundraising progress,
+          book milestones, chapter releases, partner highlights, and the ongoing work
+          of growing JSM Cooperative into a story-powered force for good.
+        </p>
+
+        <ul>
+          <li>Updates from JSM Cooperative Corporation</li>
+          <li>Book, blog, and chapter-reading announcements</li>
+          <li>Future campaign and donor-impact updates</li>
+          <li>Behind-the-scenes notes from the creative process</li>
+        </ul>
+      </article>
+
+      <article class="camino-newsletter-card reveal delay-1">
+        <p class="donate-kicker">Stay connected</p>
+        <h3>Subscribe to The Camino</h3>
+
+        <p>
+          Join the newsletter for updates on books, blogs, campaigns, chapter readings,
+          and the people walking this path with us.
+        </p>
+
+        <form class="newsletter-form-redesign"
+              action="{{ mailchimp_action_url }}"
+              method="post"
+              target="_blank"
+              novalidate>
+
+          <div class="form-row">
+            <input type="text" name="FNAME" placeholder="First name" aria-label="First name">
+            <input type="text" name="LNAME" placeholder="Last name" aria-label="Last name">
+          </div>
+
+          <input type="email" name="EMAIL" placeholder="you@example.com" aria-label="Email address" required>
+          <input type="text" name="PHONE" placeholder="Optional phone" aria-label="Phone number">
+
+          <div class="mailchimp-honeypot" aria-hidden="true">
+            <input type="text" name="{{ mailchimp_honeypot_name }}" tabindex="-1" value="">
+          </div>
+
+          <button type="submit">📬 Subscribe to The Camino</button>
+        </form>
+
+        <p class="newsletter-privacy-note">
+          We will only use your information to send JSM Cooperative updates.
+          You can unsubscribe at any time through Mailchimp.
+        </p>
+      </article>
+    </div>
+
+    <div class="donate-bottom-line reveal">
+      <p>
+        Thank you for being part of the JSM Cooperative story. Together, we are proving that
+        <strong>stories can fund a better world.</strong>
+      </p>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,931 @@
+<!-- wp:html -->
+<!-- 🌌 JSM COOPERATIVE · NEON COOPERATIVE NEXUS TEAM SECTION -->
+<section class="jsm-team-nexus">
+
+  <style>
+    /* ============ NEON THEME VARS ============ */
+    :root {
+      --jsm-bg-deep: #020617;
+      --jsm-bg-card: #050816;
+      --jsm-neon-cyan: #00e7ff;
+      --jsm-neon-pink: #ff4ffb;
+      --jsm-neon-violet: #a855f7;
+      --jsm-neon-gold: #fbbf24;
+      --jsm-neon-green: #22c55e;
+      --jsm-text-main: #e5e7eb;
+      --jsm-text-soft: #9ca3af;
+      --jsm-border-soft: rgba(148,163,184,0.65);
+      --jsm-radius-lg: 24px;
+      --jsm-shadow-lg: 0 20px 40px rgba(0,0,0,0.75);
+      --jsm-max-width: 1120px;
+    }
+
+    .jsm-team-nexus {
+      position: relative;
+      padding: 70px 18px 90px;
+      background:
+        radial-gradient(circle at top, #111827 0, #020617 55%, #020308 100%);
+      color: var(--jsm-text-main);
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .jsm-team-nexus::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(0,231,255,0.22), transparent 60%),
+        radial-gradient(circle at 90% 10%, rgba(168,85,247,0.25), transparent 65%),
+        radial-gradient(circle at 50% 100%, rgba(34,197,94,0.22), transparent 60%);
+      opacity: 0.9;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .jsm-team-inner {
+      position: relative;
+      z-index: 1;
+      margin: 0 auto;
+      max-width: var(--jsm-max-width);
+    }
+
+    /* ============ SECTION HEADER ============ */
+    .jsm-team-kicker {
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 11px;
+      color: var(--jsm-neon-cyan);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .jsm-team-title {
+      text-align: center;
+      font-size: 34px;
+      margin: 0 0 12px;
+      background: linear-gradient(
+        120deg,
+        #ffffff,
+        var(--jsm-neon-cyan),
+        var(--jsm-neon-pink),
+        var(--jsm-neon-green)
+      );
+      background-size: 220% 220%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: jsmTitleSweep 9s ease-in-out infinite;
+    }
+
+    .jsm-team-sub {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 28px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--jsm-text-soft);
+    }
+
+    .jsm-team-sub strong {
+      color: #e5e7eb;
+    }
+
+    .jsm-team-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .jsm-team-pill {
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(5,8,20,0.85);
+      color: var(--jsm-text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    @keyframes jsmTitleSweep {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ============ TEAM GRID ============ */
+    .jsm-team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 22px;
+      margin-bottom: 40px;
+    }
+
+    .jsm-member-card {
+      position: relative;
+      background: radial-gradient(
+        circle at top,
+        rgba(15,23,42,0.95),
+        rgba(2,6,23,0.96)
+      );
+      border-radius: 22px;
+      padding: 18px 16px 16px;
+      border: 1px solid rgba(148,163,184,0.6);
+      box-shadow: var(--jsm-shadow-lg);
+      overflow: hidden;
+      transform-origin: center;
+      transition: transform 0.25s ease, box-shadow 0.25s ease,
+                  border-color 0.25s ease, background 0.25s ease;
+    }
+
+    .jsm-member-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        conic-gradient(
+          from 120deg,
+          rgba(0,231,255,0.25),
+          rgba(168,85,247,0.25),
+          rgba(34,197,94,0.26),
+          rgba(0,231,255,0.25)
+        );
+      opacity: 0;
+      filter: blur(16px);
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .jsm-member-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 24px 55px rgba(0,0,0,0.85);
+      border-color: var(--jsm-neon-cyan);
+      background: radial-gradient(
+        circle at top,
+        rgba(15,23,42,0.98),
+        rgba(2,6,23,0.98)
+      );
+    }
+
+    .jsm-member-card:hover::before {
+      opacity: 1;
+    }
+
+    /* HEX / IMAGE WRAP */
+    .jsm-avatar-wrap {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      margin: 4px auto 10px;
+      clip-path: polygon(
+        25% 3%, 75% 3%,
+        97% 50%,
+        75% 97%, 25% 97%,
+        3% 50%
+      );
+      background: radial-gradient(circle at 30% 0%, #22c55e, #0f172a);
+      padding: 2px;
+    }
+
+    .jsm-avatar-inner {
+      width: 100%;
+      height: 100%;
+      clip-path: inherit;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .jsm-avatar-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1.04);
+      transition: transform 0.4s ease;
+    }
+
+    .jsm-member-card:hover .jsm-avatar-inner img {
+      transform: scale(1.1);
+    }
+
+    .jsm-avatar-glow-ring {
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      background:
+        conic-gradient(
+          from 0deg,
+          rgba(0,231,255,0.6),
+          rgba(244,63,94,0.5),
+          rgba(234,179,8,0.5),
+          rgba(56,189,248,0.7),
+          rgba(0,231,255,0.6)
+        );
+      opacity: 0;
+      filter: blur(14px);
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .jsm-member-card:hover .jsm-avatar-glow-ring {
+      opacity: 0.75;
+    }
+
+    /* TEXT INFO */
+    .jsm-member-name {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 8px 0 2px;
+    }
+
+    .jsm-member-role {
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--jsm-neon-cyan);
+      margin-bottom: 8px;
+    }
+
+    .jsm-member-bio {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--jsm-text-soft);
+      text-align: left;
+      margin-bottom: 10px;
+    }
+
+    /* SOCIAL ROW UNDER EACH MEMBER */
+    .jsm-member-socials {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .jsm-social-chip {
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.9);
+      color: var(--jsm-text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s, transform 0.2s,
+        box-shadow 0.2s;
+    }
+
+    .jsm-social-chip span {
+      font-size: 12px;
+    }
+
+    .jsm-social-chip:hover {
+      background: radial-gradient(circle at top,
+        rgba(56,189,248,0.4),
+        rgba(15,23,42,1)
+      );
+      border-color: var(--jsm-neon-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px rgba(56,189,248,0.7);
+      text-decoration: none;
+    }
+
+    .jsm-chip-ig { color: #f9a8d4; }
+    .jsm-chip-li { color: #93c5fd; }
+    .jsm-chip-mail { color: #bbf7d0; }
+    .jsm-chip-tt { color: #fed7aa; }
+
+    /* Simple “icon” letters */
+    .jsm-chip-circle {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+    }
+
+    /* ============ JOIN / CTA STRIP ============ */
+    .jsm-cta-strip {
+      margin-top: 32px;
+      padding: 22px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background:
+        linear-gradient(120deg, rgba(0,231,255,0.13), rgba(15,23,42,0.96)),
+        radial-gradient(circle at top right, rgba(251,191,36,0.1), transparent 60%);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .jsm-cta-text {
+      flex: 1 1 260px;
+      min-width: 0;
+    }
+
+    .jsm-cta-title {
+      font-size: 20px;
+      margin: 0 0 6px;
+    }
+
+    .jsm-cta-body {
+      font-size: 14px;
+      color: var(--jsm-text-soft);
+      margin: 0;
+    }
+
+    .jsm-cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .jsm-btn-main,
+    .jsm-btn-ghost {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      text-decoration: none;
+      transition: 0.22s transform, 0.22s box-shadow, 0.22s background,
+        0.22s border-color;
+      white-space: nowrap;
+    }
+
+    .jsm-btn-main {
+      background: linear-gradient(120deg,
+        var(--jsm-neon-cyan),
+        var(--jsm-neon-pink)
+      );
+      color: #020617;
+      box-shadow: 0 0 18px rgba(0,231,255,0.75);
+    }
+
+    .jsm-btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 26px rgba(244,114,182,0.9);
+    }
+
+    .jsm-btn-ghost {
+      background: transparent;
+      color: var(--jsm-text-main);
+      border-color: rgba(148,163,184,0.7);
+    }
+
+    .jsm-btn-ghost:hover {
+      background: rgba(15,23,42,0.9);
+      border-color: var(--jsm-neon-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px rgba(59,130,246,0.7);
+    }
+
+    /* ============ WORK WITH US PANEL ============ */
+    .jsm-work-panel {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+      gap: 18px;
+    }
+
+    .jsm-work-card {
+      background: rgba(5,8,22,0.95);
+      border-radius: 18px;
+      border: 1px solid rgba(148,163,184,0.55);
+      padding: 18px 16px 16px;
+      box-shadow: 0 14px 30px rgba(0,0,0,0.65);
+    }
+
+    .jsm-work-card h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .jsm-work-card p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--jsm-text-soft);
+    }
+
+    /* ============ FLOATING JOIN BUTTON ============ */
+    .jsm-floating-join {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 50;
+    }
+
+    .jsm-floating-join button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg,
+        var(--jsm-neon-cyan),
+        var(--jsm-neon-violet)
+      );
+      color: #020617;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 26px rgba(56,189,248,0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      animation: jsmFloatPulse 3s ease-in-out infinite;
+    }
+
+    .jsm-floating-join button:hover {
+      box-shadow: 0 0 34px rgba(168,85,247,1);
+      transform: translateY(-2px);
+    }
+
+    .jsm-floating-join .jsm-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34,197,94,1);
+    }
+
+    @keyframes jsmFloatPulse {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    /* ============ MODAL ============ */
+    .jsm-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+    }
+
+    .jsm-modal-backdrop.jsm-open {
+      display: flex;
+    }
+
+    .jsm-modal {
+      max-width: 480px;
+      width: 90%;
+      background: radial-gradient(circle at top,
+        rgba(30,64,175,0.8),
+        #020617
+      );
+      border-radius: 20px;
+      border: 1px solid rgba(148,163,184,0.8);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.9);
+      padding: 22px 20px 18px;
+      position: relative;
+      color: var(--jsm-text-main);
+    }
+
+    .jsm-modal h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .jsm-modal p {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--jsm-text-soft);
+      line-height: 1.7;
+    }
+
+    .jsm-modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .jsm-modal-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      border: none;
+      background: transparent;
+      color: #e5e7eb;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 720px) {
+      .jsm-team-title {
+        font-size: 26px;
+      }
+      .jsm-team-nexus {
+        padding-top: 50px;
+        padding-bottom: 70px;
+      }
+      .jsm-cta-strip {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .jsm-floating-join button {
+        font-size: 11px;
+        padding: 9px 14px;
+      }
+    }
+  </style>
+
+  <div class="jsm-team-inner">
+    <!-- HEADER -->
+    <div class="jsm-team-kicker">The Cooperative · No Hierarchy · One Story Engine</div>
+    <h2 class="jsm-team-title">Meet the JSM Cooperative Team</h2>
+    <p class="jsm-team-sub">
+      We are a collective of storytellers, editors, designers, dreamers, and community builders,
+      working together as one unit. There are no titles that sit above others here — just a
+      cooperative of humans using <strong>fiction, imagination, and heart</strong> to fund a better world.
+    </p>
+    <div class="jsm-team-pill-row">
+      <span class="jsm-team-pill">Cooperative, not corporate</span>
+      <span class="jsm-team-pill">Powered by the UN SDGs</span>
+      <span class="jsm-team-pill">Stories that fund change</span>
+    </div>
+
+    <!-- TEAM GRID -->
+    <div class="jsm-team-grid">
+
+      <!-- J. Michael Schulz -->
+      <article class="jsm-member-card">
+        <div class="jsm-avatar-wrap">
+          <div class="jsm-avatar-inner">
+            <img src="https://i0.wp.com/jsmcoop.com/wp-content/uploads/2024/04/IMG_0464.jpeg?resize=1024%2C768&ssl=1"
+                 alt="J. Michael Schulz, Founder and Author" />
+            <div class="jsm-avatar-glow-ring"></div>
+          </div>
+        </div>
+        <div class="jsm-member-name">J. Michael Schulz</div>
+        <div class="jsm-member-role">Founder · Author · Camino Architect</div>
+        <p class="jsm-member-bio">
+          A man of many hats, J. Michael imagines the JSM Cooperative as a story engine that can breathe
+          life into nonprofits across all <strong>17 UN Sustainable Development Goals</strong>. From his days
+          leading GenUN at Rollins College to launching <em>The Man in the Ballcap</em>, he’s obsessed with
+          turning fiction into fuel for real-world change.
+        </p>
+        <p class="jsm-member-bio">
+          Alongside the team, he brings characters (and causes) to life — hoping to captivate a large,
+          diverse community by writing across genres while keeping one promise: <strong>100% of novel profits
+          go back into the world.</strong>
+        </p>
+        <div class="jsm-member-socials">
+          <a href="https://www.instagram.com/joeyschulz_" target="_blank"
+             class="jsm-social-chip jsm-chip-ig">
+            <span class="jsm-chip-circle">IG</span>
+            <span>@joeyschulz_</span>
+          </a>
+          <a href="https://www.linkedin.com/in/jmichaelschulz/" target="_blank"
+             class="jsm-social-chip jsm-chip-li">
+            <span class="jsm-chip-circle">in</span>
+            <span>LinkedIn</span>
+          </a>
+          <a href="mailto:jmschulz@mindfuldiabetes.org"
+             class="jsm-social-chip jsm-chip-mail">
+            <span class="jsm-chip-circle">@</span>
+            <span>Email J. Michael</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- Jack Scilla -->
+      <article class="jsm-member-card">
+        <div class="jsm-avatar-wrap">
+          <div class="jsm-avatar-inner">
+            <img src="https://jsmcoop.com/wp-content/uploads/2025/11/Jack-Scilla.jpg"
+                 alt="Jack Scilla, Lead Editor" />
+            <div class="jsm-avatar-glow-ring"></div>
+          </div>
+        </div>
+        <div class="jsm-member-name">Jack Scilla</div>
+        <div class="jsm-member-role">Lead Editor · Story Surgeon</div>
+        <p class="jsm-member-bio">
+          Jack is the first set of eyes every story meets. From clunky commas to tangled plot threads,
+          he quietly removes every distraction before a reader ever turns the page. A storyteller
+          in his own right, he knows how to keep dialogue sharp, characters grounded, and pacing honest.
+        </p>
+        <p class="jsm-member-bio">
+          His work lives between the lines — making sure every sentence serves the bigger mission:
+          <strong>stories that readers love and nonprofits can grow from.</strong>
+        </p>
+        <div class="jsm-member-socials">
+          <a href="https://www.linkedin.com/in/jackscilla/" target="_blank"
+             class="jsm-social-chip jsm-chip-li">
+            <span class="jsm-chip-circle">in</span>
+            <span>LinkedIn</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- Jacob Geller -->
+      <article class="jsm-member-card">
+        <div class="jsm-avatar-wrap">
+          <div class="jsm-avatar-inner">
+            <img src="https://jsmcoop.com/wp-content/uploads/2025/11/Jacob-Geller.png"
+                 alt="Jacob Geller, Digital Media & Marketing Advisor" />
+            <div class="jsm-avatar-glow-ring"></div>
+          </div>
+        </div>
+        <div class="jsm-member-name">Jacob Geller</div>
+        <div class="jsm-member-role">Digital Media &amp; Marketing Advisor</div>
+        <p class="jsm-member-bio">
+          Jacob designs and architects the online pathways that bring readers, donors, and dreamers
+          to the Cooperative. With 8+ years in digital marketing, he helps ensure that every ad,
+          campaign, and creative experiment feels human — and leads back to our stories and our mission.
+        </p>
+        <p class="jsm-member-bio">
+          If you discovered JSM through an ad, a scroll, or a perfectly timed post, there’s a good
+          chance Jacob’s fingerprints are on it.
+        </p>
+        <div class="jsm-member-socials">
+          <a href="https://www.instagram.com/snicksjacob1/" target="_blank"
+             class="jsm-social-chip jsm-chip-ig">
+            <span class="jsm-chip-circle">IG</span>
+            <span>@snicksjacob1</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- Jack “Junior” Herman -->
+      <article class="jsm-member-card">
+        <div class="jsm-avatar-wrap">
+          <div class="jsm-avatar-inner">
+            <img src="https://i0.wp.com/jsmcoop.com/wp-content/uploads/2024/03/JR.jpg?resize=1200%2C1500&ssl=1"
+                 alt="Jack Herman, Chief Technology Officer / Lead Graphic Designer" />
+            <div class="jsm-avatar-glow-ring"></div>
+          </div>
+        </div>
+        <div class="jsm-member-name">Jack “Junior” Herman</div>
+        <div class="jsm-member-role">CTO · Lead Graphic &amp; Experience Designer</div>
+        <p class="jsm-member-bio">
+          Junior orchestrates the visual language of JSM Cooperative: from website experiences
+          and UI to cinematic book mockups and pre-prints for early readers. His work sits at the
+          intersection of <strong>design, technology, and narrative</strong>.
+        </p>
+        <p class="jsm-member-bio">
+          Every time a reader says “wow” before reading a single word, there’s a good chance
+          Junior’s design magic is to thank.
+        </p>
+        <div class="jsm-member-socials">
+          <a href="https://www.instagram.com/jack_herman/" target="_blank"
+             class="jsm-social-chip jsm-chip-ig">
+            <span class="jsm-chip-circle">IG</span>
+            <span>@jack_herman</span>
+          </a>
+          <a href="https://www.linkedin.com/in/jack-herman-30532789/" target="_blank"
+             class="jsm-social-chip jsm-chip-li">
+            <span class="jsm-chip-circle">in</span>
+            <span>LinkedIn</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- Robert “Bobby” Suchor -->
+      <article class="jsm-member-card">
+        <div class="jsm-avatar-wrap">
+          <div class="jsm-avatar-inner">
+            <img src="https://i0.wp.com/jsmcoop.com/wp-content/uploads/2024/04/RobertSuchorGif-ezgif.com-video-to-gif-converter-1.gif?resize=800%2C800&ssl=1"
+                 alt="Robert Suchor, Head of Imagineering Division" />
+            <div class="jsm-avatar-glow-ring"></div>
+          </div>
+        </div>
+        <div class="jsm-member-name">Robert “Bobby” Suchor</div>
+        <div class="jsm-member-role">Head of the Imagineering Division</div>
+        <p class="jsm-member-bio">
+          Bobby is part producer, part futurist, part golf-course story scout. His job is to listen
+          — to donors, to communities, to nonprofits — and translate what he hears into narrative
+          blueprints the Cooperative can build from.
+        </p>
+        <p class="jsm-member-bio">
+          Whether he’s at a charity event or on the green, he’s gathering the threads that become
+          characters like <strong>Pepe Miguel</strong> and campaigns that actually resonate.
+        </p>
+        <div class="jsm-member-socials">
+          <a href="https://www.linkedin.com/in/robert-suchor/" target="_blank"
+             class="jsm-social-chip jsm-chip-li">
+            <span class="jsm-chip-circle">in</span>
+            <span>LinkedIn</span>
+          </a>
+          <a href="https://www.instagram.com/bobbysuchor/" target="_blank"
+             class="jsm-social-chip jsm-chip-ig">
+            <span class="jsm-chip-circle">IG</span>
+            <span>@bobbysuchor</span>
+          </a>
+          <a href="https://www.tiktok.com/@bobbysuchor" target="_blank"
+             class="jsm-social-chip jsm-chip-tt">
+            <span class="jsm-chip-circle">TT</span>
+            <span>TikTok</span>
+          </a>
+          <a href="mailto:books@jsmcoop.com"
+             class="jsm-social-chip jsm-chip-mail">
+            <span class="jsm-chip-circle">@</span>
+            <span>Email Bobby</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- Cora / Esther Cora Rivera -->
+      <article class="jsm-member-card">
+        <div class="jsm-avatar-wrap">
+          <div class="jsm-avatar-inner">
+            <img src="https://jsmcoop.com/wp-content/uploads/2025/11/Esther-Cora-Rivera.jpg"
+                 alt="Cora, Social Media & Community Engagement" />
+            <div class="jsm-avatar-glow-ring"></div>
+          </div>
+        </div>
+        <div class="jsm-member-name">Esther “Cora” Rivera</div>
+        <div class="jsm-member-role">Social Media &amp; Community Engagement</div>
+        <p class="jsm-member-bio">
+          Cora is the bridge between our online world and real-world communities. She manages
+          social media storytelling, digital interactions, and our presence at events and
+          gatherings — making sure the Cooperative always shows up as its full, authentic self.
+        </p>
+        <p class="jsm-member-bio">
+          From heartfelt posts to in-person conversations, she helps readers feel less like
+          “audience” and more like <strong>family walking the Camino with us.</strong>
+        </p>
+        <div class="jsm-member-socials">
+          <a href="https://www.instagram.com/ferreirasempree/" target="_blank"
+             class="jsm-social-chip jsm-chip-ig">
+            <span class="jsm-chip-circle">IG</span>
+            <span>@ferreirasempree</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- Always Expanding -->
+      <article class="jsm-member-card">
+        <div class="jsm-avatar-wrap">
+          <div class="jsm-avatar-inner">
+            <img src="https://jsmcoop.com/wp-content/uploads/2024/03/SDG.png"
+                 alt="Future Project Manager role, always expanding" />
+            <div class="jsm-avatar-glow-ring"></div>
+          </div>
+        </div>
+        <div class="jsm-member-name">Always Expanding</div>
+        <div class="jsm-member-role">Future Project Manager · You?</div>
+        <p class="jsm-member-bio">
+          As the JSM Cooperative grows across children’s stories, young adult fiction, and adult
+          fiction, the web of tales and timelines keeps expanding. We’re looking for someone who
+          loves <strong>organization as much as imagination</strong> — a project manager who can
+          help us build the internal systems that keep everything flowing.
+        </p>
+        <p class="jsm-member-bio">
+          If you thrive in chaos, live in spreadsheets, and still get excited by wild ideas,
+          we’d love to talk to you.
+        </p>
+        <div class="jsm-member-socials">
+          <a href="https://jsmcoop.com/contactus/" target="_blank"
+             class="jsm-social-chip jsm-chip-mail">
+            <span class="jsm-chip-circle">@</span>
+            <span>Reach Out to Join</span>
+          </a>
+          <a href="mailto:books@jsmcoop.com"
+             class="jsm-social-chip jsm-chip-mail">
+            <span class="jsm-chip-circle">@</span>
+            <span>books@jsmcoop.com</span>
+          </a>
+        </div>
+      </article>
+
+    </div><!-- /team grid -->
+
+    <!-- CTA STRIP -->
+    <div class="jsm-cta-strip">
+      <div class="jsm-cta-text">
+        <h3 class="jsm-cta-title">Walk the Camino With Us</h3>
+        <p class="jsm-cta-body">
+          Whether you’re a reader, creator, nonprofit leader, or simply someone who believes
+          stories can change the world, there’s a place for you in this Cooperative.
+        </p>
+      </div>
+      <div class="jsm-cta-actions">
+        <button type="button" class="jsm-btn-main" id="jsm-open-modal">
+          ✨ Join the Cooperative Conversation
+        </button>
+        <a href="https://jsmcoop.com/contactus/" target="_blank"
+           class="jsm-btn-ghost">
+          📬 Contact Us on Our Site
+        </a>
+        <a href="mailto:books@jsmcoop.com" class="jsm-btn-ghost">
+          💌 Email: books@jsmcoop.com
+        </a>
+      </div>
+    </div>
+
+    <!-- WORK WITH US PANEL -->
+    <div class="jsm-work-panel">
+      <div class="jsm-work-card">
+        <h3>🧠 Collaborate on Story &amp; Strategy</h3>
+        <p>
+          Want to build a campaign or narrative around your nonprofit, community, or cause?
+          We love co-creating stories that center dignity, nuance, and real humans. From
+          concept to finished book, we can explore ways to weave your mission into
+          <strong>fiction that funds your work.</strong>
+        </p>
+      </div>
+      <div class="jsm-work-card">
+        <h3>📚 Hire Us for Creative &amp; Editorial Work</h3>
+        <p>
+          Our team includes editors, designers, strategists, and imagineers who can support your
+          organization with <strong>story development, line editing, visual design, and campaign
+          storytelling.</strong> When you work with us, you’re also supporting our SDG-aligned mission.
+        </p>
+      </div>
+      <div class="jsm-work-card">
+        <h3>🌍 Partner With Us Around the SDGs</h3>
+        <p>
+          We’re especially eager to collaborate with organizations advancing the
+          <strong>UN Sustainable Development Goals</strong>. If your work touches health, education,
+          climate, equity, or community resilience, we’d love to explore what a story-powered
+          partnership could look like.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /team inner -->
+
+  <!-- FLOATING JOIN BUTTON -->
+  <div class="jsm-floating-join">
+    <button type="button" id="jsm-floating-open">
+      <span class="jsm-dot"></span>
+      <span>Join the Cooperative</span>
+    </button>
+  </div>
+
+  <!-- MODAL -->
+  <div class="jsm-modal-backdrop" id="jsm-modal">
+    <div class="jsm-modal">
+      <button class="jsm-modal-close" type="button" id="jsm-modal-close">&times;</button>
+      <h3>Let’s Build Something Together</h3>
+      <p>
+        Thank you for spending time with our team. If something in our mission, our stories,
+        or our structure sparks a feeling — that’s your invitation.
+      </p>
+      <p>
+        You can reach out to explore <strong>partnerships, project work, volunteering, or new roles
+        on the team.</strong> Every email is read with care.
+      </p>
+      <div class="jsm-modal-actions">
+        <a href="mailto:books@jsmcoop.com" class="jsm-btn-main">
+          💌 Email the Cooperative
+        </a>
+        <a href="https://jsmcoop.com/contactus/" target="_blank"
+           class="jsm-btn-ghost">
+          📬 Go to Contact Page
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Modal open/close logic
+    (function() {
+      const modal = document.getElementById('jsm-modal');
+      const openBtn = document.getElementById('jsm-open-modal');
+      const floatingBtn = document.getElementById('jsm-floating-open');
+      const closeBtn = document.getElementById('jsm-modal-close');
+
+      function openModal() {
+        if (modal) modal.classList.add('jsm-open');
+      }
+      function closeModal() {
+        if (modal) modal.classList.remove('jsm-open');
+      }
+
+      if (openBtn) openBtn.addEventListener('click', openModal);
+      if (floatingBtn) floatingBtn.addEventListener('click', openModal);
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) closeModal();
+        });
+      }
+    })();
+  </script>
+</section>
+
+<!-- /wp:html -->

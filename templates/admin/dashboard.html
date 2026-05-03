@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+{% block content %}
+<section class="admin-layout">
+  <div class="container">
+    <div class="admin-top">
+      <div>
+        <p class="eyebrow">Admin Dashboard</p>
+        <h1>JSM Command Center</h1>
+      </div>
+      <div class="admin-actions">
+        <a class="btn btn-ghost" href="{{ url_for('admin_blog_new') }}">New Blog</a>
+        <a class="btn btn-ghost" href="{{ url_for('admin_analytics') }}">Analytics</a>
+        <a class="btn btn-donate" href="{{ url_for('admin_logout') }}">Logout</a>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <section class="admin-panel">
+        <h2>Recent Contacts</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Subject</th><th>Date</th></tr></thead>
+            <tbody>
+              {% for c in contacts %}
+                <tr><td>{{ c.name }}</td><td>{{ c.email }}</td><td>{{ c.subject }}</td><td>{{ c.created_at[:10] }}</td></tr>
+              {% else %}
+                <tr><td colspan="4">No contacts yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel">
+        <h2>Newsletter Subscribers</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Email</th><th>Name</th><th>Date</th></tr></thead>
+            <tbody>
+              {% for s in subscribers %}
+                <tr><td>{{ s.email }}</td><td>{{ s.first_name }} {{ s.last_name }}</td><td>{{ s.created_at[:10] }}</td></tr>
+              {% else %}
+                <tr><td colspan="3">No subscribers yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel wide">
+        <h2>Blog Posts</h2>
+        <div class="blog-admin-list">
+          {% for post in posts %}
+            <div>
+              <strong>{{ post.title }}</strong>
+              <span>{{ post.date }}</span>
+              <a href="{{ url_for('admin_blog_edit', slug=post.slug) }}">Edit</a>
+              <a href="{{ url_for('blog_detail', slug=post.slug) }}">View</a>
+            </div>
+          {% else %}
+            <p>No posts yet.</p>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+{% endblock %}

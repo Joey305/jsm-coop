@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .blog-detail-page {
+    overflow: hidden;
+  }
+
+  .blog-detail-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .blog-detail-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 18% 20%, rgba(0, 234, 255, 0.16), transparent 34%),
+      radial-gradient(circle at 82% 18%, rgba(250, 204, 21, 0.11), transparent 30%),
+      radial-gradient(circle at 62% 88%, rgba(78, 254, 220, 0.09), transparent 34%);
+  }
+
+  .blog-detail-hero::after {
+    content: "JSM";
+    position: absolute;
+    right: -0.5rem;
+    bottom: -1.2rem;
+    z-index: -1;
+    color: rgba(255, 255, 255, 0.035);
+    font-size: clamp(5rem, 16vw, 13rem);
+    font-weight: 950;
+    letter-spacing: -0.1em;
+    pointer-events: none;
+  }
+
+  .blog-detail-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.85rem;
+    padding: 0.4rem 0.78rem;
+    border-radius: 999px;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.24);
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+  }
+
+  .blog-detail-hero h1 {
+    max-width: 900px;
+  }
+
+  .blog-detail-excerpt {
+    max-width: 780px;
+    color: var(--text-soft, #9ca3af);
+    line-height: 1.75;
+  }
+
+  .blog-cover-wrap {
+    margin-top: 2rem;
+    border-radius: 30px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    box-shadow:
+      0 26px 70px rgba(0, 0, 0, 0.28),
+      0 0 40px rgba(0, 234, 255, 0.08);
+  }
+
+  .blog-cover-wrap img {
+    width: 100%;
+    max-height: 520px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .blog-detail-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .article-body {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: clamp(1.3rem, 3vw, 2.3rem);
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at top left, rgba(0, 234, 255, 0.07), transparent 34%),
+      rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.095);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+  }
+
+  .article-body > *:first-child {
+    margin-top: 0;
+  }
+
+  .article-body h1,
+  .article-body h2,
+  .article-body h3,
+  .article-body h4 {
+    color: var(--text, #ffffff);
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+  }
+
+  .article-body h2 {
+    margin-top: 2.2rem;
+    font-size: clamp(1.7rem, 4vw, 2.45rem);
+  }
+
+  .article-body h3 {
+    margin-top: 1.8rem;
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+  }
+
+  .article-body p {
+    color: rgba(203, 213, 225, 0.86);
+    line-height: 1.85;
+    font-size: 1.04rem;
+  }
+
+  .article-body a {
+    color: #4efedc;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .article-body a:hover,
+  .article-body a:focus-visible {
+    color: #ffffff;
+    text-decoration: underline;
+    outline: none;
+  }
+
+  .article-body ul,
+  .article-body ol {
+    color: rgba(203, 213, 225, 0.86);
+    line-height: 1.8;
+    padding-left: 1.35rem;
+  }
+
+  .article-body li {
+    margin-bottom: 0.5rem;
+  }
+
+  .article-body strong {
+    color: #ffffff;
+  }
+
+  .article-body blockquote {
+    margin: 2rem 0;
+    padding: 1.2rem 1.35rem;
+    border-left: 4px solid #4efedc;
+    border-radius: 18px;
+    background: rgba(78, 254, 220, 0.08);
+    color: rgba(229, 231, 235, 0.92);
+  }
+
+  .article-body blockquote p {
+    margin: 0;
+    color: rgba(229, 231, 235, 0.92);
+    font-size: 1.1rem;
+  }
+
+  .article-body hr {
+    margin: 2.4rem 0;
+    border: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 234, 255, 0.5), transparent);
+  }
+
+  .article-body code {
+    padding: 0.15rem 0.35rem;
+    border-radius: 8px;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.09);
+  }
+
+  .article-body pre {
+    overflow-x: auto;
+    padding: 1.1rem;
+    border-radius: 20px;
+    background: rgba(2, 6, 23, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .article-body pre code {
+    padding: 0;
+    background: transparent;
+  }
+
+  /* Inline Markdown image support */
+  .article-body p:has(> img:only-child) {
+    margin: 2.35rem auto 0.85rem;
+    padding: 1rem;
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at top, rgba(0, 234, 255, 0.1), transparent 42%),
+      rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    box-shadow:
+      0 24px 70px rgba(0, 0, 0, 0.32),
+      0 0 42px rgba(0, 234, 255, 0.1);
+  }
+
+  .article-body img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    box-shadow:
+      0 20px 55px rgba(0, 0, 0, 0.28),
+      0 0 34px rgba(0, 234, 255, 0.08);
+  }
+
+  .article-body p:has(> em:only-child) {
+    margin: 0 auto 2.1rem;
+    max-width: 760px;
+    color: rgba(203, 213, 225, 0.72);
+    font-size: 0.94rem;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  .article-body p:has(> em:only-child) em {
+    color: rgba(203, 213, 225, 0.72);
+    font-style: italic;
+  }
+
+  /* Fallback class added by JS if an image fails */
+  .article-body img.image-load-error {
+    min-height: 220px;
+    object-fit: contain;
+    padding: 2rem;
+    background:
+      radial-gradient(circle at center, rgba(0, 234, 255, 0.08), transparent 42%),
+      rgba(255, 255, 255, 0.04);
+  }
+
+  /* Article buttons from Markdown attr_list */
+  .article-body .article-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.45rem 0.45rem 0.45rem 0;
+    padding: 0.78rem 1.15rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 950;
+    line-height: 1;
+    border: 1px solid transparent;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease,
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .article-body .article-btn:hover,
+  .article-body .article-btn:focus-visible {
+    transform: translateY(-2px);
+    text-decoration: none;
+    outline: none;
+  }
+
+  .article-body .article-btn-cyan {
+    color: #031016;
+    background: linear-gradient(135deg, #00eaff, #4efedc);
+    box-shadow: 0 0 22px rgba(78, 254, 220, 0.22);
+  }
+
+  .article-body .article-btn-cyan:hover,
+  .article-body .article-btn-cyan:focus-visible {
+    color: #031016;
+    box-shadow: 0 0 32px rgba(78, 254, 220, 0.34);
+  }
+
+  .article-body .article-btn-gold {
+    color: #111827;
+    background: linear-gradient(135deg, #facc15, #fb923c);
+    box-shadow: 0 0 22px rgba(250, 204, 21, 0.22);
+  }
+
+  .article-body .article-btn-gold:hover,
+  .article-body .article-btn-gold:focus-visible {
+    color: #111827;
+    box-shadow: 0 0 32px rgba(250, 204, 21, 0.34);
+  }
+
+  .article-body .article-btn-outline {
+    color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.065);
+    border-color: rgba(255, 255, 255, 0.13);
+  }
+
+  .article-body .article-btn-outline:hover,
+  .article-body .article-btn-outline:focus-visible {
+    color: #ffffff;
+    border-color: rgba(0, 234, 255, 0.42);
+    background: rgba(255, 255, 255, 0.105);
+    box-shadow: 0 0 24px rgba(0, 234, 255, 0.12);
+  }
+
+  .blog-detail-footer {
+    max-width: 900px;
+    margin: 2rem auto 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .blog-detail-footer .tag-row {
+    margin: 0;
+  }
+
+  .blog-back-link {
+    display: inline-flex;
+    align-items: center;
+    color: #4efedc;
+    text-decoration: none;
+    font-weight: 950;
+    transition: transform 0.2s ease, color 0.2s ease, text-shadow 0.2s ease;
+  }
+
+  .blog-back-link:hover,
+  .blog-back-link:focus-visible {
+    transform: translateX(-4px);
+    color: #ffffff;
+    text-shadow: 0 0 16px rgba(78, 254, 220, 0.25);
+    outline: none;
+  }
+
+  @media (max-width: 700px) {
+    .article-body {
+      padding: 1.15rem;
+      border-radius: 24px;
+    }
+
+    .blog-cover-wrap {
+      border-radius: 24px;
+    }
+
+    .article-body p {
+      font-size: 1rem;
+    }
+
+    .article-body p:has(> img:only-child) {
+      padding: 0.65rem;
+      border-radius: 24px;
+    }
+
+    .article-body img {
+      border-radius: 18px;
+    }
+
+    .article-body .article-btn {
+      width: 100%;
+      margin-right: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="blog-detail-page">
+  <header class="page-hero blog-detail-hero">
+    <div class="container narrow reveal">
+      <div class="blog-detail-meta">
+        {{ post.date }} · {{ post.author }}
+      </div>
+
+      <h1>{{ post.title }}</h1>
+
+      {% if post.excerpt %}
+        <p class="blog-detail-excerpt">{{ post.excerpt }}</p>
+      {% endif %}
+
+      {% if post.tags %}
+        <div class="tag-row">
+          {% for tag in post.tags %}
+            <span>{{ tag }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if post.cover %}
+        <div class="blog-cover-wrap">
+          <img
+            src="{{ post.cover }}"
+            alt="{{ post.title }} cover image"
+            loading="lazy"
+            onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+          >
+        </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container blog-detail-shell">
+      <div class="article-body reveal" data-article-body>
+        {{ post.html }}
+      </div>
+
+      <div class="blog-detail-footer reveal">
+        <a class="blog-back-link" href="{{ url_for('blogs') }}">← Back to all posts</a>
+
+        {% if post.tags %}
+          <div class="tag-row">
+            {% for tag in post.tags %}
+              <span>{{ tag }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const articleBody = document.querySelector("[data-article-body]");
+    if (!articleBody) return;
+
+    const placeholderSrc = "{{ url_for('static', filename='images/jsm-placeholder.svg') }}";
+
+    articleBody.querySelectorAll("img").forEach(function (img) {
+      img.loading = "lazy";
+
+      if (!img.alt || img.alt.trim() === "") {
+        img.alt = "JSM Cooperative article image";
+      }
+
+      img.addEventListener("error", function () {
+        if (img.dataset.failedOnce === "true") return;
+
+        img.dataset.failedOnce = "true";
+        img.classList.add("image-load-error");
+        img.src = placeholderSrc;
+      });
+    });
+  });
+</script>
+{% endblock %}

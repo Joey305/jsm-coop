@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "Home" }} · {{ site_name }}</title>
+
+  <meta name="description" content="JSM Cooperative Corporation uses storytelling, publishing, and community support to fund mission-aligned nonprofit impact.">
+  <meta property="og:title" content="{{ title or 'JSM Cooperative Corporation' }}">
+  <meta property="og:description" content="Stories that fund a better world. Walk the Camino with JSM Cooperative.">
+  <meta property="og:type" content="website">
+
+  <link rel="icon" href="{{ url_for('static', filename='images/Logo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+  <style>
+    /* ================================
+       Premium Tron Footer
+    ================================ */
+
+    .site-footer {
+      position: relative;
+      overflow: hidden;
+      margin-top: 4rem;
+      padding: clamp(3.5rem, 7vw, 5.5rem) 0 2rem;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(0, 234, 255, 0.12), transparent 34%),
+        radial-gradient(circle at 88% 20%, rgba(250, 204, 21, 0.1), transparent 30%),
+        radial-gradient(circle at 78% 82%, rgba(78, 254, 220, 0.08), transparent 35%),
+        linear-gradient(180deg, #050b18 0%, #020713 55%, #01040c 100%);
+      border-top: 1px solid rgba(0, 234, 255, 0.18);
+      color: var(--text, #e5e7eb);
+      isolation: isolate;
+    }
+
+    .site-footer::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0, 234, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 234, 255, 0.045) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.65), transparent 75%);
+    }
+
+    .site-footer::after {
+      content: "";
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 0;
+      height: 1px;
+      z-index: -1;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 234, 255, 0.75),
+        rgba(250, 204, 21, 0.55),
+        rgba(78, 254, 220, 0.75),
+        transparent
+      );
+      box-shadow:
+        0 0 24px rgba(0, 234, 255, 0.3),
+        0 0 48px rgba(78, 254, 220, 0.18);
+    }
+
+    .site-footer .footer-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(280px, 1.45fr) minmax(180px, 0.75fr) minmax(260px, 1fr) minmax(170px, 0.65fr);
+      gap: clamp(1.5rem, 4vw, 3rem);
+      align-items: start;
+    }
+
+    .site-footer .footer-grid > section {
+      position: relative;
+      min-height: 100%;
+    }
+
+    .site-footer .footer-grid > section:not(:first-child) {
+      padding-left: clamp(0rem, 1.5vw, 1.25rem);
+      border-left: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .footer-brand {
+      margin-bottom: 1rem;
+      font-size: clamp(1.4rem, 3vw, 1.9rem);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -0.055em;
+      color: #ffffff;
+      text-shadow:
+        0 0 18px rgba(0, 234, 255, 0.18),
+        0 0 34px rgba(78, 254, 220, 0.08);
+    }
+
+    .site-footer p {
+      max-width: 520px;
+      color: rgba(203, 213, 225, 0.78);
+      line-height: 1.75;
+      font-size: 0.98rem;
+    }
+
+    .site-footer h3 {
+      position: relative;
+      display: inline-flex;
+      margin: 0 0 1rem;
+      color: #ffffff;
+      font-size: 1.35rem;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      text-shadow: 0 0 18px rgba(0, 234, 255, 0.14);
+    }
+
+    .site-footer h3::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -0.45rem;
+      width: 2.2rem;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #00eaff, #4efedc, #facc15);
+      box-shadow: 0 0 16px rgba(0, 234, 255, 0.3);
+    }
+
+    .footer-social-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 1.35rem;
+    }
+
+    .footer-social-label {
+      color: #facc15;
+      font-size: 0.78rem;
+      font-weight: 950;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .social-row.clean-social-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .social-link {
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 999px;
+      color: #e5e7eb;
+      text-decoration: none;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+      border: 1px solid rgba(0, 234, 255, 0.22);
+      box-shadow:
+        inset 0 0 18px rgba(0, 234, 255, 0.045),
+        0 0 0 rgba(0, 234, 255, 0);
+      transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease;
+    }
+
+    .social-link::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      opacity: 0;
+      background: linear-gradient(135deg, rgba(0, 234, 255, 0.55), rgba(78, 254, 220, 0.4), rgba(250, 204, 21, 0.4));
+      filter: blur(10px);
+      z-index: -1;
+      transition: opacity 0.2s ease;
+    }
+
+    .social-link:hover,
+    .social-link:focus-visible {
+      transform: translateY(-3px) scale(1.03);
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(0, 234, 255, 0.55);
+      box-shadow:
+        inset 0 0 18px rgba(0, 234, 255, 0.08),
+        0 0 26px rgba(0, 234, 255, 0.14);
+      outline: none;
+    }
+
+    .social-link:hover::before,
+    .social-link:focus-visible::before {
+      opacity: 1;
+    }
+
+    .social-link svg {
+      width: 1.16rem;
+      height: 1.16rem;
+      display: block;
+      fill: currentColor;
+    }
+
+    .social-link.social-youtube:hover,
+    .social-link.social-youtube:focus-visible {
+      border-color: rgba(255, 56, 56, 0.62);
+      box-shadow: 0 0 28px rgba(255, 56, 56, 0.13);
+    }
+
+    .social-link.social-instagram:hover,
+    .social-link.social-instagram:focus-visible {
+      border-color: rgba(236, 72, 153, 0.66);
+      box-shadow: 0 0 28px rgba(236, 72, 153, 0.13);
+    }
+
+    .social-link.social-tiktok:hover,
+    .social-link.social-tiktok:focus-visible {
+      border-color: rgba(0, 234, 255, 0.68);
+      box-shadow:
+        0 0 22px rgba(0, 234, 255, 0.14),
+        0 0 30px rgba(255, 0, 80, 0.09);
+    }
+
+    .footer-links {
+      display: grid;
+      gap: 0.58rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .footer-links a,
+    .footer-link-button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      color: rgba(203, 213, 225, 0.78);
+      text-decoration: none;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      font: inherit;
+      cursor: pointer;
+      text-align: left;
+      transition:
+        color 0.2s ease,
+        transform 0.2s ease,
+        text-shadow 0.2s ease;
+    }
+
+    .footer-links a::before,
+    .footer-link-button::before {
+      content: "";
+      width: 0;
+      height: 1px;
+      margin-right: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #00eaff, #4efedc);
+      box-shadow: 0 0 10px rgba(0, 234, 255, 0.3);
+      transition:
+        width 0.2s ease,
+        margin-right 0.2s ease;
+    }
+
+    .footer-links a:hover,
+    .footer-links a:focus-visible,
+    .footer-link-button:hover,
+    .footer-link-button:focus-visible {
+      color: #ffffff;
+      transform: translateX(3px);
+      text-shadow: 0 0 14px rgba(0, 234, 255, 0.18);
+      outline: none;
+    }
+
+    .footer-links a:hover::before,
+    .footer-links a:focus-visible::before,
+    .footer-link-button:hover::before,
+    .footer-link-button:focus-visible::before {
+      width: 0.9rem;
+      margin-right: 0.45rem;
+    }
+
+    .footer-camino-card {
+      position: relative;
+      overflow: hidden;
+      padding: 1.15rem;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top right, rgba(78, 254, 220, 0.16), transparent 38%),
+        rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(78, 254, 220, 0.18);
+      box-shadow:
+        inset 0 0 24px rgba(0, 234, 255, 0.04),
+        0 18px 44px rgba(0, 0, 0, 0.16);
+    }
+
+    .footer-camino-card::after {
+      content: "CAMINO";
+      position: absolute;
+      right: -0.35rem;
+      bottom: -0.45rem;
+      color: rgba(255, 255, 255, 0.035);
+      font-size: 3.2rem;
+      font-weight: 950;
+      letter-spacing: -0.08em;
+      pointer-events: none;
+    }
+
+    .footer-camino-card p,
+    .footer-camino-card form,
+    .footer-camino-card .hero-actions,
+    .footer-camino-card .footer-links {
+      position: relative;
+      z-index: 2;
+    }
+
+    .footer-camino-card .btn {
+      width: 100%;
+      justify-content: center;
+      min-height: 44px;
+      box-shadow: 0 0 22px rgba(78, 254, 220, 0.18);
+    }
+
+    .mini-newsletter {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+
+    .mini-newsletter input {
+      min-width: 0;
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      background: rgba(2, 6, 23, 0.62);
+      color: #ffffff;
+      padding: 0.8rem 1rem;
+      outline: none;
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+    }
+
+    .mini-newsletter input:focus {
+      border-color: rgba(0, 234, 255, 0.55);
+      background: rgba(2, 6, 23, 0.82);
+      box-shadow: 0 0 0 4px rgba(0, 234, 255, 0.09);
+    }
+
+    .mini-newsletter button {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.8rem 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      color: #031016;
+      background: linear-gradient(135deg, #00eaff, #4efedc);
+      box-shadow: 0 0 20px rgba(78, 254, 220, 0.18);
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .mini-newsletter button:hover,
+    .mini-newsletter button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 0 28px rgba(78, 254, 220, 0.28);
+      outline: none;
+    }
+
+    .footer-bottom {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: clamp(2rem, 5vw, 4rem);
+      padding-top: 1.35rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+      color: rgba(203, 213, 225, 0.72);
+      font-size: 0.9rem;
+    }
+
+    .footer-bottom::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: 38%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0, 234, 255, 0.7), transparent);
+      box-shadow: 0 0 18px rgba(0, 234, 255, 0.25);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 1050px) {
+      .site-footer .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .site-footer .footer-grid > section:not(:first-child) {
+        border-left: 0;
+        padding-left: 0;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .site-footer {
+        padding-top: 3rem;
+      }
+
+      .site-footer .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-newsletter {
+        flex-direction: column;
+      }
+
+      .mini-newsletter button {
+        width: 100%;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" data-header>
+    <div class="container header-inner">
+      <a class="brand" href="{{ url_for('home') }}" aria-label="JSM Cooperative home">
+        <span class="brand-mark">🎭</span>
+        <span class="brand-text">JSM <strong>Cooperative</strong></span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        {% set hidden_header_endpoints = ['contact', 'chapter_readings', 'novel_subscription', 'donate'] %}
+
+        {% for label, endpoint in nav_items %}
+          {% if endpoint not in hidden_header_endpoints %}
+            <a href="{{ url_for(endpoint) }}" {% if request.endpoint == endpoint %}class="active"{% endif %}>
+              {{ label }}
+            </a>
+          {% endif %}
+        {% endfor %}
+
+        <a
+          href="{{ url_for('novel_subscription') }}"
+          {% if request.endpoint == 'novel_subscription' %}class="active"{% endif %}
+        >
+          Novel Subscription
+        </a>
+      </nav>
+
+      <div class="header-actions">
+        <a class="btn btn-ghost" href="{{ url_for('book') }}#preview">Read</a>
+
+        <button
+          type="button"
+          class="btn btn-buy"
+          data-purchase-open
+          aria-haspopup="dialog"
+          aria-controls="purchase-modal"
+        >
+          Buy
+        </button>
+
+        <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate</a>
+
+        <button class="menu-toggle" data-menu-toggle aria-label="Open navigation" aria-expanded="false">
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mobile-menu" data-mobile-menu aria-hidden="true">
+      <nav class="mobile-nav" aria-label="Mobile navigation">
+        {% set hidden_mobile_endpoints = ['contact', 'chapter_readings', 'novel_subscription', 'donate'] %}
+
+        {% for label, endpoint in nav_items %}
+          {% if endpoint not in hidden_mobile_endpoints %}
+            <a href="{{ url_for(endpoint) }}">{{ label }}</a>
+          {% endif %}
+        {% endfor %}
+
+        <a href="{{ url_for('novel_subscription') }}">Novel Subscription</a>
+        <a href="{{ url_for('book') }}#preview">Read Preview</a>
+
+        <button
+          type="button"
+          class="mobile-purchase-btn"
+          data-purchase-open
+          aria-haspopup="dialog"
+          aria-controls="purchase-modal"
+        >
+          Buy The Book
+        </button>
+
+        <a href="{{ url_for('donate') }}">Donate</a>
+      </nav>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-wrap container">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/purchase_modal.html" %}
+
+  {% set youtube_url = social_links.youtube if social_links is defined else 'https://www.youtube.com/@JSm.cooperative' %}
+  {% set instagram_url = social_links.instagram if social_links is defined else 'https://www.instagram.com/jsm.cooperative/' %}
+  {% set tiktok_url = social_links.tiktok if social_links is defined else 'https://www.tiktok.com/@jsm.cooperative' %}
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <section>
+        <div class="footer-brand">JSM Cooperative Corporation</div>
+
+        <p>
+          Stories that fund a better world. We publish creative work, support mission-aligned nonprofits,
+          and invite readers to walk the Camino with us.
+        </p>
+
+        <div class="footer-social-wrap">
+          <div class="footer-social-label">Connect</div>
+
+          <div class="social-row clean-social-row">
+            <a
+              class="social-link social-email"
+              href="mailto:{{ contact_email }}?subject=JSM%20Cooperative%20Inquiry"
+              aria-label="Email JSM Cooperative"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z"/>
+              </svg>
+              <span class="sr-only">Email Us</span>
+            </a>
+
+            <a
+              class="social-link social-youtube"
+              href="{{ youtube_url }}"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit JSM Cooperative on YouTube"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M23.5 6.2s-.2-1.7-.9-2.4c-.9-.9-1.9-.9-2.4-1C16.8 2.5 12 2.5 12 2.5h-.1s-4.8 0-8.2.3c-.5.1-1.5.1-2.4 1C.6 4.5.4 6.2.4 6.2S0 8.1 0 10v1.8c0 1.9.4 3.8.4 3.8s.2 1.7.9 2.4c.9.9 2.1.9 2.6 1 1.9.2 8.1.3 8.1.3s4.8 0 8.2-.3c.5-.1 1.5-.1 2.4-1 .7-.7.9-2.4.9-2.4s.4-1.9.4-3.8V10c0-1.9-.4-3.8-.4-3.8ZM9.5 14.7V7.9l6.3 3.4-6.3 3.4Z"/>
+              </svg>
+              <span class="sr-only">YouTube</span>
+            </a>
+
+            <a
+              class="social-link social-instagram"
+              href="{{ instagram_url }}"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit JSM Cooperative on Instagram"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 2h10c2.8 0 5 2.2 5 5v10c0 2.8-2.2 5-5 5H7c-2.8 0-5-2.2-5-5V7c0-2.8 2.2-5 5-5Zm10 2H7C5.3 4 4 5.3 4 7v10c0 1.7 1.3 3 3 3h10c1.7 0 3-1.3 3-3V7c0-1.7-1.3-3-3-3Zm-5 3.3A4.7 4.7 0 1 1 12 16.7 4.7 4.7 0 0 1 12 7.3Zm0 2A2.7 2.7 0 1 0 12 14.7 2.7 2.7 0 0 0 12 9.3ZM17.2 6.6a1.1 1.1 0 1 1-1.1 1.1 1.1 1.1 0 0 1 1.1-1.1Z"/>
+              </svg>
+              <span class="sr-only">Instagram</span>
+            </a>
+
+            <a
+              class="social-link social-tiktok"
+              href="{{ tiktok_url }}"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit JSM Cooperative on TikTok"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M16.7 2c.3 2.4 1.7 4.1 4.1 4.3v3.1c-1.4.1-2.7-.3-4-1.1v6.4c0 3.2-2.1 6.2-5.3 7-4.2 1-8-2.2-8-6.3 0-3.9 3.5-7 7.3-6.3v3.3c-1.7-.5-3.5.8-3.5 2.6 0 1.7 1.6 3 3.3 2.6 1.1-.3 2-1.4 2-2.7V2h4.1Z"/>
+              </svg>
+              <span class="sr-only">TikTok</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h3>Explore</h3>
+
+        <ul class="footer-links">
+          <li><a href="{{ url_for('novel_subscription') }}">Novel Subscription</a></li>
+          <li><a href="{{ url_for('book') }}#preview">Read Book Preview</a></li>
+          <li>
+            <button
+              type="button"
+              class="footer-link-button"
+              data-purchase-open
+              aria-haspopup="dialog"
+              aria-controls="purchase-modal"
+            >
+              Purchase The Book
+            </button>
+          </li>
+          <li><a href="{{ url_for('newsletter_page') }}">Newsletter</a></li>
+          <li><a href="{{ url_for('blogs') }}">Blogs</a></li>
+          <li><a href="{{ url_for('team') }}">Our Team</a></li>
+          <li><a href="{{ url_for('contact') }}">Contact</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Join The Camino</h3>
+
+        <div class="footer-camino-card">
+          <p>
+            Get updates on books, blogs, community campaigns, and nonprofit impact.
+          </p>
+
+          <div class="hero-actions" style="margin-bottom: 1rem;">
+            <a class="btn btn-primary" href="{{ url_for('novel_subscription') }}">Novel Subscription</a>
+          </div>
+
+          <form class="mini-newsletter" action="{{ url_for('newsletter_page') }}" method="post">
+            <input type="email" name="email" placeholder="you@example.com" aria-label="Email address" required>
+            <button type="submit">Subscribe</button>
+          </form>
+        </div>
+      </section>
+
+      <section>
+        <h3>Legal</h3>
+
+        <ul class="footer-links">
+          <li><a href="{{ url_for('privacy') }}">Privacy Policy</a></li>
+          <li><a href="{{ url_for('terms') }}">Terms / Disclaimer</a></li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="container footer-bottom">
+      <span>© {{ current_year }} JSM Cooperative Corporation. All rights reserved.</span>
+      <span>#JOINTHECAMINO · Storytelling-as-solidarity</span>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

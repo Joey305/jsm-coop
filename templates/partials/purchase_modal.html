@@ -1,0 +1,77 @@
+<div
+  id="purchase-modal"
+  class="purchase-modal"
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="purchase-modal-title"
+>
+  <div class="purchase-modal-backdrop" data-purchase-close></div>
+
+  <div class="purchase-modal-panel" role="document">
+    <button
+      type="button"
+      class="purchase-modal-close"
+      data-purchase-close
+      aria-label="Close purchase options"
+    >
+      ×
+    </button>
+
+    <div class="purchase-modal-kicker">The Man in the Ball Cap</div>
+
+    <h2 id="purchase-modal-title">Choose Where To Buy</h2>
+
+    <p class="purchase-modal-copy">
+      Pick your preferred bookstore below. Every purchase helps support JSM Cooperative’s
+      storytelling and mission-aligned community work.
+    </p>
+
+    <div class="purchase-options">
+      <a
+        class="purchase-option-card"
+        href="https://www.barnesandnoble.com/w/the-man-in-the-ballcap-jsm-cooperative/1144453545?ean=9798822929067"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span class="purchase-option-icon">📖</span>
+        <span>
+          <strong>Barnes & Noble</strong>
+          <em>Paperback edition</em>
+        </span>
+      </a>
+
+      <a
+        class="purchase-option-card"
+        href="https://www.amazon.com/Man-Ballcap-JSM-Cooperative-ebook/dp/B0CPKTVMYX"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span class="purchase-option-icon">🔥</span>
+        <span>
+          <strong>Amazon</strong>
+          <em>Kindle / English edition</em>
+        </span>
+      </a>
+
+      <a
+        class="purchase-option-card"
+        href="https://www.amazon.es/dp/B0D2MB8JWZ?_encoding=UTF8&psc=1&ref=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1&ref_=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1&social_share=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span class="purchase-option-icon">🇪🇸</span>
+        <span>
+          <strong>Spanish Copy</strong>
+          <em>Amazon Spain edition</em>
+        </span>
+      </a>
+    </div>
+
+    <div class="purchase-modal-footer">
+      <a href="{{ url_for('book') }}">Learn more about the book</a>
+      <span>·</span>
+      <a href="{{ url_for('donate') }}">Support the Co-op</a>
+    </div>
+  </div>
+</div>

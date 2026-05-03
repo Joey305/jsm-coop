@@ -1,0 +1,780 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .camino-page {
+    overflow: hidden;
+  }
+
+  .camino-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .camino-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(0, 234, 255, 0.18), transparent 34%),
+      radial-gradient(circle at 82% 22%, rgba(250, 204, 21, 0.14), transparent 30%),
+      radial-gradient(circle at 60% 88%, rgba(78, 254, 220, 0.12), transparent 36%);
+    pointer-events: none;
+  }
+
+  .camino-hero::after {
+    content: "#JOINTHECAMINO";
+    position: absolute;
+    right: -1.5rem;
+    bottom: -0.8rem;
+    z-index: -1;
+    color: rgba(255, 255, 255, 0.035);
+    font-size: clamp(3rem, 10vw, 9rem);
+    font-weight: 900;
+    letter-spacing: -0.08em;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .camino-hero-panel {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.4rem, 3vw, 2rem);
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at top, rgba(0, 234, 255, 0.12), transparent 42%),
+      linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(5, 8, 20, 0.96));
+    border: 1px solid rgba(0, 234, 255, 0.2);
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.36),
+      0 0 45px rgba(0, 234, 255, 0.12);
+  }
+
+  .camino-hero-panel::before {
+    content: "✨";
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    font-size: 1.7rem;
+    opacity: 0.8;
+    animation: caminoStarFloat 4.8s ease-in-out infinite;
+  }
+
+  .camino-hero-panel::after {
+    content: "✦";
+    position: absolute;
+    left: 1.2rem;
+    bottom: 1.2rem;
+    font-size: 1.2rem;
+    opacity: 0.45;
+    animation: caminoStarFloat 5.5s ease-in-out infinite 0.8s;
+  }
+
+  @keyframes caminoStarFloat {
+    0%, 100% {
+      transform: translateY(0);
+      opacity: 0.45;
+    }
+
+    50% {
+      transform: translateY(-8px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes caminoBookFloat {
+    0%, 100% {
+      transform: translateY(0) rotate(1deg);
+    }
+
+    50% {
+      transform: translateY(-10px) rotate(-1deg);
+    }
+  }
+
+  .camino-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.9rem;
+    padding: 0.42rem 0.78rem;
+    border-radius: 999px;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.26);
+    font-size: 0.8rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .camino-title-gradient {
+    background: linear-gradient(120deg, #ffffff, #9be8ff, #4efedc, #ffffff);
+    background-size: 260% 260%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: caminoGradientShift 8s ease-in-out infinite;
+  }
+
+  @keyframes caminoGradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .camino-hero h1 {
+    max-width: 880px;
+  }
+
+  .camino-hero .hero-lede {
+    max-width: 680px;
+  }
+
+  .camino-mini-proof {
+    display: grid;
+    gap: 0.7rem;
+    margin-top: 1.2rem;
+  }
+
+  .camino-proof-item {
+    display: flex;
+    gap: 0.65rem;
+    color: var(--text-soft);
+    line-height: 1.55;
+  }
+
+  .camino-proof-item span {
+    flex: 0 0 auto;
+  }
+
+  .camino-showcase {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 440px;
+  }
+
+  .camino-book-card {
+    position: relative;
+    width: min(300px, 82vw);
+    min-height: 390px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top, rgba(255, 255, 255, 0.13), transparent 34%),
+      linear-gradient(145deg, rgba(9, 16, 34, 0.98), rgba(4, 8, 19, 0.98));
+    border: 1px solid rgba(0, 234, 255, 0.32);
+    box-shadow:
+      0 34px 80px rgba(0, 0, 0, 0.44),
+      0 0 50px rgba(0, 234, 255, 0.16);
+    animation: caminoBookFloat 7s ease-in-out infinite;
+  }
+
+  .camino-book-card::before {
+    content: "";
+    position: absolute;
+    inset: -25%;
+    z-index: -1;
+    background:
+      conic-gradient(
+        from 140deg,
+        rgba(0, 198, 255, 0.32),
+        transparent,
+        rgba(78, 254, 220, 0.34),
+        transparent,
+        rgba(250, 204, 21, 0.26),
+        transparent
+      );
+    filter: blur(22px);
+    opacity: 0.7;
+  }
+
+  .camino-signed-badge {
+    position: absolute;
+    top: 1.1rem;
+    right: -0.65rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 10px;
+    background: #ffd965;
+    color: #3a2a00;
+    font-size: 0.74rem;
+    font-weight: 900;
+    transform: rotate(12deg);
+    box-shadow: 0 0 18px rgba(255, 217, 101, 0.45);
+  }
+
+  .camino-book-mark {
+    position: absolute;
+    top: 1.15rem;
+    left: 1.15rem;
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #facc15;
+    border: 1px solid rgba(250, 204, 21, 0.28);
+    font-weight: 900;
+    letter-spacing: -0.05em;
+  }
+
+  .camino-book-card span.book-small {
+    color: #cbd5e1;
+    font-size: 1.05rem;
+  }
+
+  .camino-book-card strong {
+    display: block;
+    margin-top: 0.35rem;
+    color: #ffffff;
+    font-size: clamp(2.8rem, 7vw, 4.4rem);
+    line-height: 0.9;
+    letter-spacing: -0.08em;
+  }
+
+  .camino-book-card em {
+    display: block;
+    margin-top: 1rem;
+    color: #facc15;
+    font-style: normal;
+    font-weight: 850;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .camino-book-card p {
+    margin: 0.8rem 0 0;
+    color: #9ca3af;
+    line-height: 1.55;
+    font-size: 0.95rem;
+  }
+
+  .camino-section-heading {
+    max-width: 790px;
+    margin: 0 auto 2rem;
+    text-align: center;
+  }
+
+  .camino-section-heading h2 {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3.3rem);
+    line-height: 1;
+    letter-spacing: -0.055em;
+  }
+
+  .camino-section-heading p {
+    max-width: 660px;
+    margin: 1rem auto 0;
+    color: var(--text-soft);
+    line-height: 1.7;
+  }
+
+  .camino-detail-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+
+  .camino-card {
+    padding: clamp(1.2rem, 3vw, 1.6rem);
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at top left, rgba(0, 234, 255, 0.08), transparent 32%),
+      rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.22);
+  }
+
+  .camino-card h3 {
+    margin: 0 0 0.7rem;
+    color: var(--text);
+    font-size: 1.35rem;
+  }
+
+  .camino-card p {
+    color: var(--text-soft);
+    line-height: 1.72;
+  }
+
+  .camino-list {
+    display: grid;
+    gap: 0.85rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .camino-list li {
+    display: flex;
+    gap: 0.7rem;
+    color: var(--text-soft);
+    line-height: 1.62;
+  }
+
+  .camino-list li span {
+    flex: 0 0 auto;
+  }
+
+  .camino-price-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .camino-price-card::after {
+    content: "$23";
+    position: absolute;
+    right: -0.2rem;
+    bottom: -0.6rem;
+    color: rgba(255, 255, 255, 0.05);
+    font-size: 7rem;
+    font-weight: 900;
+    letter-spacing: -0.1em;
+    pointer-events: none;
+  }
+
+  .camino-price {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.4rem;
+    margin: 0.8rem 0 1rem;
+  }
+
+  .camino-price strong {
+    color: #ffffff;
+    font-size: clamp(3.4rem, 8vw, 5rem);
+    line-height: 0.9;
+    letter-spacing: -0.09em;
+  }
+
+  .camino-price span {
+    margin-bottom: 0.45rem;
+    color: #facc15;
+    font-weight: 850;
+  }
+
+  .camino-impact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .camino-impact-card {
+    padding: 1.15rem;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+  }
+
+  .camino-impact-card span {
+    display: inline-grid;
+    place-items: center;
+    width: 2.7rem;
+    height: 2.7rem;
+    margin-bottom: 0.9rem;
+    border-radius: 16px;
+    background: rgba(0, 234, 255, 0.1);
+    border: 1px solid rgba(0, 234, 255, 0.2);
+    font-size: 1.25rem;
+  }
+
+  .camino-impact-card h3 {
+    margin: 0 0 0.45rem;
+    color: var(--text);
+  }
+
+  .camino-impact-card p {
+    margin: 0;
+    color: var(--text-soft);
+    line-height: 1.62;
+  }
+
+  .paypal-section {
+    position: relative;
+  }
+
+  .paypal-panel {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(1.35rem, 3vw, 2rem);
+    text-align: center;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top, rgba(250, 204, 21, 0.12), transparent 42%),
+      linear-gradient(145deg, rgba(17, 24, 39, 0.96), rgba(5, 8, 20, 0.98));
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.32),
+      0 0 42px rgba(250, 204, 21, 0.1);
+  }
+
+  .paypal-panel h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    line-height: 1.05;
+    letter-spacing: -0.045em;
+  }
+
+  .paypal-panel p {
+    max-width: 560px;
+    margin: 0.85rem auto 1.1rem;
+    color: var(--text-soft);
+    line-height: 1.7;
+  }
+
+  .paypal-button-shell {
+    width: min(100%, 430px);
+    margin: 1.2rem auto 0;
+    padding: 1rem;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.065);
+    border: 1px solid rgba(255, 255, 255, 0.11);
+  }
+
+  .paypal-note {
+    margin-top: 0.95rem;
+    color: #94a3b8;
+    font-size: 0.86rem;
+  }
+
+  .camino-final-cta {
+    text-align: center;
+  }
+
+  .camino-final-cta p {
+    max-width: 660px;
+    margin: 0.8rem auto 1.2rem;
+    color: var(--text-soft);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 900px) {
+    .camino-detail-grid,
+    .camino-impact-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .camino-showcase {
+      min-height: 400px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .camino-hero .hero-actions,
+    .camino-final-cta .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .camino-hero .btn,
+    .camino-final-cta .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .camino-book-card {
+      min-height: 360px;
+    }
+
+    .paypal-button-shell {
+      padding: 0.8rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="camino-page">
+
+  <section class="page-hero camino-hero">
+    <div class="container hero-grid">
+      <div class="reveal">
+        <p class="eyebrow">Novel Subscription · The Camino</p>
+
+        <h1>
+          A reader-powered path for stories that fund change.
+        </h1>
+
+        <p class="hero-lede">
+          Join The Camino is JSM Cooperative’s monthly novel subscription campaign:
+          a way to turn reading, gifting, and storytelling into recurring impact.
+        </p>
+
+        <div class="pill-row">
+          <span>📚 Signed story drops</span>
+          <span>💙 Mission support</span>
+          <span>🌎 SDG-aligned impact</span>
+        </div>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#paypal-section-camino">Start Your Camino Subscription</a>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            data-purchase-open
+            aria-haspopup="dialog"
+            aria-controls="purchase-modal"
+          >
+            Buy The Book First
+          </button>
+          <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate Instead</a>
+        </div>
+
+        <div class="camino-mini-proof">
+          <div class="camino-proof-item">
+            <span>🌄</span>
+            <div><strong>$23/month:</strong> a recurring Camino subscription through PayPal.</div>
+          </div>
+          <div class="camino-proof-item">
+            <span>📘</span>
+            <div><strong>First month:</strong> receive a signed copy of <em>The Man in the Ball Cap</em>.</div>
+          </div>
+          <div class="camino-proof-item">
+            <span>💌</span>
+            <div><strong>Every month after:</strong> choose someone special to receive a signed copy.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="camino-hero-panel reveal delay-1">
+        <div class="camino-showcase">
+          <div class="camino-book-card" aria-label="The Man in the Ball Cap book showcase">
+            <div class="camino-book-mark">JSM</div>
+            <div class="camino-signed-badge">SIGNED COPY</div>
+
+            <span class="book-small">The Man in the</span>
+            <strong>Ball Cap</strong>
+            <em>Debut Novel · JSM Cooperative</em>
+            <p>
+              A story of memory, mystery, place, and purpose — now part of a reader-powered
+              campaign for community impact.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="camino-section-heading reveal">
+        <p class="eyebrow">A Literary March Against Alzheimer’s & Type 3 Diabetes</p>
+        <h2 class="camino-title-gradient">Every subscription is a step on the Camino.</h2>
+        <p>
+          Mindful Diabetes Inc. and JSM Cooperative Corporation invite you to join a unique fundraiser
+          where every page turned supports brain-health education, metabolic health awareness, and
+          community-centered storytelling.
+        </p>
+      </div>
+
+      <div class="camino-detail-grid">
+        <article class="camino-card reveal">
+          <h3>How The Camino works</h3>
+          <p>
+            Through the atmospheric novel <em>The Man in the Ball Cap</em>, you are not just reading
+            a story. You are helping us keep publishing tied to purpose, generosity, and mission-driven
+            support.
+          </p>
+
+          <ul class="camino-list">
+            <li>
+              <span>📚</span>
+              <div>
+                <strong>First month:</strong> You receive a personally signed copy of
+                <em>The Man in the Ball Cap</em>.
+              </div>
+            </li>
+            <li>
+              <span>🎁</span>
+              <div>
+                <strong>Every month after:</strong> You choose someone meaningful to receive a signed copy.
+              </div>
+            </li>
+            <li>
+              <span>💙</span>
+              <div>
+                <strong>Impact:</strong> Subscription profits help support Mindful Diabetes Inc.’s
+                programs and JSM Cooperative’s mission-aligned publishing work.
+              </div>
+            </li>
+            <li>
+              <span>🌎</span>
+              <div>
+                <strong>Community:</strong> Each subscription helps spread stories, education,
+                and solidarity one reader at a time.
+              </div>
+            </li>
+          </ul>
+        </article>
+
+        <aside class="camino-card camino-price-card reveal delay-1">
+          <span class="camino-badge">Monthly Subscription</span>
+          <h3>Start your Camino</h3>
+
+          <div class="camino-price">
+            <strong>$23</strong>
+            <span>/ month</span>
+          </div>
+
+          <p>
+            Securely processed through PayPal. You can manage or cancel anytime through your PayPal account.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#paypal-section-camino">Subscribe Now</a>
+            <a class="btn btn-ghost" href="{{ url_for('book') }}#preview">Read Preview</a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="camino-section-heading reveal">
+        <p class="eyebrow">Why It Matters</p>
+        <h2>Storytelling becomes solidarity when readers move together.</h2>
+        <p>
+          The Camino subscription turns one book into a shared journey: a recurring way to support
+          the mission, gift stories to others, and help fund nonprofit-aligned impact.
+        </p>
+      </div>
+
+      <div class="camino-impact-grid">
+        <article class="camino-impact-card reveal">
+          <span>🧠</span>
+          <h3>Brain-health education</h3>
+          <p>
+            Support outreach connected to diabetes, Alzheimer’s risk, and the idea of Type 3 diabetes.
+          </p>
+        </article>
+
+        <article class="camino-impact-card reveal delay-1">
+          <span>📖</span>
+          <h3>Publishing with purpose</h3>
+          <p>
+            Help JSM Cooperative continue using books, blogs, and campaigns as vehicles for impact.
+          </p>
+        </article>
+
+        <article class="camino-impact-card reveal delay-2">
+          <span>💌</span>
+          <h3>Gifted signed copies</h3>
+          <p>
+            Send a signed copy to someone each month and help the story travel through the community.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section paypal-section" id="paypal-section-camino">
+    <div class="container">
+      <div class="paypal-panel reveal">
+        <span class="camino-badge">Secure PayPal Subscription</span>
+
+        <h2>Start Your $23/Month Camino Subscription</h2>
+
+        <p>
+          Click the button below to subscribe securely through PayPal. After joining, we will follow up
+          with details for your signed copy and future monthly recipient selections.
+        </p>
+
+        <div class="paypal-button-shell">
+          <div id="paypal-button-container-P-9PR89637A11935035M67J3EQ"></div>
+        </div>
+
+        <div class="paypal-note">
+          Securely processed via PayPal · Cancel anytime through your PayPal account
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section camino-final-cta">
+    <div class="container reveal">
+      <p class="eyebrow">Not ready to subscribe?</p>
+      <h2>There are still ways to walk with us.</h2>
+      <p>
+        You can preview the book, purchase a single copy, donate directly, or join the newsletter
+        to follow campaign updates.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{{ url_for('book') }}#preview">Read The Preview</a>
+
+        <button
+          type="button"
+          class="btn btn-ghost"
+          data-purchase-open
+          aria-haspopup="dialog"
+          aria-controls="purchase-modal"
+        >
+          Buy The Book
+        </button>
+
+        <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate</a>
+        <a class="btn btn-ghost" href="{{ url_for('newsletter_page') }}">Join Newsletter</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://www.paypal.com/sdk/js?client-id=Adb3yeUPDzJWoPPM4mnU6EJAEUcBybrrx9_EZivm9ec1PyiZZE9JsGnPpxy0ADjBwXUEgUwch-PlDgVA&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const paypalContainerId = "#paypal-button-container-P-9PR89637A11935035M67J3EQ";
+
+    if (window.paypal && document.querySelector(paypalContainerId)) {
+      paypal.Buttons({
+        style: {
+          shape: "rect",
+          color: "gold",
+          layout: "vertical",
+          label: "subscribe"
+        },
+        createSubscription: function (data, actions) {
+          return actions.subscription.create({
+            plan_id: "P-9PR89637A11935035M67J3EQ"
+          });
+        },
+        onApprove: function (data, actions) {
+          alert("Thank you for joining the Camino! Subscription ID: " + data.subscriptionID);
+        }
+      }).render(paypalContainerId);
+    }
+
+    document.querySelectorAll('a[href="#paypal-section-camino"]').forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        const target = document.getElementById("paypal-section-camino");
+
+        if (target) {
+          event.preventDefault();
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

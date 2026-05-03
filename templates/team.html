@@ -1,0 +1,1032 @@
+{% extends "base.html" %}
+
+{% block title %}Our Team | JSM Cooperative Corporation{% endblock %}
+
+{% block content %}
+
+<section class="team-nexus-page">
+
+  <style>
+    .team-nexus-page {
+      --team-bg-deep: #020617;
+      --team-bg-card: rgba(5, 8, 22, 0.94);
+      --team-bg-card-strong: rgba(15, 23, 42, 0.98);
+      --team-neon-cyan: #00e7ff;
+      --team-neon-mint: #4efedc;
+      --team-neon-pink: #ff4ffb;
+      --team-neon-violet: #a855f7;
+      --team-neon-gold: #fbbf24;
+      --team-neon-green: #22c55e;
+      --team-text-main: #e5e7eb;
+      --team-text-soft: #9ca3af;
+      --team-border-soft: rgba(148, 163, 184, 0.55);
+      --team-radius-lg: 28px;
+      --team-radius-md: 20px;
+      --team-shadow-lg: 0 22px 60px rgba(0, 0, 0, 0.72);
+      --team-max-width: 1180px;
+
+      position: relative;
+      padding: 72px 18px 92px;
+      color: var(--team-text-main);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .team-nexus-page::before {
+      content: "";
+      position: absolute;
+      inset: -35%;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(0, 231, 255, 0.22), transparent 58%),
+        radial-gradient(circle at 90% 12%, rgba(168, 85, 247, 0.22), transparent 62%),
+        radial-gradient(circle at 50% 100%, rgba(34, 197, 94, 0.18), transparent 58%);
+      opacity: 0.9;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    .team-nexus-page::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, black, transparent 92%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .team-nexus-inner {
+      max-width: var(--team-max-width);
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .team-hero-card {
+      position: relative;
+      border-radius: var(--team-radius-lg);
+      padding: 34px 24px 30px;
+      background:
+        radial-gradient(circle at top left, rgba(0, 231, 255, 0.12), transparent 42%),
+        radial-gradient(circle at bottom right, rgba(255, 79, 251, 0.10), transparent 42%),
+        rgba(5, 8, 22, 0.88);
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      box-shadow: var(--team-shadow-lg);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    .team-hero-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(
+        135deg,
+        rgba(0, 231, 255, 0.8),
+        rgba(168, 85, 247, 0.2),
+        rgba(255, 79, 251, 0.55),
+        rgba(34, 197, 94, 0.45)
+      );
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .team-kicker {
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 11px;
+      color: var(--team-neon-mint);
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .team-title {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(2.1rem, 5vw, 4rem);
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+      background: linear-gradient(
+        120deg,
+        #ffffff,
+        var(--team-neon-cyan),
+        var(--team-neon-pink),
+        var(--team-neon-green)
+      );
+      background-size: 240% 240%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: teamTitleSweep 9s ease-in-out infinite;
+    }
+
+    .team-subtitle {
+      max-width: 780px;
+      margin: 18px auto 0;
+      text-align: center;
+      color: var(--team-text-soft);
+      font-size: 1.02rem;
+      line-height: 1.85;
+    }
+
+    .team-subtitle strong {
+      color: var(--team-text-main);
+    }
+
+    .team-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 24px;
+    }
+
+    .team-pill {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.52);
+      background: rgba(2, 6, 23, 0.82);
+      color: var(--team-text-soft);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      box-shadow: 0 0 18px rgba(0, 231, 255, 0.07);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+      margin-top: 30px;
+      align-items: stretch;
+    }
+
+    .member-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      border-radius: 24px;
+      padding: 18px 16px 18px;
+      background:
+        radial-gradient(circle at top, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.98));
+      border: 1px solid rgba(148, 163, 184, 0.58);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.62);
+      overflow: hidden;
+      transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease;
+    }
+
+    .member-card::before {
+      content: "";
+      position: absolute;
+      inset: -45%;
+      background:
+        conic-gradient(
+          from 120deg,
+          rgba(0, 231, 255, 0.26),
+          rgba(168, 85, 247, 0.22),
+          rgba(34, 197, 94, 0.24),
+          rgba(255, 79, 251, 0.18),
+          rgba(0, 231, 255, 0.26)
+        );
+      opacity: 0;
+      filter: blur(20px);
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .member-card:hover {
+      transform: translateY(-7px);
+      border-color: rgba(0, 231, 255, 0.95);
+      box-shadow:
+        0 26px 68px rgba(0, 0, 0, 0.82),
+        0 0 28px rgba(0, 231, 255, 0.16);
+    }
+
+    .member-card:hover::before {
+      opacity: 1;
+    }
+
+    .member-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .avatar-wrap {
+      position: relative;
+      width: min(230px, 72vw);
+      aspect-ratio: 1;
+      margin: 4px auto 14px;
+      clip-path: polygon(
+        25% 3%,
+        75% 3%,
+        97% 50%,
+        75% 97%,
+        25% 97%,
+        3% 50%
+      );
+      background:
+        conic-gradient(
+          from 0deg,
+          var(--team-neon-cyan),
+          var(--team-neon-pink),
+          var(--team-neon-gold),
+          var(--team-neon-green),
+          var(--team-neon-cyan)
+        );
+      padding: 3px;
+      box-shadow: 0 0 26px rgba(0, 231, 255, 0.16);
+    }
+
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      clip-path: inherit;
+      overflow: hidden;
+      background: #020617;
+    }
+
+    .avatar-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1.04);
+      transition: transform 0.45s ease, filter 0.45s ease;
+    }
+
+    .member-card:hover .avatar-inner img {
+      transform: scale(1.1);
+      filter: saturate(1.08) contrast(1.05);
+    }
+
+    .member-name {
+      text-align: center;
+      font-size: 1.08rem;
+      font-weight: 900;
+      margin: 4px 0 4px;
+      letter-spacing: -0.01em;
+    }
+
+    .member-role {
+      text-align: center;
+      font-size: 0.72rem;
+      line-height: 1.5;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--team-neon-cyan);
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+
+    .member-bio {
+      font-size: 0.9rem;
+      line-height: 1.72;
+      color: var(--team-text-soft);
+      margin: 0 0 10px;
+    }
+
+    .member-bio strong {
+      color: #dffcff;
+      font-weight: 800;
+    }
+
+    .member-bio em {
+      color: #fdf2f8;
+    }
+
+    .member-socials {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 12px;
+    }
+
+    .social-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--team-text-main);
+      text-decoration: none;
+      padding: 6px 9px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+    }
+
+    .social-chip:hover {
+      transform: translateY(-2px);
+      border-color: var(--team-neon-cyan);
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.35), rgba(15, 23, 42, 1));
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.5);
+      text-decoration: none;
+    }
+
+    .chip-circle {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.62);
+      font-size: 0.58rem;
+      font-weight: 900;
+    }
+
+    .chip-ig { color: #f9a8d4; }
+    .chip-li { color: #93c5fd; }
+    .chip-mail { color: #bbf7d0; }
+    .chip-tt { color: #fed7aa; }
+
+    .team-cta-strip {
+      margin-top: 36px;
+      padding: 24px 20px;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.62);
+      background:
+        linear-gradient(120deg, rgba(0, 231, 255, 0.12), rgba(15, 23, 42, 0.95)),
+        radial-gradient(circle at top right, rgba(251, 191, 36, 0.12), transparent 62%);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.58);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .team-cta-text {
+      flex: 1 1 320px;
+      min-width: 0;
+    }
+
+    .team-cta-title {
+      margin: 0 0 6px;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+    }
+
+    .team-cta-body {
+      margin: 0;
+      color: var(--team-text-soft);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .team-cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .team-btn-main,
+    .team-btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 11px 17px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 900;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition:
+        transform 0.22s ease,
+        box-shadow 0.22s ease,
+        background 0.22s ease,
+        border-color 0.22s ease;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .team-btn-main {
+      color: #020617;
+      background: linear-gradient(120deg, var(--team-neon-cyan), var(--team-neon-pink));
+      box-shadow: 0 0 22px rgba(0, 231, 255, 0.62);
+    }
+
+    .team-btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 28px rgba(255, 79, 251, 0.78);
+      text-decoration: none;
+    }
+
+    .team-btn-ghost {
+      color: var(--team-text-main);
+      background: rgba(2, 6, 23, 0.38);
+      border-color: rgba(148, 163, 184, 0.7);
+    }
+
+    .team-btn-ghost:hover {
+      transform: translateY(-2px);
+      border-color: var(--team-neon-cyan);
+      background: rgba(15, 23, 42, 0.92);
+      box-shadow: 0 0 18px rgba(59, 130, 246, 0.48);
+      text-decoration: none;
+    }
+
+    .work-panel {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .work-card {
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background:
+        radial-gradient(circle at top left, rgba(0, 231, 255, 0.08), transparent 42%),
+        rgba(5, 8, 22, 0.92);
+      padding: 20px 18px 18px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+    }
+
+    .work-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.02rem;
+    }
+
+    .work-card p {
+      margin: 0;
+      color: var(--team-text-soft);
+      line-height: 1.72;
+      font-size: 0.92rem;
+    }
+
+    .floating-join {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 40;
+    }
+
+    .floating-join button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 17px;
+      color: #020617;
+      background: linear-gradient(135deg, var(--team-neon-cyan), var(--team-neon-violet));
+      font-size: 0.78rem;
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 28px rgba(56, 189, 248, 0.82);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      animation: teamFloatPulse 3s ease-in-out infinite;
+    }
+
+    .floating-join button:hover {
+      box-shadow: 0 0 34px rgba(168, 85, 247, 0.96);
+      transform: translateY(-2px);
+    }
+
+    .join-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 14px rgba(34, 197, 94, 1);
+    }
+
+    .team-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.78);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 70;
+      backdrop-filter: blur(10px);
+      padding: 20px;
+    }
+
+    .team-modal-backdrop.is-open {
+      display: flex;
+    }
+
+    .team-modal {
+      max-width: 510px;
+      width: 100%;
+      position: relative;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top, rgba(30, 64, 175, 0.72), transparent 48%),
+        rgba(2, 6, 23, 0.98);
+      border: 1px solid rgba(148, 163, 184, 0.72);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.92);
+      padding: 26px 22px 22px;
+      color: var(--team-text-main);
+    }
+
+    .team-modal h3 {
+      margin: 0 0 10px;
+      font-size: 1.3rem;
+      letter-spacing: -0.03em;
+    }
+
+    .team-modal p {
+      margin: 0 0 11px;
+      color: var(--team-text-soft);
+      line-height: 1.72;
+      font-size: 0.94rem;
+    }
+
+    .team-modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .team-modal-close {
+      position: absolute;
+      top: 11px;
+      right: 13px;
+      border: none;
+      background: transparent;
+      color: var(--team-text-main);
+      font-size: 1.35rem;
+      cursor: pointer;
+      opacity: 0.78;
+    }
+
+    .team-modal-close:hover {
+      opacity: 1;
+      color: var(--team-neon-mint);
+    }
+
+    @keyframes teamTitleSweep {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes teamFloatPulse {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @media (max-width: 760px) {
+      .team-nexus-page {
+        padding: 46px 14px 78px;
+      }
+
+      .team-hero-card {
+        padding: 28px 18px 24px;
+      }
+
+      .team-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .team-cta-strip {
+        align-items: flex-start;
+      }
+
+      .team-cta-actions {
+        width: 100%;
+      }
+
+      .team-btn-main,
+      .team-btn-ghost {
+        width: 100%;
+      }
+
+      .floating-join {
+        left: 14px;
+        right: 14px;
+        bottom: 12px;
+      }
+
+      .floating-join button {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.72rem;
+      }
+    }
+  </style>
+
+  <div class="team-nexus-inner">
+
+    <header class="team-hero-card">
+      <div class="team-kicker">The Cooperative · No Hierarchy · One Story Engine</div>
+      <h1 class="team-title">Meet the JSM Cooperative Team</h1>
+      <p class="team-subtitle">
+        We are a collective of storytellers, editors, designers, dreamers, and community builders,
+        working together as one unit. There are no titles that sit above others here — just a
+        cooperative of humans using <strong>fiction, imagination, and heart</strong> to fund a better world.
+      </p>
+
+      <div class="team-pill-row">
+        <span class="team-pill">Cooperative, not corporate</span>
+        <span class="team-pill">Powered by the UN SDGs</span>
+        <span class="team-pill">Stories that fund change</span>
+        <span class="team-pill">#JOINTHECAMINO</span>
+      </div>
+    </header>
+
+    <div class="team-grid">
+
+      <article class="member-card">
+        <div class="avatar-wrap">
+          <div class="avatar-inner">
+            <img src="{{ url_for('static', filename='images/team/j-michael-schulz.jpeg') }}" alt="J. Michael Schulz, Founder and Author">
+          </div>
+        </div>
+
+        <div class="member-name">J. Michael Schulz</div>
+        <div class="member-role">Founder · Author · Camino Architect</div>
+
+        <p class="member-bio">
+          A man of many hats, J. Michael imagines the JSM Cooperative as a story engine that can breathe
+          life into nonprofits across all <strong>17 UN Sustainable Development Goals</strong>. From his days
+          leading GenUN at Rollins College to launching <em>The Man in the Ballcap</em>, he is obsessed with
+          turning fiction into fuel for real-world change.
+        </p>
+
+        <p class="member-bio">
+          Alongside the team, he brings characters and causes to life — hoping to captivate a large,
+          diverse community by writing across genres while keeping one promise: <strong>100% of novel profits
+          go back into the world.</strong>
+        </p>
+
+        <div class="member-socials">
+          <a href="https://www.instagram.com/joeyschulz_" target="_blank" rel="noopener" class="social-chip chip-ig">
+            <span class="chip-circle">IG</span>
+            <span>@joeyschulz_</span>
+          </a>
+
+          <a href="https://www.linkedin.com/in/jmichaelschulz/" target="_blank" rel="noopener" class="social-chip chip-li">
+            <span class="chip-circle">in</span>
+            <span>LinkedIn</span>
+          </a>
+
+          <a href="mailto:books@jsmcoop.com" class="social-chip chip-mail">
+            <span class="chip-circle">@</span>
+            <span>Email JSM Cooperative</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="member-card">
+        <div class="avatar-wrap">
+          <div class="avatar-inner">
+            <img src="{{ url_for('static', filename='images/team/jack-scilla.jpg') }}" alt="Jack Scilla, Lead Editor">
+          </div>
+        </div>
+
+        <div class="member-name">Jack Scilla</div>
+        <div class="member-role">Lead Editor · Story Surgeon</div>
+
+        <p class="member-bio">
+          Jack is the first set of eyes every story meets. From clunky commas to tangled plot threads,
+          he quietly removes every distraction before a reader ever turns the page. A storyteller
+          in his own right, he knows how to keep dialogue sharp, characters grounded, and pacing honest.
+        </p>
+
+        <p class="member-bio">
+          His work lives between the lines — making sure every sentence serves the bigger mission:
+          <strong>stories that readers love and nonprofits can grow from.</strong>
+        </p>
+
+        <div class="member-socials">
+          <a href="https://www.linkedin.com/in/jackscilla/" target="_blank" rel="noopener" class="social-chip chip-li">
+            <span class="chip-circle">in</span>
+            <span>LinkedIn</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="member-card">
+        <div class="avatar-wrap">
+          <div class="avatar-inner">
+            <img src="{{ url_for('static', filename='images/team/jacob-geller.png') }}" alt="Jacob Geller, Digital Media and Marketing Advisor">
+          </div>
+        </div>
+
+        <div class="member-name">Jacob Geller</div>
+        <div class="member-role">Digital Media &amp; Marketing Advisor</div>
+
+        <p class="member-bio">
+          Jacob designs and architects the online pathways that bring readers, donors, and dreamers
+          to the Cooperative. With 8+ years in digital marketing, he helps ensure that every ad,
+          campaign, and creative experiment feels human — and leads back to our stories and our mission.
+        </p>
+
+        <p class="member-bio">
+          If you discovered JSM through an ad, a scroll, or a perfectly timed post, there is a good
+          chance Jacob’s fingerprints are on it.
+        </p>
+
+        <div class="member-socials">
+          <a href="https://www.instagram.com/snicksjacob1/" target="_blank" rel="noopener" class="social-chip chip-ig">
+            <span class="chip-circle">IG</span>
+            <span>@snicksjacob1</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="member-card">
+        <div class="avatar-wrap">
+          <div class="avatar-inner">
+            <img src="{{ url_for('static', filename='images/team/jack-herman.jpg') }}" alt="Jack Herman, CTO and Lead Graphic Designer">
+          </div>
+        </div>
+
+        <div class="member-name">Jack “Junior” Herman</div>
+        <div class="member-role">CTO · Lead Graphic &amp; Experience Designer</div>
+
+        <p class="member-bio">
+          Junior orchestrates the visual language of JSM Cooperative: from website experiences
+          and UI to cinematic book mockups and pre-prints for early readers. His work sits at the
+          intersection of <strong>design, technology, and narrative</strong>.
+        </p>
+
+        <p class="member-bio">
+          Every time a reader says “wow” before reading a single word, there is a good chance
+          Junior’s design magic is to thank.
+        </p>
+
+        <div class="member-socials">
+          <a href="https://www.instagram.com/jack_herman/" target="_blank" rel="noopener" class="social-chip chip-ig">
+            <span class="chip-circle">IG</span>
+            <span>@jack_herman</span>
+          </a>
+
+          <a href="https://www.linkedin.com/in/jack-herman-30532789/" target="_blank" rel="noopener" class="social-chip chip-li">
+            <span class="chip-circle">in</span>
+            <span>LinkedIn</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="member-card">
+        <div class="avatar-wrap">
+          <div class="avatar-inner">
+            <img src="{{ url_for('static', filename='images/team/robert-suchor.gif') }}" alt="Robert Suchor, Head of Imagineering Division">
+          </div>
+        </div>
+
+        <div class="member-name">Robert “Bobby” Suchor</div>
+        <div class="member-role">Head of the Imagineering Division</div>
+
+        <p class="member-bio">
+          Bobby is part producer, part futurist, part golf-course story scout. His job is to listen
+          — to donors, to communities, to nonprofits — and translate what he hears into narrative
+          blueprints the Cooperative can build from.
+        </p>
+
+        <p class="member-bio">
+          Whether he is at a charity event or on the green, he is gathering the threads that become
+          characters like <strong>Pepe Miguel</strong> and campaigns that actually resonate.
+        </p>
+
+        <div class="member-socials">
+          <a href="https://www.linkedin.com/in/robert-suchor/" target="_blank" rel="noopener" class="social-chip chip-li">
+            <span class="chip-circle">in</span>
+            <span>LinkedIn</span>
+          </a>
+
+          <a href="https://www.instagram.com/bobbysuchor/" target="_blank" rel="noopener" class="social-chip chip-ig">
+            <span class="chip-circle">IG</span>
+            <span>@bobbysuchor</span>
+          </a>
+
+          <a href="https://www.tiktok.com/@bobbysuchor" target="_blank" rel="noopener" class="social-chip chip-tt">
+            <span class="chip-circle">TT</span>
+            <span>TikTok</span>
+          </a>
+
+          <a href="mailto:books@jsmcoop.com" class="social-chip chip-mail">
+            <span class="chip-circle">@</span>
+            <span>Email Bobby</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="member-card">
+        <div class="avatar-wrap">
+          <div class="avatar-inner">
+            <img src="{{ url_for('static', filename='images/team/esther-cora-rivera.jpg') }}" alt="Esther Cora Rivera, Social Media and Community Engagement">
+          </div>
+        </div>
+
+        <div class="member-name">Esther “Cora” Rivera</div>
+        <div class="member-role">Social Media &amp; Community Engagement</div>
+
+        <p class="member-bio">
+          Cora is the bridge between our online world and real-world communities. She manages
+          social media storytelling, digital interactions, and our presence at events and
+          gatherings — making sure the Cooperative always shows up as its full, authentic self.
+        </p>
+
+        <p class="member-bio">
+          From heartfelt posts to in-person conversations, she helps readers feel less like
+          “audience” and more like <strong>family walking the Camino with us.</strong>
+        </p>
+
+        <div class="member-socials">
+          <a href="https://www.instagram.com/ferreirasempree/" target="_blank" rel="noopener" class="social-chip chip-ig">
+            <span class="chip-circle">IG</span>
+            <span>@ferreirasempree</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="member-card">
+        <div class="avatar-wrap">
+          <div class="avatar-inner">
+            <img src="{{ url_for('static', filename='images/team/sdg.png') }}" alt="Future Project Manager role, always expanding">
+          </div>
+        </div>
+
+        <div class="member-name">Always Expanding</div>
+        <div class="member-role">Future Project Manager · You?</div>
+
+        <p class="member-bio">
+          As the JSM Cooperative grows across children’s stories, young adult fiction, and adult
+          fiction, the web of tales and timelines keeps expanding. We are looking for someone who
+          loves <strong>organization as much as imagination</strong> — a project manager who can
+          help us build the internal systems that keep everything flowing.
+        </p>
+
+        <p class="member-bio">
+          If you thrive in chaos, live in spreadsheets, and still get excited by wild ideas,
+          we would love to talk to you.
+        </p>
+
+        <div class="member-socials">
+          <a href="/contact" class="social-chip chip-mail">
+            <span class="chip-circle">@</span>
+            <span>Reach Out to Join</span>
+          </a>
+
+          <a href="mailto:books@jsmcoop.com" class="social-chip chip-mail">
+            <span class="chip-circle">@</span>
+            <span>Lets Chat</span>
+          </a>
+        </div>
+      </article>
+
+    </div>
+
+    <section class="team-cta-strip">
+      <div class="team-cta-text">
+        <h2 class="team-cta-title">Walk the Camino With Us</h2>
+        <p class="team-cta-body">
+          Whether you are a reader, creator, nonprofit leader, or simply someone who believes
+          stories can change the world, there is a place for you in this Cooperative.
+        </p>
+      </div>
+
+      <div class="team-cta-actions">
+        <button type="button" class="team-btn-main" id="team-open-modal">
+          ✨ Join the Cooperative Conversation
+        </button>
+
+        <a href="/contact" class="team-btn-ghost">
+          📬 Contact Us
+        </a>
+
+        <a href="mailto:books@jsmcoop.com" class="team-btn-ghost">
+          💌 Email Us
+        </a>
+      </div>
+    </section>
+
+    <section class="work-panel" aria-label="Work with JSM Cooperative">
+      <article class="work-card">
+        <h3>🧠 Collaborate on Story &amp; Strategy</h3>
+        <p>
+          Want to build a campaign or narrative around your nonprofit, community, or cause?
+          We love co-creating stories that center dignity, nuance, and real humans. From
+          concept to finished book, we can explore ways to weave your mission into
+          <strong>fiction that funds your work.</strong>
+        </p>
+      </article>
+
+      <article class="work-card">
+        <h3>📚 Hire Us for Creative &amp; Editorial Work</h3>
+        <p>
+          Our team includes editors, designers, strategists, and imagineers who can support your
+          organization with <strong>story development, line editing, visual design, and campaign
+          storytelling.</strong> When you work with us, you are also supporting our SDG-aligned mission.
+        </p>
+      </article>
+
+      <article class="work-card">
+        <h3>🌍 Partner With Us Around the SDGs</h3>
+        <p>
+          We are especially eager to collaborate with organizations advancing the
+          <strong>UN Sustainable Development Goals</strong>. If your work touches health, education,
+          climate, equity, or community resilience, we would love to explore what a story-powered
+          partnership could look like.
+        </p>
+      </article>
+    </section>
+
+  </div>
+
+  <div class="floating-join">
+    <button type="button" id="team-floating-open">
+      <span class="join-dot"></span>
+      <span>Join the Cooperative</span>
+    </button>
+  </div>
+
+  <div class="team-modal-backdrop" id="team-modal" aria-hidden="true">
+    <div class="team-modal" role="dialog" aria-modal="true" aria-labelledby="team-modal-title">
+      <button class="team-modal-close" type="button" id="team-modal-close" aria-label="Close modal">×</button>
+
+      <h3 id="team-modal-title">Let’s Build Something Together</h3>
+
+      <p>
+        Thank you for spending time with our team. If something in our mission, our stories,
+        or our structure sparks a feeling — that is your invitation.
+      </p>
+
+      <p>
+        You can reach out to explore <strong>partnerships, project work, volunteering, or new roles
+        on the team.</strong> Every email is read with care.
+      </p>
+
+      <div class="team-modal-actions">
+        <a href="mailto:books@jsmcoop.com" class="team-btn-main">
+          💌 Email the Cooperative
+        </a>
+
+        <a href="/contact" class="team-btn-ghost">
+          📬 Go to Contact Page
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const modal = document.getElementById("team-modal");
+      const openBtn = document.getElementById("team-open-modal");
+      const floatingBtn = document.getElementById("team-floating-open");
+      const closeBtn = document.getElementById("team-modal-close");
+
+      function openModal() {
+        if (!modal) return;
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeModal() {
+        if (!modal) return;
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+      }
+
+      if (openBtn) openBtn.addEventListener("click", openModal);
+      if (floatingBtn) floatingBtn.addEventListener("click", openModal);
+      if (closeBtn) closeBtn.addEventListener("click", closeModal);
+
+      if (modal) {
+        modal.addEventListener("click", function (event) {
+          if (event.target === modal) closeModal();
+        });
+      }
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") closeModal();
+      });
+    })();
+  </script>
+
+</section>
+
+{% endblock %}

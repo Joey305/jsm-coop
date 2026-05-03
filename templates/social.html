@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero">
+  <div class="container narrow">
+    <p class="eyebrow">JSM Cooperative · Social</p>
+    <h1>{{ platform }} landing page</h1>
+    <p>This recovered WordPress export included a lightweight {{ platform }} page. This Flask version keeps the route alive so old links and ad destinations do not break.</p>
+    <div class="redirect-grid">
+      <a href="{{ url_for('newsletter_page') }}"><strong>📬 Newsletter</strong><span>Join The Camino.</span></a>
+      <a href="{{ url_for('blogs') }}"><strong>📰 Blogs</strong><span>Read updates and impact stories.</span></a>
+      <a href="{{ url_for('donate') }}"><strong>💙 Donate</strong><span>Fuel stories that fund a better world.</span></a>
+    </div>
+  </div>
+</section>
+{% endblock %}

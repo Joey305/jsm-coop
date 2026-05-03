@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .contact-page {
+    overflow: hidden;
+  }
+
+  .contact-hero {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .contact-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 18% 20%, rgba(0, 234, 255, 0.16), transparent 34%),
+      radial-gradient(circle at 82% 18%, rgba(250, 204, 21, 0.12), transparent 30%),
+      radial-gradient(circle at 64% 88%, rgba(78, 254, 220, 0.1), transparent 34%);
+  }
+
+  .contact-hero .container {
+    position: relative;
+    z-index: 2;
+  }
+
+  .contact-intro {
+    max-width: 760px;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .contact-form-card,
+  .contact-info-card {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.2rem, 3vw, 1.75rem);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top left, rgba(0, 234, 255, 0.08), transparent 36%),
+      rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+  }
+
+  .contact-form-card::after {
+    content: "MESSAGE";
+    position: absolute;
+    right: -0.4rem;
+    bottom: -0.6rem;
+    color: rgba(255, 255, 255, 0.035);
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+    letter-spacing: -0.08em;
+    pointer-events: none;
+  }
+
+  .contact-info-card::after {
+    content: "#JOINTHECAMINO";
+    position: absolute;
+    right: -0.8rem;
+    bottom: -0.4rem;
+    color: rgba(255, 255, 255, 0.035);
+    font-size: clamp(2.4rem, 6vw, 4.8rem);
+    font-weight: 900;
+    letter-spacing: -0.08em;
+    pointer-events: none;
+  }
+
+  .contact-form-card form,
+  .contact-info-card > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  .contact-form-card label {
+    display: grid;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    color: var(--text, #e5e7eb);
+    font-weight: 800;
+  }
+
+  .contact-form-card input,
+  .contact-form-card textarea,
+  .contact-form-card select {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    background: rgba(255, 255, 255, 0.075);
+    color: var(--text, #e5e7eb);
+    font: inherit;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .contact-form-card textarea {
+    resize: vertical;
+    min-height: 180px;
+  }
+
+  .contact-form-card input:focus,
+  .contact-form-card textarea:focus,
+  .contact-form-card select:focus {
+    border-color: rgba(0, 234, 255, 0.5);
+    background: rgba(255, 255, 255, 0.095);
+    box-shadow: 0 0 0 4px rgba(0, 234, 255, 0.1);
+  }
+
+  .contact-form-card input::placeholder,
+  .contact-form-card textarea::placeholder {
+    color: rgba(203, 213, 225, 0.58);
+  }
+
+  .contact-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .contact-form-card .full {
+    grid-column: 1 / -1;
+  }
+
+  .contact-note {
+    margin: 0.8rem 0 0;
+    color: var(--text-soft, #9ca3af);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .contact-info-card h2 {
+    margin: 0 0 0.7rem;
+    color: var(--text, #e5e7eb);
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.045em;
+  }
+
+  .contact-info-card p {
+    color: var(--text-soft, #9ca3af);
+    line-height: 1.72;
+  }
+
+  .contact-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.85rem;
+    padding: 0.38rem 0.75rem;
+    border-radius: 999px;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.24);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .contact-action-stack {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1.1rem 0;
+  }
+
+  .contact-action,
+  button.contact-action {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    width: 100%;
+    padding: 0.95rem;
+    border-radius: 20px;
+    color: var(--text, #e5e7eb);
+    text-decoration: none;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.065);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    font: inherit;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .contact-action:hover,
+  .contact-action:focus-visible,
+  button.contact-action:hover,
+  button.contact-action:focus-visible {
+    transform: translateY(-3px);
+    border-color: rgba(0, 234, 255, 0.38);
+    background: rgba(255, 255, 255, 0.105);
+  }
+
+  .contact-action-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 2.85rem;
+    height: 2.85rem;
+    border-radius: 17px;
+    background: rgba(0, 234, 255, 0.11);
+    border: 1px solid rgba(0, 234, 255, 0.22);
+    font-size: 1.25rem;
+  }
+
+  .contact-action-copy {
+    display: block;
+    min-width: 0;
+  }
+
+  .contact-action-copy strong {
+    display: block;
+    color: #ffffff;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .contact-action-copy small {
+    display: block;
+    margin-top: 0.18rem;
+    color: var(--text-soft, #9ca3af);
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+
+  .mini-stat-grid.contact-stats {
+    margin-top: 1.2rem;
+  }
+
+  .contact-topic-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.9rem;
+  }
+
+  .contact-topic-card,
+  .contact-topic-card:visited {
+    display: block;
+    min-height: 100%;
+    padding: 1rem;
+    border-radius: 22px;
+    color: inherit;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .contact-topic-card:hover,
+  .contact-topic-card:focus-visible {
+    transform: translateY(-4px);
+    border-color: rgba(0, 234, 255, 0.4);
+    background: rgba(255, 255, 255, 0.095);
+    box-shadow: 0 18px 44px rgba(0, 234, 255, 0.09);
+  }
+
+  .contact-topic-card .topic-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 2.65rem;
+    height: 2.65rem;
+    margin-bottom: 0.8rem;
+    border-radius: 16px;
+    background: rgba(0, 234, 255, 0.1);
+    border: 1px solid rgba(0, 234, 255, 0.2);
+    font-size: 1.25rem;
+  }
+
+  .contact-topic-card h3 {
+    margin: 0 0 0.4rem;
+    color: var(--text, #e5e7eb);
+  }
+
+  .contact-topic-card p {
+    margin: 0;
+    color: var(--text-soft, #9ca3af);
+    line-height: 1.6;
+  }
+
+  .contact-topic-card .topic-cta {
+    display: inline-flex;
+    margin-top: 0.85rem;
+    color: #7dd3fc;
+    font-weight: 800;
+    font-size: 0.92rem;
+  }
+
+  @media (max-width: 960px) {
+    .contact-grid,
+    .contact-topic-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .contact-form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .contact-form-card .full {
+      grid-column: auto;
+    }
+
+    .contact-form-card .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contact-page">
+
+  <section class="page-hero contact-hero">
+    <div class="container narrow reveal contact-intro">
+      <p class="eyebrow">Contact</p>
+      <h1>Get in touch with JSM Cooperative.</h1>
+      <p>
+        Questions, collaborations, donations, book inquiries, press, or Camino subscription support?
+        Send us a message and we will get back to you.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#contact-form">Send a Message</a>
+        <a class="btn btn-ghost" href="mailto:{{ contact_email }}?subject=JSM%20Cooperative%20Inquiry&body=Hello%20JSM%20Cooperative%20team%2C%0D%0A%0D%0AI%20am%20reaching%20out%20about%3A%0D%0A%0D%0A">Email Us</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container contact-grid">
+      <div class="contact-form-card reveal" id="contact-form">
+        <span class="contact-badge">Message JSM Cooperative</span>
+
+        <form method="post">
+          <div class="contact-form-grid">
+            <label>
+              Name
+              <input name="name" autocomplete="name" placeholder="Your name" required>
+            </label>
+
+            <label>
+              Email
+              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required>
+            </label>
+
+            <label class="full">
+              Subject
+              <input name="subject" placeholder="Book inquiry, donation question, collaboration, press, etc.">
+            </label>
+
+            <label class="full">
+              Message
+              <textarea name="message" rows="7" placeholder="Tell us how we can help." required></textarea>
+            </label>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Send Message</button>
+
+          <p class="contact-note">
+            We use your message only to respond to your inquiry and support JSM Cooperative communications.
+          </p>
+        </form>
+      </div>
+
+      <aside class="contact-info-card reveal delay-1">
+        <span class="contact-badge">Direct Contact</span>
+
+        <h2>Let’s build something meaningful.</h2>
+
+        <p>
+          Whether you are reaching out about <em>The Man in the Ball Cap</em>, the Camino novel subscription,
+          a nonprofit collaboration, a donation, or a press inquiry, this is the best place to start.
+        </p>
+
+        <div class="contact-action-stack">
+          <a
+            class="contact-action"
+            href="mailto:{{ contact_email }}?subject=JSM%20Cooperative%20Inquiry&body=Hello%20JSM%20Cooperative%20team%2C%0D%0A%0D%0AI%20am%20reaching%20out%20about%3A%0D%0A%0D%0A"
+          >
+            <span class="contact-action-icon">✉️</span>
+            <span class="contact-action-copy">
+              <strong>Email Us</strong>
+              <small>Open your email app and send us a direct message.</small>
+            </span>
+          </a>
+
+          <a class="contact-action" href="{{ url_for('novel_subscription') }}">
+            <span class="contact-action-icon">🚶</span>
+            <span class="contact-action-copy">
+              <strong>Join The Camino</strong>
+              <small>Learn about the monthly novel subscription.</small>
+            </span>
+          </a>
+
+          <button
+            type="button"
+            class="contact-action"
+            data-purchase-open
+            aria-haspopup="dialog"
+            aria-controls="purchase-modal"
+          >
+            <span class="contact-action-icon">📚</span>
+            <span class="contact-action-copy">
+              <strong>Buy The Book</strong>
+              <small>Choose Amazon, Barnes & Noble, or the Spanish edition.</small>
+            </span>
+          </button>
+
+          <a class="contact-action" href="{{ url_for('donate') }}">
+            <span class="contact-action-icon">💙</span>
+            <span class="contact-action-copy">
+              <strong>Support The Mission</strong>
+              <small>Help fund storytelling and nonprofit-aligned impact.</small>
+            </span>
+          </a>
+        </div>
+
+        <div class="mini-stat-grid contact-stats">
+          <div>
+            <strong>Books</strong>
+            <span>Publishing</span>
+          </div>
+
+          <div>
+            <strong>Impact</strong>
+            <span>Nonprofit</span>
+          </div>
+
+          <div>
+            <strong>Camino</strong>
+            <span>Community</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="contact-topic-grid">
+        <a
+          class="contact-topic-card reveal"
+          href="mailto:{{ contact_email }}?subject=Book%20Inquiry%20%7C%20JSM%20Cooperative&body=Hello%20JSM%20Cooperative%20team%2C%0D%0A%0D%0AI%20am%20reaching%20out%20with%20a%20book%20inquiry%20about%20The%20Man%20in%20the%20Ball%20Cap.%0D%0A%0D%0AMy%20question%20is%3A%0D%0A%0D%0A"
+        >
+          <span class="topic-icon">📖</span>
+          <h3>Book Inquiries</h3>
+          <p>
+            Questions about the novel, signed copies, chapter readings, or author updates.
+          </p>
+          <span class="topic-cta">Email the team →</span>
+        </a>
+
+        <a
+          class="contact-topic-card reveal delay-1"
+          href="mailto:{{ contact_email }}?subject=Camino%20Subscription%20Inquiry%20%7C%20JSM%20Cooperative&body=Hello%20JSM%20Cooperative%20team%2C%0D%0A%0D%0AI%20am%20reaching%20out%20about%20the%20Camino%20novel%20subscription.%0D%0A%0D%0AMy%20question%20is%3A%0D%0A%0D%0A"
+        >
+          <span class="topic-icon">🚶</span>
+          <h3>Camino Subscription</h3>
+          <p>
+            Support questions for the monthly reader-powered subscription campaign.
+          </p>
+          <span class="topic-cta">Email the team →</span>
+        </a>
+
+        <a
+          class="contact-topic-card reveal delay-2"
+          href="mailto:{{ contact_email }}?subject=Collaboration%20Inquiry%20%7C%20JSM%20Cooperative&body=Hello%20JSM%20Cooperative%20team%2C%0D%0A%0D%0AI%20am%20reaching%20out%20about%20a%20potential%20collaboration%20with%20JSM%20Cooperative.%0D%0A%0D%0AHere%20is%20a%20brief%20overview%3A%0D%0A%0D%0A"
+        >
+          <span class="topic-icon">🤝</span>
+          <h3>Collaborations</h3>
+          <p>
+            Partnerships, nonprofit work, community campaigns, and creative-impact projects.
+          </p>
+          <span class="topic-cta">Email the team →</span>
+        </a>
+
+        <a
+          class="contact-topic-card reveal delay-3"
+          href="mailto:{{ contact_email }}?subject=Press%20%26%20Media%20Inquiry%20%7C%20JSM%20Cooperative&body=Hello%20JSM%20Cooperative%20team%2C%0D%0A%0D%0AI%20am%20reaching%20out%20with%20a%20press%20or%20media%20inquiry.%0D%0A%0D%0AOutlet%20or%20organization%3A%0D%0ATimeline%3A%0D%0AInquiry%20details%3A%0D%0A%0D%0A"
+        >
+          <span class="topic-icon">🎙️</span>
+          <h3>Press & Media</h3>
+          <p>
+            Interviews, features, announcements, and media requests connected to JSM Cooperative.
+          </p>
+          <span class="topic-cta">Email the team →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

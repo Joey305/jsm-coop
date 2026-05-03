@@ -1,0 +1,986 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .home-page {
+    overflow: hidden;
+  }
+
+  .home-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: min(92vh, 920px);
+    display: flex;
+    align-items: center;
+    padding: clamp(5rem, 9vw, 8rem) 0 clamp(3rem, 7vw, 5rem);
+    background:
+      radial-gradient(circle at 15% 18%, rgba(0, 234, 255, 0.2), transparent 32%),
+      radial-gradient(circle at 82% 18%, rgba(250, 204, 21, 0.12), transparent 28%),
+      radial-gradient(circle at 70% 82%, rgba(168, 85, 247, 0.16), transparent 36%),
+      linear-gradient(180deg, #06101f 0%, #030712 56%, #01040b 100%);
+  }
+
+  .home-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    background-image:
+      linear-gradient(rgba(0, 234, 255, 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 234, 255, 0.045) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent 78%);
+    pointer-events: none;
+  }
+
+  .home-hero::after {
+    content: "#JOINTHECAMINO";
+    position: absolute;
+    right: -1.4rem;
+    bottom: -1rem;
+    z-index: -2;
+    color: rgba(255, 255, 255, 0.035);
+    font-size: clamp(3.8rem, 12vw, 12rem);
+    font-weight: 950;
+    letter-spacing: -0.09em;
+    line-height: 0.85;
+    pointer-events: none;
+  }
+
+  .home-orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(4px);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .home-orb-one {
+    width: 18rem;
+    height: 18rem;
+    left: -6rem;
+    top: 18%;
+    background: radial-gradient(circle, rgba(0, 234, 255, 0.18), transparent 68%);
+    animation: homeOrbFloat 9s ease-in-out infinite;
+  }
+
+  .home-orb-two {
+    width: 22rem;
+    height: 22rem;
+    right: -8rem;
+    top: 12%;
+    background: radial-gradient(circle, rgba(250, 204, 21, 0.13), transparent 68%);
+    animation: homeOrbFloat 11s ease-in-out infinite 1.5s;
+  }
+
+  .home-orb-three {
+    width: 20rem;
+    height: 20rem;
+    right: 22%;
+    bottom: -7rem;
+    background: radial-gradient(circle, rgba(78, 254, 220, 0.12), transparent 70%);
+    animation: homeOrbFloat 10s ease-in-out infinite 0.6s;
+  }
+
+  @keyframes homeOrbFloat {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+    }
+
+    50% {
+      transform: translateY(-18px) scale(1.04);
+    }
+  }
+
+  .home-hero-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  .home-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    padding: 0.45rem 0.82rem;
+    border-radius: 999px;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.26);
+    font-size: 0.78rem;
+    font-weight: 950;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .home-hero h1 {
+    max-width: 760px;
+    margin: 0;
+    font-size: clamp(3.3rem, 8.5vw, 7.5rem);
+    line-height: 0.88;
+    letter-spacing: -0.085em;
+    color: #ffffff;
+  }
+
+  .home-gradient-text {
+    background: linear-gradient(120deg, #ffffff, #9be8ff, #4efedc, #facc15, #ffffff);
+    background-size: 280% 280%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: homeGradientShift 8s ease-in-out infinite;
+  }
+
+  @keyframes homeGradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .home-hero-lede {
+    max-width: 670px;
+    margin: 1.35rem 0 0;
+    color: rgba(203, 213, 225, 0.84);
+    font-size: clamp(1.08rem, 2vw, 1.28rem);
+    line-height: 1.75;
+  }
+
+  .home-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 1.6rem;
+  }
+
+  .home-hero-actions .btn {
+    min-height: 48px;
+  }
+
+  .home-proof-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 1.35rem;
+  }
+
+  .home-proof-row span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0.42rem 0.72rem;
+    border-radius: 999px;
+    color: rgba(226, 232, 240, 0.86);
+    background: rgba(255, 255, 255, 0.065);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+
+  .book-showcase-wrap {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 560px;
+  }
+
+  .book-showcase-wrap::before {
+    content: "";
+    position: absolute;
+    width: min(78%, 460px);
+    height: min(78%, 460px);
+    border-radius: 999px;
+    background:
+      conic-gradient(
+        from 160deg,
+        rgba(0, 234, 255, 0.4),
+        transparent,
+        rgba(78, 254, 220, 0.34),
+        transparent,
+        rgba(250, 204, 21, 0.24),
+        transparent,
+        rgba(168, 85, 247, 0.34),
+        transparent
+      );
+    filter: blur(22px);
+    opacity: 0.8;
+    animation: homeSpinGlow 18s linear infinite;
+  }
+
+  @keyframes homeSpinGlow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .book-showcase-card {
+    position: relative;
+    z-index: 2;
+    width: min(100%, 520px);
+    padding: clamp(1.1rem, 3vw, 1.6rem);
+    border-radius: 34px;
+    background:
+      radial-gradient(circle at top, rgba(0, 234, 255, 0.12), transparent 42%),
+      linear-gradient(145deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.92));
+    border: 1px solid rgba(0, 234, 255, 0.22);
+    box-shadow:
+      0 32px 90px rgba(0, 0, 0, 0.42),
+      0 0 42px rgba(0, 234, 255, 0.12),
+      inset 0 0 34px rgba(0, 234, 255, 0.04);
+    backdrop-filter: blur(18px);
+  }
+
+  .book-showcase-badge {
+    position: absolute;
+    top: 1.1rem;
+    right: 1.1rem;
+    z-index: 4;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    color: #111827;
+    background: linear-gradient(135deg, #facc15, #fb923c);
+    font-size: 0.72rem;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 0 24px rgba(250, 204, 21, 0.28);
+  }
+
+  .book-showcase-img {
+    position: relative;
+    z-index: 3;
+    display: block;
+    width: min(100%, 430px);
+    margin: 0 auto;
+    filter:
+      drop-shadow(0 34px 42px rgba(0, 0, 0, 0.66))
+      drop-shadow(0 0 22px rgba(0, 234, 255, 0.12));
+    animation: homeBookFloat 6.5s ease-in-out infinite;
+  }
+
+  @keyframes homeBookFloat {
+    0%, 100% {
+      transform: translateY(0) rotate(-1deg);
+    }
+
+    50% {
+      transform: translateY(-14px) rotate(1deg);
+    }
+  }
+
+  .book-showcase-copy {
+    position: relative;
+    z-index: 3;
+    margin-top: -0.25rem;
+    padding: 1rem;
+    border-radius: 24px;
+    background: rgba(2, 6, 23, 0.54);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .book-showcase-copy h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    line-height: 1.05;
+    letter-spacing: -0.05em;
+  }
+
+  .book-showcase-copy p {
+    margin: 0.65rem 0 0;
+    color: rgba(203, 213, 225, 0.78);
+    line-height: 1.65;
+  }
+
+  .section-heading.home-section-heading {
+    max-width: 850px;
+  }
+
+  .home-section-shell {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-section-shell::after {
+    content: "";
+    position: absolute;
+    inset: auto 8% 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 234, 255, 0.42), rgba(250, 204, 21, 0.3), transparent);
+    pointer-events: none;
+  }
+
+  .home-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .home-feature-card {
+    position: relative;
+    overflow: hidden;
+    padding: 1.3rem;
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at top left, rgba(0, 234, 255, 0.08), transparent 36%),
+      rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.2);
+  }
+
+  .home-feature-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -20% -45% 20%;
+    height: 7rem;
+    background: radial-gradient(circle, rgba(0, 234, 255, 0.12), transparent 68%);
+    pointer-events: none;
+  }
+
+  .home-feature-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    border-radius: 18px;
+    background: rgba(0, 234, 255, 0.1);
+    border: 1px solid rgba(0, 234, 255, 0.22);
+    font-size: 1.35rem;
+  }
+
+  .home-feature-card h3 {
+    margin: 0 0 0.55rem;
+    color: #ffffff;
+    font-size: 1.25rem;
+  }
+
+  .home-feature-card p {
+    margin: 0;
+    color: rgba(203, 213, 225, 0.78);
+    line-height: 1.66;
+  }
+
+  .home-novel-section {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-novel-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 0.82fr);
+    gap: clamp(1.3rem, 4vw, 2rem);
+    align-items: start;
+  }
+
+  .home-panel {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.25rem, 3vw, 1.7rem);
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at top left, rgba(0, 234, 255, 0.09), transparent 34%),
+      rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+  }
+
+  .home-panel h2 {
+    margin: 0 0 0.8rem;
+    color: #ffffff;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+  }
+
+  .home-panel p {
+    color: rgba(203, 213, 225, 0.8);
+    line-height: 1.76;
+  }
+
+  .home-impact-list {
+    display: grid;
+    gap: 0.85rem;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .home-impact-list li {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    border-radius: 20px;
+    color: rgba(203, 213, 225, 0.84);
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.095);
+    line-height: 1.55;
+  }
+
+  .home-impact-list strong {
+    color: #4efedc;
+  }
+
+  .home-kindle-card {
+    text-align: center;
+  }
+
+  .home-kindle-frame {
+    width: min(100%, 360px);
+    margin: 1rem auto 0;
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(2, 6, 23, 0.85);
+    border: 1px solid rgba(0, 234, 255, 0.16);
+    box-shadow:
+      0 24px 70px rgba(0, 0, 0, 0.3),
+      0 0 34px rgba(0, 234, 255, 0.08);
+  }
+
+  .home-kindle-frame iframe {
+    width: 100%;
+    height: 550px;
+    display: block;
+    border: 0;
+  }
+
+  .home-camino-band {
+    position: relative;
+    overflow: hidden;
+    border-radius: 34px;
+    margin: 0 auto;
+    padding: clamp(1.35rem, 4vw, 2rem);
+    background:
+      radial-gradient(circle at top right, rgba(250, 204, 21, 0.14), transparent 34%),
+      radial-gradient(circle at bottom left, rgba(0, 234, 255, 0.12), transparent 36%),
+      linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.96));
+    border: 1px solid rgba(78, 254, 220, 0.18);
+    box-shadow:
+      0 28px 80px rgba(0, 0, 0, 0.28),
+      0 0 42px rgba(78, 254, 220, 0.08);
+  }
+
+  .home-camino-band::after {
+    content: "CAMINO";
+    position: absolute;
+    right: -0.6rem;
+    bottom: -0.8rem;
+    color: rgba(255, 255, 255, 0.04);
+    font-size: clamp(4rem, 12vw, 9rem);
+    font-weight: 950;
+    letter-spacing: -0.09em;
+    pointer-events: none;
+  }
+
+  .home-camino-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
+    gap: 1.4rem;
+    align-items: center;
+  }
+
+  .home-camino-band h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.06em;
+  }
+
+  .home-camino-band p {
+    color: rgba(203, 213, 225, 0.82);
+    line-height: 1.7;
+  }
+
+  .home-price-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin-bottom: 0.8rem;
+    color: #facc15;
+  }
+
+  .home-price-chip strong {
+    color: #ffffff;
+    font-size: clamp(2.7rem, 6vw, 4.4rem);
+    line-height: 0.9;
+    letter-spacing: -0.09em;
+  }
+
+  .home-blog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .home-blog-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.052);
+    border: 1px solid rgba(255, 255, 255, 0.105);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.2);
+    transition:
+      transform 0.22s ease,
+      border-color 0.22s ease,
+      box-shadow 0.22s ease;
+  }
+
+  .home-blog-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 234, 255, 0.26);
+    box-shadow:
+      0 28px 74px rgba(0, 0, 0, 0.28),
+      0 0 28px rgba(0, 234, 255, 0.08);
+  }
+
+  .home-blog-card a {
+    text-decoration: none;
+  }
+
+  .home-blog-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 8;
+    object-fit: cover;
+  }
+
+  .home-blog-card-body {
+    padding: 1rem;
+  }
+
+  .home-blog-meta {
+    margin: 0 0 0.55rem;
+    color: rgba(203, 213, 225, 0.66);
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .home-blog-card h3 {
+    margin: 0 0 0.55rem;
+    color: #ffffff;
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+  }
+
+  .home-blog-card p {
+    margin: 0;
+    color: rgba(203, 213, 225, 0.75);
+    line-height: 1.6;
+  }
+
+  .home-final-cta {
+    position: relative;
+    overflow: hidden;
+    border-radius: 34px;
+    background:
+      radial-gradient(circle at 14% 20%, rgba(0, 234, 255, 0.18), transparent 36%),
+      radial-gradient(circle at 85% 15%, rgba(250, 204, 21, 0.14), transparent 30%),
+      linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.98));
+    border: 1px solid rgba(0, 234, 255, 0.18);
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.3),
+      0 0 42px rgba(0, 234, 255, 0.09);
+  }
+
+  .home-final-cta .cta-inner {
+    position: relative;
+    z-index: 2;
+  }
+
+  .home-final-cta::after {
+    content: "STORIES";
+    position: absolute;
+    right: -0.6rem;
+    bottom: -0.8rem;
+    color: rgba(255, 255, 255, 0.04);
+    font-size: clamp(4rem, 12vw, 9rem);
+    font-weight: 950;
+    letter-spacing: -0.09em;
+    pointer-events: none;
+  }
+
+  @media (max-width: 1050px) {
+    .home-hero-grid,
+    .home-novel-grid,
+    .home-camino-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .book-showcase-wrap {
+      min-height: auto;
+    }
+
+    .home-feature-grid,
+    .home-blog-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .home-hero {
+      min-height: auto;
+      padding-top: 4.5rem;
+    }
+
+    .home-hero h1 {
+      font-size: clamp(3rem, 17vw, 5.3rem);
+    }
+
+    .home-hero-actions .btn,
+    .home-camino-grid .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .book-showcase-card {
+      border-radius: 26px;
+    }
+
+    .book-showcase-badge {
+      top: 0.75rem;
+      right: 0.75rem;
+    }
+
+    .home-kindle-frame iframe {
+      height: 500px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="home-page">
+
+  <section class="home-hero">
+    <div class="home-orb home-orb-one"></div>
+    <div class="home-orb home-orb-two"></div>
+    <div class="home-orb home-orb-three"></div>
+
+    <div class="container home-hero-grid">
+      <div class="home-hero-copy reveal">
+        <div class="home-kicker">JSM Cooperative Corporation · #JOINTHECAMINO</div>
+
+        <h1>
+          Stories that fund
+          <span class="home-gradient-text">a better world.</span>
+        </h1>
+
+        <p class="home-hero-lede">
+          JSM Cooperative turns books, creative campaigns, and community storytelling into real-world
+          support for mission-aligned nonprofit impact — beginning with our debut novel,
+          <em>The Man in the Ball Cap</em>.
+        </p>
+
+        <div class="home-hero-actions">
+          <a class="btn btn-primary" href="{{ url_for('book') }}">Explore the Book</a>
+
+          <button
+            type="button"
+            class="btn btn-buy"
+            data-purchase-open
+            aria-haspopup="dialog"
+            aria-controls="purchase-modal"
+          >
+            Buy the Book
+          </button>
+
+          <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate Now</a>
+          <a class="btn btn-ghost" href="{{ url_for('novel_subscription') }}">Join The Camino</a>
+        </div>
+
+        <div class="home-proof-row">
+          <span>📚 Debut novel</span>
+          <span>💙 Nonprofit-aligned impact</span>
+          <span>🌎 SDG-minded mission</span>
+          <span>🚶 Reader-powered Camino</span>
+        </div>
+      </div>
+
+      <aside class="book-showcase-wrap reveal delay-1">
+        <div class="book-showcase-card">
+          <div class="book-showcase-badge">Debut Novel</div>
+
+          <img
+            class="book-showcase-img"
+            src="{{ url_for('static', filename='images/BOOK3D.png') }}"
+            alt="The Man in the Ball Cap 3D book cover"
+            loading="eager"
+            onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+          >
+
+          <div class="book-showcase-copy">
+            <h2>The Man in the Ball Cap</h2>
+            <p>
+              A mystery set in A Coruña, Spain — where memory, symbols, shadow, and purpose collide.
+            </p>
+
+            <div class="home-hero-actions" style="margin-top: 1rem;">
+              <a class="btn btn-primary" href="{{ url_for('book') }}#preview">Read Preview</a>
+
+              <button
+                type="button"
+                class="btn btn-ghost"
+                data-purchase-open
+                aria-haspopup="dialog"
+                aria-controls="purchase-modal"
+              >
+                Purchase Options
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section home-section-shell">
+    <div class="container section-heading home-section-heading reveal">
+      <p class="eyebrow">What we are building</p>
+      <h2>A home for books, impact, and community.</h2>
+      <p>
+        JSM Cooperative exists to prove that stories can do more than entertain. They can gather readers,
+        move resources, and support the nonprofit-aligned work our community believes in.
+      </p>
+    </div>
+
+    <div class="container home-feature-grid">
+      <article class="home-feature-card reveal">
+        <div class="home-feature-icon">📖</div>
+        <h3>Publish the stories</h3>
+        <p>
+          Showcase novels, author updates, behind-the-scenes notes, chapter materials,
+          and creative projects without being trapped in a page builder.
+        </p>
+      </article>
+
+      <article class="home-feature-card reveal delay-1">
+        <div class="home-feature-icon">🌍</div>
+        <h3>Fund the mission</h3>
+        <p>
+          Connect book sales, donations, subscriptions, and community campaigns to mission-aligned impact.
+        </p>
+      </article>
+
+      <article class="home-feature-card reveal delay-2">
+        <div class="home-feature-icon">🚶</div>
+        <h3>Walk the Camino</h3>
+        <p>
+          Build a reader-powered community path where updates, giving, storytelling,
+          and nonprofit support move together.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section home-novel-section" id="novel">
+    <div class="container home-novel-grid">
+      <article class="home-panel reveal">
+        <p class="eyebrow">Debut Novel</p>
+        <h2>Read, listen, and join the journey.</h2>
+
+        <p>
+          In the coastal city of <strong>A Coruña</strong>, private investigator
+          <strong>Pepe Miguel</strong> is drawn into a mystery where old symbols,
+          hidden motives, and buried histories begin to surface.
+        </p>
+
+        <p>
+          <em>The Man in the Ball Cap</em> is the creative anchor for JSM Cooperative’s first major
+          impact campaign — a story that invites readers into both a mystery and a mission.
+        </p>
+
+        <ul class="home-impact-list">
+          <li><strong>1.</strong> Read the story and enter the world of Pepe Miguel.</li>
+          <li><strong>2.</strong> Share the book, preview, or campaign with someone who might connect with it.</li>
+          <li><strong>3.</strong> Help JSM Cooperative keep building storytelling-as-solidarity.</li>
+        </ul>
+
+        <div class="home-hero-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-purchase-open
+            aria-haspopup="dialog"
+            aria-controls="purchase-modal"
+          >
+            Buy The Book
+          </button>
+
+          <a class="btn btn-ghost" href="{{ url_for('book') }}">Book Page</a>
+          <a class="btn btn-donate" href="{{ url_for('donate') }}">Support the Mission</a>
+        </div>
+      </article>
+
+      <aside class="home-panel home-kindle-card reveal delay-1" id="preview">
+        <p class="eyebrow">Free Sample</p>
+        <h2>Preview the book.</h2>
+        <p>
+          Peek inside before purchasing. The Kindle preview below lets visitors read a sample directly
+          from Amazon’s official reader.
+        </p>
+
+        <div class="home-kindle-frame">
+          <iframe
+            type="text/html"
+            sandbox="allow-scripts allow-same-origin allow-popups"
+            width="336"
+            height="550"
+            frameborder="0"
+            allowfullscreen
+            src="https://read.amazon.com/kp/card?asin=B0CPKTVMYX&amp;preview=inline&amp;linkCode=kpe&amp;ref_=cm_sw_r_kb_dp_6ZFC66VA6C4D8CH1W11N">
+          </iframe>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container home-camino-band reveal">
+      <div class="home-camino-grid">
+        <div>
+          <p class="eyebrow">Ongoing Fundraiser</p>
+          <h2>#JoinTheCamino</h2>
+          <p>
+            The Camino is our reader-powered path: a monthly subscription campaign that turns books,
+            signed copies, community updates, and giving into recurring impact.
+          </p>
+
+          <div class="home-hero-actions">
+            <a class="btn btn-primary" href="{{ url_for('novel_subscription') }}">Join The Camino</a>
+            <a class="btn btn-ghost" href="{{ url_for('newsletter_page') }}">Newsletter</a>
+          </div>
+        </div>
+
+        <div class="home-panel" style="box-shadow:none;">
+          <div class="home-price-chip">
+            <strong>$23</strong>
+            <span>/ month</span>
+          </div>
+
+          <p>
+            First month: receive a signed copy. Every month after: choose someone special to receive one.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="split-section">
+    <div class="container split-grid">
+      <div class="panel reveal">
+        <p class="eyebrow">The Camino newsletter</p>
+        <h2>Walk with us, one update at a time.</h2>
+        <p>
+          Subscribe for book updates, campaign notes, community stories, nonprofit-aligned impact,
+          and reflections on storytelling as a tool for service.
+        </p>
+
+        <form class="newsletter-panel" action="{{ url_for('newsletter_page') }}" method="post">
+          <div class="form-row">
+            <input name="first_name" placeholder="First name">
+            <input name="last_name" placeholder="Last name">
+          </div>
+          <input type="email" name="email" placeholder="Email address" required>
+          <button class="btn btn-primary" type="submit">Join The Camino</button>
+        </form>
+      </div>
+
+      <div class="panel impact-panel reveal delay-1">
+        <p class="eyebrow">Impact model</p>
+        <h2>Move hearts. Move resources.</h2>
+        <ul class="impact-list">
+          <li><strong>1.</strong> Create meaningful books and campaigns.</li>
+          <li><strong>2.</strong> Grow readership and community support.</li>
+          <li><strong>3.</strong> Channel proceeds, attention, and energy toward nonprofit-aligned impact.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container section-heading reveal">
+      <p class="eyebrow">Latest updates</p>
+      <h2>From the JSM blog</h2>
+      <p>
+        Follow the story behind the story: book updates, Camino reflections, mission notes,
+        and milestones from the Co-op.
+      </p>
+    </div>
+
+    <div class="container home-blog-grid">
+      {% for post in posts[:3] %}
+        <article class="home-blog-card reveal">
+          <a href="{{ url_for('blog_detail', slug=post.slug) }}">
+            <img
+              src="{{ post.cover }}"
+              alt="{{ post.title }} cover image"
+              loading="lazy"
+              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+            >
+          </a>
+
+          <div class="home-blog-card-body">
+            <p class="home-blog-meta">{{ post.date }} · {{ post.author }}</p>
+            <h3>
+              <a href="{{ url_for('blog_detail', slug=post.slug) }}">
+                {{ post.title }}
+              </a>
+            </h3>
+            <p>{{ post.excerpt }}</p>
+            <a class="read-more" href="{{ url_for('blog_detail', slug=post.slug) }}">Read more →</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="container" style="text-align:center; margin-top:1.5rem;">
+      <a class="btn btn-ghost" href="{{ url_for('blogs') }}">View All Updates</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container home-final-cta cta-band">
+      <div class="cta-inner reveal">
+        <div>
+          <p class="eyebrow">Ready to help?</p>
+          <h2>Support stories designed to do double duty.</h2>
+          <p>
+            Help JSM Cooperative keep publishing, organizing, and building campaigns that connect
+            creativity with community-powered impact.
+          </p>
+        </div>
+
+        <div class="home-hero-actions">
+          <a class="btn btn-donate large" href="{{ url_for('donate') }}">💙 Fuel the Camino</a>
+
+          <button
+            type="button"
+            class="btn btn-primary large"
+            data-purchase-open
+            aria-haspopup="dialog"
+            aria-controls="purchase-modal"
+          >
+            Buy The Book
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

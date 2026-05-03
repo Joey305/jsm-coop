@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">JSM Cooperative Placeholder Image</title>
+  <desc id="desc">Neon gradient placeholder for JSM Cooperative.</desc>
+  <defs>
+    <radialGradient id="g1" cx="20%" cy="10%" r="80%">
+      <stop offset="0%" stop-color="#00eaff" stop-opacity=".9"/>
+      <stop offset="45%" stop-color="#3b82f6" stop-opacity=".45"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="82%" cy="18%" r="60%">
+      <stop offset="0%" stop-color="#ff3b6a" stop-opacity=".75"/>
+      <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="txt" x1="0" x2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".5" stop-color="#4efedc"/>
+      <stop offset="1" stop-color="#facc15"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="720" fill="#020617"/>
+  <rect width="1200" height="720" fill="url(#g1)"/>
+  <rect width="1200" height="720" fill="url(#g2)"/>
+  <g opacity=".28" stroke="#4efedc" stroke-width="1">
+    <path d="M0 560 C260 420 360 650 600 500 S950 420 1200 520" fill="none"/>
+    <path d="M0 590 C260 450 360 680 600 530 S950 450 1200 550" fill="none"/>
+    <path d="M0 620 C260 480 360 710 600 560 S950 480 1200 580" fill="none"/>
+  </g>
+  <circle cx="600" cy="360" r="170" fill="none" stroke="#00eaff" stroke-opacity=".35" stroke-width="2"/>
+  <circle cx="600" cy="360" r="120" fill="none" stroke="#ff3b6a" stroke-opacity=".25" stroke-width="2"/>
+  <text x="600" y="330" fill="url(#txt)" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900" text-anchor="middle">JSM</text>
+  <text x="600" y="400" fill="#e5e7eb" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" text-anchor="middle">Cooperative</text>
+  <text x="600" y="460" fill="#9ca3af" font-family="Arial, Helvetica, sans-serif" font-size="24" text-anchor="middle">Stories that fund a better world</text>
+</svg>

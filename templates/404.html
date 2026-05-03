@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="not-found">
+  <div class="container not-found-inner reveal">
+    <p class="eyebrow">404 · Lost on the Camino</p>
+    <h1>This page wandered off the path.</h1>
+    <p>
+      The link may be old from the WordPress version, moved during the rebuild, or still waiting to be created.
+      Choose a new path below.
+    </p>
+
+    <div class="redirect-grid">
+      <a href="{{ url_for('home') }}"><strong>🏠 Home</strong><span>Start again from the new JSM homepage.</span></a>
+      <a href="{{ url_for('book') }}"><strong>📚 The Book</strong><span>Explore The Man in the Ball Cap.</span></a>
+      <a href="{{ url_for('blogs') }}"><strong>📰 Blogs</strong><span>Catch up on updates and chapter notes.</span></a>
+      <a href="{{ url_for('donate') }}"><strong>💙 Donate</strong><span>Support the Camino and JSM mission.</span></a>
+      <a href="{{ url_for('contact') }}"><strong>✉️ Contact</strong><span>Tell us what broken link brought you here.</span></a>
+      <a href="{{ url_for('projects') }}"><strong>🌍 Projects</strong><span>See the future impact hub.</span></a>
+    </div>
+
+    <p class="small-muted">
+      Tip: if this was a Google Ads destination, update the final URL to one of the live pages above.
+    </p>
+  </div>
+</section>
+{% endblock %}
