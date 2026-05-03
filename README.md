@@ -267,37 +267,6 @@ Deployment settings may vary by host. Make sure production secrets are configure
 
 ---
 
-## Public Repository Safety Checklist
-
-Before making this repository public, confirm:
-
-- No `.env` file is committed
-- No API keys, passwords, tokens, or private credentials are committed
-- No real SQLite database is committed
-- `data/` contains only `.gitkeep` unless intentionally publishing public data
-- `static/uploads/` contains only `.gitkeep` unless intentionally publishing public files
-- `wordpress_export/` contains only public website recovery content
-- `.DS_Store` files are removed
-- Contact forms and newsletter integrations do not expose private keys in frontend code
-- Admin routes do not contain hardcoded credentials
-
-Useful checks:
-
-```bash
-git status
-git ls-files
-grep -RniE "password|secret|token|api_key|apikey|mailchimp|private|gmail|subscriber|contact|admin" .
-```
-
-Remove macOS `.DS_Store` files before publishing:
-
-```bash
-find . -name ".DS_Store" -delete
-git add -A
-git commit -m "Remove macOS system files"
-```
-
----
 
 ## License
 
