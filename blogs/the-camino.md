@@ -1,6 +1,6 @@
 ---
 title: Walking The Camino
-date: 2026-05-02
+date: 2026-03-02
 author: JSM Cooperative
 excerpt: The Camino is the community path: a mission, a source, and a shared walk shaped by Galicia, storytelling, and the belief that creative work can bring people together.
 cover: /static/images/jsm-placeholder.svg

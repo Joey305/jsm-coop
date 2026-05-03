@@ -1,6 +1,6 @@
 ---
 title: The Man in the Ball Cap
-date: 2026-05-02
+date: 2026-04-02
 author: JSM Cooperative
 excerpt: Our debut novel sits at the center of the JSM Cooperative mission: turning creative work into community-powered impact.
 cover: /static/images/jsm-placeholder.svg
