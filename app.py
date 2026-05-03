@@ -6,6 +6,9 @@ from functools import wraps
 from urllib.parse import urlencode, quote
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
+from werkzeug.utils import secure_filename
+import mimetypes
+
 
 from dotenv import load_dotenv
 from flask import (
@@ -36,6 +39,17 @@ app.config["SITE_NAME"] = os.getenv("SITE_NAME", "JSM Cooperative Corporation")
 app.config["SITE_DOMAIN"] = os.getenv("SITE_DOMAIN", "https://jsmcoop.com")
 app.config["CONTACT_EMAIL"] = os.getenv("CONTACT_EMAIL", "books@jsmcoop.com")
 app.config["PAYPAL_DONATE_BUTTON_ID"] = os.getenv("PAYPAL_DONATE_BUTTON_ID", "TLWCSL2KJDZQU")
+app.config["BLOG_IMAGE_UPLOAD_DIR"] = BASE_DIR / "static" / "images" / "blog"
+app.config["BLOG_VIDEO_UPLOAD_DIR"] = BASE_DIR / "static" / "videos" / "blog"
+
+app.config["BLOG_IMAGE_URL_PREFIX"] = "images/blog"
+app.config["BLOG_VIDEO_URL_PREFIX"] = "videos/blog"
+
+app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB upload limit
+
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "svg"}
+ALLOWED_VIDEO_EXTENSIONS = {"mp4", "webm", "mov", "m4v"}
+
 
 # Use the exact Mailchimp POST action URL from your embedded form.
 # Example:
@@ -57,6 +71,56 @@ NAV_ITEMS = [
     ("Donate", "donate"),
     ("Contact", "contact"),
 ]
+
+
+
+
+
+def get_file_extension(filename):
+    if "." not in filename:
+        return ""
+
+    return filename.rsplit(".", 1)[1].lower().strip()
+
+
+def make_unique_path(directory, filename):
+    directory.mkdir(parents=True, exist_ok=True)
+
+    candidate = directory / filename
+
+    if not candidate.exists():
+        return candidate
+
+    stem = candidate.stem
+    suffix = candidate.suffix
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+
+    return directory / f"{stem}-{timestamp}{suffix}"
+
+
+def build_safe_upload_filename(original_filename, requested_filename=""):
+    original_filename = secure_filename(original_filename or "")
+    requested_filename = secure_filename(requested_filename or "")
+
+    original_ext = get_file_extension(original_filename)
+
+    if not original_filename or not original_ext:
+        return None, None
+
+    if requested_filename:
+        requested_ext = get_file_extension(requested_filename)
+
+        if requested_ext:
+            safe_filename = requested_filename
+        else:
+            safe_filename = f"{requested_filename}.{original_ext}"
+    else:
+        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        original_stem = Path(original_filename).stem
+        safe_filename = f"{original_stem}-{timestamp}.{original_ext}"
+
+    return safe_filename, original_ext
+
 
 
 @app.context_processor
@@ -523,6 +587,83 @@ def admin_login():
         flash("Invalid login.", "error")
 
     return render_template("admin/login.html", title="Admin Login")
+
+@app.route("/admin/media/upload", methods=["POST"])
+@login_required
+def admin_media_upload():
+    uploaded_file = request.files.get("media")
+    requested_filename = request.form.get("filename", "").strip()
+    alt_text = request.form.get("alt_text", "").strip()
+
+    if not uploaded_file or not uploaded_file.filename:
+        return jsonify(
+            {
+                "ok": False,
+                "error": "Please choose an image or video file first.",
+            }
+        ), 400
+
+    safe_filename, ext = build_safe_upload_filename(
+        uploaded_file.filename,
+        requested_filename,
+    )
+
+    if not safe_filename or not ext:
+        return jsonify(
+            {
+                "ok": False,
+                "error": "Invalid filename.",
+            }
+        ), 400
+
+    if ext in ALLOWED_IMAGE_EXTENSIONS:
+        upload_dir = app.config["BLOG_IMAGE_UPLOAD_DIR"]
+        url_prefix = app.config["BLOG_IMAGE_URL_PREFIX"]
+        media_type = "image"
+
+    elif ext in ALLOWED_VIDEO_EXTENSIONS:
+        upload_dir = app.config["BLOG_VIDEO_UPLOAD_DIR"]
+        url_prefix = app.config["BLOG_VIDEO_URL_PREFIX"]
+        media_type = "video"
+
+    else:
+        return jsonify(
+            {
+                "ok": False,
+                "error": "Unsupported file type. Please upload an image or video.",
+            }
+        ), 400
+
+    target_path = make_unique_path(upload_dir, safe_filename)
+    uploaded_file.save(target_path)
+
+    media_url = url_for(
+        "static",
+        filename=f"{url_prefix}/{target_path.name}",
+    )
+
+    clean_alt = alt_text or target_path.stem.replace("-", " ").replace("_", " ").title()
+
+    if media_type == "image":
+        embed_code = f"![{clean_alt}]({media_url})"
+
+    else:
+        mime_type = mimetypes.guess_type(str(target_path))[0] or "video/mp4"
+
+        embed_code = f"""<video class="blog-video" controls preload="metadata">
+  <source src="{media_url}" type="{mime_type}">
+  Your browser does not support the video tag.
+</video>"""
+
+    return jsonify(
+        {
+            "ok": True,
+            "media_type": media_type,
+            "filename": target_path.name,
+            "url": media_url,
+            "embed_code": embed_code,
+        }
+    )
 
 
 @app.route("/admin/logout")
