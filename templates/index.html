@@ -38,7 +38,7 @@
     content: "#JOINTHECAMINO";
     position: absolute;
     right: -1.4rem;
-    bottom: -1rem;
+    bottom: 0.75rem;
     z-index: -2;
     color: rgba(255, 255, 255, 0.035);
     font-size: clamp(3.8rem, 12vw, 12rem);
@@ -660,6 +660,233 @@
       height: 500px;
     }
   }
+
+
+  /* ================================
+   JSM Brand Bridge
+================================ */
+
+.home-brand-bridge {
+  position: relative;
+  z-index: 2;
+  margin-top: 0;
+  padding: clamp(3rem, 6vw, 5rem) 0 clamp(2.5rem, 5vw, 4rem);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(0, 234, 255, 0.08), transparent 32%),
+    radial-gradient(circle at 85% 15%, rgba(168, 85, 247, 0.09), transparent 34%),
+    linear-gradient(180deg, #01040b 0%, #030712 55%, #020713 100%);
+}
+
+
+.home-brand-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.42fr) minmax(0, 1fr);
+  gap: clamp(1.4rem, 4vw, 2.5rem);
+  align-items: center;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border-radius: 36px;
+  background:
+    radial-gradient(circle at 16% 50%, rgba(0, 234, 255, 0.2), transparent 32%),
+    radial-gradient(circle at 88% 18%, rgba(250, 204, 21, 0.13), transparent 30%),
+    radial-gradient(circle at 72% 88%, rgba(168, 85, 247, 0.15), transparent 34%),
+    linear-gradient(145deg, rgba(15, 23, 42, 0.86), rgba(2, 6, 23, 0.96));
+  border: 1px solid rgba(0, 234, 255, 0.2);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.34),
+    0 0 48px rgba(0, 234, 255, 0.1),
+    inset 0 0 42px rgba(0, 234, 255, 0.045);
+  backdrop-filter: blur(18px);
+}
+
+.home-brand-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 234, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 234, 255, 0.035) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: radial-gradient(circle at left, rgba(0,0,0,0.9), transparent 72%);
+  pointer-events: none;
+}
+
+.home-brand-card::after {
+  content: "JSM";
+  position: absolute;
+  right: -0.3rem;
+  bottom: -1.2rem;
+  color: rgba(255, 255, 255, 0.035);
+  font-size: clamp(5rem, 14vw, 12rem);
+  font-weight: 950;
+  letter-spacing: -0.12em;
+  line-height: 0.85;
+  pointer-events: none;
+}
+
+.home-brand-logo-wrap {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+}
+
+.home-brand-logo-orbit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(170px, 22vw, 250px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background:
+    conic-gradient(
+      from 120deg,
+      rgba(0, 234, 255, 0.78),
+      rgba(78, 254, 220, 0.4),
+      rgba(250, 204, 21, 0.55),
+      rgba(168, 85, 247, 0.45),
+      rgba(0, 234, 255, 0.78)
+    );
+  box-shadow:
+    0 0 34px rgba(0, 234, 255, 0.22),
+    0 0 64px rgba(168, 85, 247, 0.13);
+  animation: homeBrandPulse 5.5s ease-in-out infinite;
+}
+
+.home-brand-logo-orbit::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: inherit;
+  background: #020713;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.home-brand-logo {
+  position: relative;
+  z-index: 2;
+  width: calc(100% - 18px);
+  height: calc(100% - 18px);
+  border-radius: 999px;
+  object-fit: cover;
+  object-position: center;
+  filter:
+    drop-shadow(0 0 16px rgba(0, 234, 255, 0.28))
+    drop-shadow(0 0 22px rgba(250, 204, 21, 0.12));
+}
+
+@keyframes homeBrandPulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    filter: saturate(1);
+  }
+
+  50% {
+    transform: translateY(-7px) scale(1.025);
+    filter: saturate(1.18);
+  }
+}
+
+.home-brand-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.home-brand-copy h2 {
+  max-width: 760px;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -0.07em;
+}
+
+.home-brand-copy p {
+  max-width: 780px;
+  margin: 0.9rem 0 0;
+  color: rgba(203, 213, 225, 0.82);
+  line-height: 1.75;
+  font-size: clamp(1rem, 1.7vw, 1.13rem);
+}
+
+.home-brand-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1.2rem;
+}
+
+.home-brand-flow span {
+  position: relative;
+  overflow: hidden;
+  min-height: 82px;
+  padding: 0.85rem;
+  border-radius: 22px;
+  color: rgba(226, 232, 240, 0.86);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.105);
+  line-height: 1.35;
+}
+
+.home-brand-flow span::after {
+  content: "";
+  position: absolute;
+  left: 0.85rem;
+  right: 0.85rem;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00eaff, #4efedc, #facc15);
+  opacity: 0.75;
+}
+
+.home-brand-flow strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #4efedc;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+
+@media (max-width: 1050px) {
+  .home-brand-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .home-brand-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-brand-copy p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .home-brand-bridge {
+    margin-top: 0;
+    padding-top: 2.5rem;
+  }
+
+  .home-brand-card {
+    border-radius: 28px;
+  }
+
+  .home-brand-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .home-brand-flow span {
+    min-height: auto;
+  }
+}
+
+
 </style>
 {% endblock %}
 
@@ -747,6 +974,64 @@
       </aside>
     </div>
   </section>
+
+
+
+  <section class="home-brand-bridge" aria-label="JSM Cooperative identity">
+    <div class="container">
+      <div class="home-brand-card reveal">
+        <div class="home-brand-logo-wrap">
+          <div class="home-brand-logo-orbit">
+            <img
+              class="home-brand-logo"
+              src="{{ url_for('static', filename='images/Logo.png') }}"
+              alt="JSM Cooperative logo"
+              loading="lazy"
+              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+            >
+          </div>
+        </div>
+
+        <div class="home-brand-copy">
+          <p class="eyebrow">The Cooperative model</p>
+
+          <h2>One story. A growing circle of impact.</h2>
+
+          <p>
+            Every reader who buys, shares, subscribes, or donates becomes part of the loop:
+            books create attention, attention builds community, and community helps fuel
+            nonprofit-aligned work.
+          </p>
+
+          <div class="home-brand-flow">
+            <span>
+              <strong>Read</strong>
+              Begin with the story.
+            </span>
+
+            <span>
+              <strong>Share</strong>
+              Invite others into the Camino.
+            </span>
+
+            <span>
+              <strong>Support</strong>
+              Turn attention into resources.
+            </span>
+
+            <span>
+              <strong>Impact</strong>
+              Help mission-aligned work grow.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+
+
 
   <section class="section home-section-shell">
     <div class="container section-heading home-section-heading reveal">

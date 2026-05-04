@@ -453,9 +453,13 @@
 
   <header class="site-header" data-header>
     <div class="container header-inner">
-      <a class="brand" href="{{ url_for('home') }}" aria-label="JSM Cooperative home">
-        <span class="brand-mark">🎭</span>
-        <span class="brand-text">JSM <strong>Cooperative</strong></span>
+      
+      <a class="brand brand-logo-link" href="{{ url_for('home') }}" aria-label="JSM Cooperative home">
+        <img
+          class="nav-logo"
+          src="{{ url_for('static', filename='images/logo-nav.png') }}"
+          alt="JSM Cooperative"
+        >
       </a>
 
       <nav class="desktop-nav" aria-label="Primary navigation">

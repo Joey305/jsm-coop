@@ -512,3 +512,30 @@ body.purchase-modal-open {
   }
 }
 
+
+
+.brand-logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.nav-logo {
+  display: block;
+  width: clamp(150px, 18vw, 230px);
+  height: 56px;
+  object-fit: contain;
+  object-position: center;
+  filter:
+    drop-shadow(0 0 10px rgba(0, 234, 255, 0.28))
+    drop-shadow(0 0 18px rgba(250, 204, 21, 0.12));
+}
+
+@media (max-width: 800px) {
+  .nav-logo {
+    width: 145px;
+    height: 48px;
+  }
+}
