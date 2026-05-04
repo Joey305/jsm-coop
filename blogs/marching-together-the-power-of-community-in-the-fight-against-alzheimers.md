@@ -148,7 +148,7 @@ That is why our creative work is tied to mission-driven impact. Our debut novel,
 
 [Buy The Book →](https://www.amazon.com/Man-Ballcap-JSM-Cooperative-ebook/dp/B0CPKTVMYX){: .article-btn .article-btn-cyan }
 
-[Buy The Spanish Edition →](https://www.amazon.es/dp/B0D2MB8JWZ?_encoding=UTF8&psc=1&ref=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1&ref_=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1&social_share=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1){: .article-btn .article-btn-gold }
+[Buy The Spanish Edition →](https://www.amazon.es/dp/B0D2MB8JWZ){: .article-btn .article-btn-gold }
 
 ---
 

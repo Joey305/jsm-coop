@@ -149,23 +149,41 @@ def slugify(text):
     return text.strip("-")
 
 
+
 def parse_front_matter(raw):
     metadata = {}
     body = raw
 
-    if raw.startswith("---"):
-        parts = raw.split("---", 2)
+    # Remove invisible BOM if a file was saved from another editor
+    raw = raw.lstrip("\ufeff")
 
-        if len(parts) >= 3:
-            header = parts[1]
-            body = parts[2].strip()
+    # Match only real front matter delimiters on their own lines
+    match = re.match(r"^---\s*\n(.*?)\n---\s*\n?(.*)$", raw, re.DOTALL)
 
-            for line in header.splitlines():
-                if ":" in line:
-                    key, val = line.split(":", 1)
-                    metadata[key.strip().lower()] = val.strip()
+    if match:
+        header = match.group(1)
+        body = match.group(2).strip()
+
+        for line in header.splitlines():
+            line = line.strip()
+
+            if not line or ":" not in line:
+                continue
+
+            key, val = line.split(":", 1)
+
+            key = key.strip().lower()
+            val = val.strip()
+
+            # Strip wrapping quotes only, not quotes inside the text
+            if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                val = val[1:-1]
+
+            metadata[key] = val
 
     return metadata, body
+
+    
 
 
 def read_blog_file(path):

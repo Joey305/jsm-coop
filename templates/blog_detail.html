@@ -387,6 +387,26 @@
       margin-right: 0;
     }
   }
+
+
+  .article-body {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: clamp(1.3rem, 3vw, 2.3rem);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top left, rgba(0, 234, 255, 0.07), transparent 34%),
+    rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.095);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+
+
 </style>
 {% endblock %}
 
@@ -428,7 +448,7 @@
   <section class="section">
     <div class="container blog-detail-shell">
       <div class="article-body reveal" data-article-body>
-        {{ post.html }}
+        {{ post.html|safe }}
       </div>
 
       <div class="blog-detail-footer reveal">
