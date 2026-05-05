@@ -33,7 +33,7 @@ load_dotenv(BASE_DIR / ".env")
 BLOG_DIR = BASE_DIR / "blogs"
 
 app = Flask(__name__)
-
+app.url_map.strict_slashes = False
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-change-me")
 app.config["SITE_NAME"] = os.getenv("SITE_NAME", "JSM Cooperative Corporation")
 app.config["SITE_DOMAIN"] = os.getenv("SITE_DOMAIN", "https://jsmcoop.com")
@@ -183,7 +183,7 @@ def parse_front_matter(raw):
 
     return metadata, body
 
-    
+
 
 
 def read_blog_file(path):
