@@ -499,7 +499,6 @@
   }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="camino-page">
 
@@ -525,6 +524,7 @@
 
         <div class="hero-actions">
           <a class="btn btn-primary" href="#paypal-section-camino">Start Your Camino Subscription</a>
+
           <button
             type="button"
             class="btn btn-ghost"
@@ -534,6 +534,7 @@
           >
             Buy The Book First
           </button>
+
           <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate Instead</a>
         </div>
 
@@ -542,10 +543,12 @@
             <span>🌄</span>
             <div><strong>$23/month:</strong> a recurring Camino subscription through PayPal.</div>
           </div>
+
           <div class="camino-proof-item">
             <span>📘</span>
             <div><strong>First month:</strong> receive a signed copy of <em>The Man in the Ball Cap</em>.</div>
           </div>
+
           <div class="camino-proof-item">
             <span>💌</span>
             <div><strong>Every month after:</strong> choose someone special to receive a signed copy.</div>
@@ -601,12 +604,14 @@
                 <em>The Man in the Ball Cap</em>.
               </div>
             </li>
+
             <li>
               <span>🎁</span>
               <div>
                 <strong>Every month after:</strong> You choose someone meaningful to receive a signed copy.
               </div>
             </li>
+
             <li>
               <span>💙</span>
               <div>
@@ -614,6 +619,7 @@
                 programs and JSM Cooperative’s mission-aligned publishing work.
               </div>
             </li>
+
             <li>
               <span>🌎</span>
               <div>
@@ -743,6 +749,30 @@
 <script src="https://www.paypal.com/sdk/js?client-id=Adb3yeUPDzJWoPPM4mnU6EJAEUcBybrrx9_EZivm9ec1PyiZZE9JsGnPpxy0ADjBwXUEgUwch-PlDgVA&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
 
 <script>
+  function reportSubscribeButtonClickConversion() {
+    if (typeof gtag !== "function") {
+      return;
+    }
+
+    gtag("event", "conversion", {
+      "send_to": "AW-16512731660/ycsaCNnn3KccEIyU8cE9",
+      "transaction_id": ""
+    });
+  }
+
+  function reportCaminoPayPalSubscriptionConversion(subscriptionId) {
+    if (typeof gtag !== "function") {
+      return;
+    }
+
+    gtag("event", "conversion", {
+      "send_to": "AW-16512731660/KW18CNbn3KccEIyU8cE9",
+      "value": 23.00,
+      "currency": "USD",
+      "transaction_id": subscriptionId || ""
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     const paypalContainerId = "#paypal-button-container-P-9PR89637A11935035M67J3EQ";
 
@@ -754,13 +784,25 @@
           layout: "vertical",
           label: "subscribe"
         },
+
+        onClick: function () {
+          reportSubscribeButtonClickConversion();
+        },
+
         createSubscription: function (data, actions) {
           return actions.subscription.create({
             plan_id: "P-9PR89637A11935035M67J3EQ"
           });
         },
+
         onApprove: function (data, actions) {
+          reportCaminoPayPalSubscriptionConversion(data.subscriptionID);
+
           alert("Thank you for joining the Camino! Subscription ID: " + data.subscriptionID);
+        },
+
+        onError: function (err) {
+          console.error("PayPal subscription error:", err);
         }
       }).render(paypalContainerId);
     }
