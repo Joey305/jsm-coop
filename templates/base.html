@@ -9,9 +9,20 @@
   <meta property="og:title" content="{{ title or 'JSM Cooperative Corporation' }}">
   <meta property="og:description" content="Stories that fund a better world. Walk the Camino with JSM Cooperative.">
   <meta property="og:type" content="website">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16512731660"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'AW-16512731660');
+  </script>
+  
 
   <link rel="icon" href="{{ url_for('static', filename='images/Logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  
 
   <style>
     /* ================================
