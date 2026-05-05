@@ -887,6 +887,188 @@
 }
 
 
+
+/* ================================
+   Gold Word + True Animated Circle
+================================ */
+
+.home-brand-headline {
+  overflow: visible;
+}
+
+.circle-word {
+  --circle-gold: #facc15;
+  --circle-orange: #fb923c;
+  --circle-cyan: #00eaff;
+  --circle-mint: #4efedc;
+
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  isolation: isolate;
+  padding: 0.03em 0.24em 0.1em;
+  margin: 0 0.04em;
+  line-height: 0.9;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.circle-word-text {
+  position: relative;
+  z-index: 3;
+  display: inline-block;
+  background: linear-gradient(
+    120deg,
+    #fff7cc 0%,
+    var(--circle-gold) 28%,
+    var(--circle-orange) 58%,
+    #fff3a3 78%,
+    var(--circle-gold) 100%
+  );
+  background-size: 220% 220%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 14px rgba(250, 204, 21, 0.28),
+    0 0 30px rgba(251, 146, 60, 0.14),
+    0 0 44px rgba(0, 234, 255, 0.08);
+  animation: circleWordGoldShift 4.5s ease-in-out infinite;
+}
+
+.circle-word-svg {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 52%;
+  width: 118%;
+  height: 118%;
+  overflow: visible;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  pointer-events: none;
+}
+
+.circle-word-base,
+.circle-word-draw,
+.circle-word-flash {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.circle-word-base {
+  stroke: rgba(250, 204, 21, 0.22);
+  stroke-width: 2.5;
+  filter:
+    drop-shadow(0 0 7px rgba(250, 204, 21, 0.22))
+    drop-shadow(0 0 14px rgba(0, 234, 255, 0.12));
+}
+
+.circle-word-draw {
+  stroke: url("#circleWordGradient");
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-dasharray: 0 100;
+  stroke-dashoffset: 25;
+  filter:
+    drop-shadow(0 0 8px rgba(0, 234, 255, 0.78))
+    drop-shadow(0 0 14px rgba(78, 254, 220, 0.42))
+    drop-shadow(0 0 20px rgba(250, 204, 21, 0.28));
+  animation: circleWordDraw 3.2s ease-in-out infinite;
+}
+
+.circle-word-flash {
+  stroke: rgba(255, 255, 255, 0.88);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 7 100;
+  stroke-dashoffset: 25;
+  opacity: 0;
+  filter:
+    drop-shadow(0 0 8px rgba(255, 255, 255, 0.75))
+    drop-shadow(0 0 14px rgba(250, 204, 21, 0.4));
+  animation: circleWordFlash 3.2s ease-in-out infinite;
+}
+
+.circle-word::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: -0.18em -0.32em -0.12em;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at center, rgba(250, 204, 21, 0.12), transparent 62%),
+    radial-gradient(ellipse at center, rgba(0, 234, 255, 0.08), transparent 70%);
+  filter: blur(6px);
+  opacity: 0.9;
+}
+
+@keyframes circleWordDraw {
+  0% {
+    stroke-dasharray: 0 100;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  68% {
+    stroke-dasharray: 100 0;
+    opacity: 1;
+  }
+
+  82% {
+    stroke-dasharray: 100 0;
+    opacity: 0.85;
+  }
+
+  100% {
+    stroke-dasharray: 100 0;
+    opacity: 0;
+  }
+}
+
+@keyframes circleWordFlash {
+  0%, 58% {
+    opacity: 0;
+    stroke-dashoffset: 25;
+  }
+
+  68% {
+    opacity: 1;
+    stroke-dashoffset: -70;
+  }
+
+  84%, 100% {
+    opacity: 0;
+    stroke-dashoffset: -92;
+  }
+}
+
+@keyframes circleWordGoldShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circle-word-text,
+  .circle-word-draw,
+  .circle-word-flash {
+    animation: none;
+  }
+
+  .circle-word-draw {
+    stroke-dasharray: 100 0;
+    opacity: 0.9;
+  }
+}
+
+
 </style>
 {% endblock %}
 
@@ -995,7 +1177,27 @@
         <div class="home-brand-copy">
           <p class="eyebrow">The Cooperative model</p>
 
-          <h2>One story. <br> A growing circle of impact.</h2>
+          <h2 class="home-brand-headline">
+            One story. <br>
+            A growing
+            <span class="circle-word">
+              <span class="circle-word-text">circle</span>
+              <svg class="circle-word-svg" viewBox="0 0 300 120" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="circleWordGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#00eaff" />
+                    <stop offset="45%" stop-color="#4efedc" />
+                    <stop offset="72%" stop-color="#facc15" />
+                    <stop offset="100%" stop-color="#fb923c" />
+                  </linearGradient>
+                </defs>
+                <ellipse class="circle-word-base" cx="150" cy="60" rx="135" ry="43"></ellipse>
+                <ellipse class="circle-word-draw" cx="150" cy="60" rx="135" ry="43" pathLength="100"></ellipse>
+                <ellipse class="circle-word-flash" cx="150" cy="60" rx="135" ry="43" pathLength="100"></ellipse>
+              </svg>
+            </span>
+            of impact.
+          </h2>
 
           <p>
             Every reader who buys, shares, subscribes, or donates becomes part of the loop:
