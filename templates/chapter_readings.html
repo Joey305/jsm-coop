@@ -1,21 +1,378 @@
 {% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .chapter-hero {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chapter-hero::before {
+    content: "";
+    position: absolute;
+    inset: -30%;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(0, 229, 255, 0.18), transparent 35%),
+      radial-gradient(circle at 80% 20%, rgba(255, 79, 216, 0.16), transparent 32%),
+      radial-gradient(circle at 50% 90%, rgba(94, 92, 230, 0.14), transparent 35%);
+    pointer-events: none;
+  }
+
+  .chapter-hero .container {
+    position: relative;
+    z-index: 2;
+  }
+
+  .chapter-kicker-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .chapter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.86);
+    font-size: 0.86rem;
+    backdrop-filter: blur(12px);
+  }
+
+  .chapter-hero-card {
+    padding: 1.4rem;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 28px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.035));
+    box-shadow: 0 24px 70px rgba(0,0,0,0.28);
+    backdrop-filter: blur(18px);
+  }
+
+  .chapter-watch-card {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 22px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .chapter-watch-card strong {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: #fff;
+  }
+
+  .chapter-watch-card span {
+    color: rgba(255,255,255,0.72);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .video-feature {
+    padding-top: 4rem;
+  }
+
+  .video-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+
+  .video-frame-card {
+    border-radius: 30px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.05);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.26);
+  }
+
+  .video-frame-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #05070f;
+  }
+
+  .video-frame-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .playlist-info {
+    padding: 1.5rem;
+    border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background:
+      linear-gradient(160deg, rgba(0,229,255,0.10), rgba(255,255,255,0.045)),
+      rgba(255,255,255,0.04);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.22);
+  }
+
+  .playlist-info h2 {
+    margin-bottom: 0.8rem;
+  }
+
+  .playlist-info p {
+    color: rgba(255,255,255,0.76);
+    line-height: 1.65;
+  }
+
+  .playlist-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin: 1.2rem 0;
+  }
+
+  .playlist-stat {
+    padding: 1rem;
+    border-radius: 20px;
+    background: rgba(0,0,0,0.22);
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .playlist-stat strong {
+    display: block;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .playlist-stat span {
+    display: block;
+    margin-top: 0.35rem;
+    color: rgba(255,255,255,0.68);
+    font-size: 0.9rem;
+  }
+
+  .chapter-path {
+    margin-top: 3rem;
+  }
+
+  .chapter-card {
+    position: relative;
+    min-height: 100%;
+  }
+
+  .chapter-card p {
+    color: rgba(255,255,255,0.74);
+  }
+
+  .chapter-number {
+    display: inline-flex;
+    width: 2.2rem;
+    height: 2.2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-bottom: 0.8rem;
+    background: rgba(0,229,255,0.13);
+    border: 1px solid rgba(0,229,255,0.25);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .reading-note {
+    margin-top: 3rem;
+    padding: 2rem;
+    border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background:
+      radial-gradient(circle at top left, rgba(0,229,255,0.10), transparent 35%),
+      rgba(255,255,255,0.045);
+    text-align: center;
+  }
+
+  .reading-note p {
+    max-width: 780px;
+    margin: 0.75rem auto 0;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 900px) {
+    .video-shell {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .playlist-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .chapter-hero-card,
+    .playlist-info,
+    .reading-note {
+      border-radius: 24px;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-hero">
+
+<section class="page-hero chapter-hero">
   <div class="container hero-grid">
     <div>
-      <p class="eyebrow">The Man in the Ball Cap</p>
-      <h1>Chapter readings, story drops, and the mystery of Pepe Miguel.</h1>
-      <p class="hero-lede">This page preserves the spirit of the original chapter readings area for <em>The Man in the Ball Cap</em>. We can use it for audio, embedded readings, chapter previews, and purchase/support links.</p>
-      <div class="hero-actions"><a class="btn btn-primary" href="{{ url_for('blogs') }}">Read updates</a><a class="btn btn-donate" href="{{ url_for('donate') }}">Support the mission</a></div>
+      <div class="chapter-kicker-row">
+        <p class="eyebrow">The Man in the Ball Cap</p>
+        <span class="chapter-pill">🎧 Chapter readings</span>
+        <span class="chapter-pill">🧢 Pepe Miguel’s story</span>
+      </div>
+
+      <h1>Listen to the story unfold, one chapter at a time.</h1>
+
+      <p class="hero-lede">
+        Step into <em>The Man in the Ball Cap</em> through recorded chapter readings from
+        JSM Cooperative. This page is the home for the first story drops, book updates,
+        and the mystery surrounding Pepe Miguel.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#chapter-readings">Watch the readings</a>
+        <a class="btn btn-donate" href="{{ url_for('donate') }}">Support the mission</a>
+      </div>
     </div>
-    <div class="book-cover large"><span>The Man in the</span><strong>Ball Cap</strong><em>Pepe Miguel</em></div>
+
+    <div class="chapter-hero-card">
+      <div class="book-cover large">
+        <span>The Man in the</span>
+        <strong>Ball Cap</strong>
+        <em>Pepe Miguel</em>
+      </div>
+
+      <div class="chapter-watch-card">
+        <strong>Now featuring the first 20 video readings</strong>
+        <span>
+          Begin with the opening chapters, follow the playlist in order, and experience
+          the novel as a serialized listening journey.
+        </span>
+      </div>
+    </div>
   </div>
 </section>
-<section class="section">
+
+<section id="chapter-readings" class="section video-feature">
+  <div class="container">
+    <div class="section-heading">
+      <p class="eyebrow">Watch / Listen</p>
+      <h2>Chapter Reading Playlist</h2>
+      <p>
+        The playlist below includes the first 20 video readings from
+        <em>The Man in the Ball Cap</em>. Start at the beginning, or let the playlist carry
+        you through the story.
+      </p>
+    </div>
+
+    <div class="video-shell">
+      <div class="video-frame-card">
+        <div class="video-frame-wrap">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/videoseries?list=PLggKDNHadQSD2Q4AQSjGiLS7RwIrnKKI9"
+            title="The Man in the Ball Cap chapter readings playlist"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+      <aside class="playlist-info">
+        <p class="eyebrow">Serialized Storytelling</p>
+        <h2>Readings that bring the book to life.</h2>
+
+        <p>
+          These videos are more than chapter previews. They are an invitation into the
+          world of the novel — the voice, the pacing, the mystery, and the emotional thread
+          behind Pepe Miguel’s journey.
+        </p>
+
+        <div class="playlist-stats">
+          <div class="playlist-stat">
+            <strong>20</strong>
+            <span>chapter videos</span>
+          </div>
+
+          <div class="playlist-stat">
+            <strong>1</strong>
+            <span>story world</span>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <a
+            class="btn btn-primary"
+            href="https://www.youtube.com/watch?v=gQctnn_i8DE&list=PLggKDNHadQSD2Q4AQSjGiLS7RwIrnKKI9"
+            target="_blank"
+            rel="noopener noreferrer">
+            Open on YouTube
+          </a>
+
+          <a class="btn btn-donate" href="{{ url_for('book') }}">
+            Explore the book
+          </a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="section chapter-path">
   <div class="container card-grid three">
-    <article class="glass-card"><div class="card-icon">🎧</div><h3>Audio readings</h3><p>Placeholder area for embedded chapter audio or video readings.</p></article>
-    <article class="glass-card"><div class="card-icon">📚</div><h3>Chapter previews</h3><p>Use this section for excerpts, sample chapters, or serialized releases.</p></article>
-    <article class="glass-card"><div class="card-icon">🧢</div><h3>Pepe’s case file</h3><p>Character notes, mystery clues, and worldbuilding from the novel.</p></article>
+    <article class="glass-card chapter-card">
+      <div class="chapter-number">1</div>
+      <h3>Start the journey</h3>
+      <p>
+        Begin with the opening readings and meet the voice, setting, and mystery that
+        shape <em>The Man in the Ball Cap</em>.
+      </p>
+    </article>
+
+    <article class="glass-card chapter-card">
+      <div class="chapter-number">2</div>
+      <h3>Follow the clues</h3>
+      <p>
+        Each chapter adds another piece to Pepe Miguel’s case file — character moments,
+        questions, symbols, and story threads.
+      </p>
+    </article>
+
+    <article class="glass-card chapter-card">
+      <div class="chapter-number">3</div>
+      <h3>Support the mission</h3>
+      <p>
+        Every view, share, book purchase, and donation helps JSM Cooperative continue
+        building story-driven community projects.
+      </p>
+    </article>
+  </div>
+
+  <div class="container">
+    <div class="reading-note">
+      <p class="eyebrow">Why chapter readings?</p>
+      <h2>A book can be more than pages.</h2>
+      <p>
+        JSM Cooperative was built around the idea that stories can move people, connect
+        communities, and support meaningful work. These chapter readings make the novel
+        easier to discover, easier to share, and easier to experience together.
+      </p>
+
+      <div class="hero-actions" style="justify-content:center; margin-top:1.5rem;">
+        <a class="btn btn-primary" href="{{ url_for('blogs') }}">Read updates</a>
+        <a class="btn btn-donate" href="{{ url_for('donate') }}">Buy the Co-op a Coffee</a>
+      </div>
+    </div>
   </div>
 </section>
+
 {% endblock %}
