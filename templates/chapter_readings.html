@@ -53,6 +53,190 @@
     backdrop-filter: blur(18px);
   }
 
+  .chapter-hero-card.book-showcase {
+    position: relative;
+    min-height: 590px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    isolation: isolate;
+    padding: 2rem;
+    border-radius: 34px;
+    border: 1px solid rgba(0, 229, 255, 0.24);
+    background:
+      radial-gradient(circle at 50% 16%, rgba(255, 244, 178, 0.18), transparent 25%),
+      radial-gradient(circle at 22% 78%, rgba(0, 229, 255, 0.20), transparent 35%),
+      radial-gradient(circle at 82% 35%, rgba(255, 79, 216, 0.17), transparent 32%),
+      linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.035));
+    box-shadow:
+      0 30px 90px rgba(0,0,0,0.40),
+      0 0 45px rgba(0, 229, 255, 0.08),
+      inset 0 0 0 1px rgba(255,255,255,0.06);
+    backdrop-filter: blur(18px);
+  }
+
+  .chapter-hero-card.book-showcase::before {
+    content: "";
+    position: absolute;
+    inset: -38%;
+    z-index: -3;
+    background:
+      conic-gradient(
+        from 180deg,
+        transparent,
+        rgba(0, 229, 255, 0.24),
+        transparent,
+        rgba(255, 79, 216, 0.20),
+        transparent,
+        rgba(255, 240, 160, 0.17),
+        transparent
+      );
+    animation: bookAuraSpin 18s linear infinite;
+    opacity: 0.75;
+  }
+
+  .chapter-hero-card.book-showcase::after {
+    content: "";
+    position: absolute;
+    inset: 1.25rem;
+    z-index: -2;
+    border-radius: 28px;
+    border: 1px solid rgba(0, 229, 255, 0.24);
+    box-shadow:
+      0 0 28px rgba(0, 229, 255, 0.18),
+      inset 0 0 42px rgba(0, 229, 255, 0.07);
+    pointer-events: none;
+  }
+
+  .book-float-stage {
+    position: relative;
+    z-index: 3;
+    width: min(94%, 420px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: bookFloat 5.8s ease-in-out infinite;
+    filter:
+      drop-shadow(0 30px 40px rgba(0, 0, 0, 0.58))
+      drop-shadow(0 0 32px rgba(0, 229, 255, 0.25))
+      drop-shadow(0 0 18px rgba(255, 240, 150, 0.12));
+  }
+
+  .book-float-stage::before {
+    content: "";
+    position: absolute;
+    width: 80%;
+    height: 20%;
+    left: 10%;
+    bottom: 1%;
+    z-index: -1;
+    background: radial-gradient(ellipse, rgba(0, 229, 255, 0.32), transparent 68%);
+    filter: blur(18px);
+    transform: rotate(-4deg);
+    animation: bookShadowPulse 5.8s ease-in-out infinite;
+  }
+
+  .book-float-stage::after {
+    content: "";
+    position: absolute;
+    inset: 4% 9%;
+    z-index: 5;
+    border-radius: 20px;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 34%,
+      rgba(255,255,255,0.32) 45%,
+      rgba(255,255,255,0.09) 53%,
+      transparent 65%,
+      transparent 100%
+    );
+    mix-blend-mode: screen;
+    pointer-events: none;
+    transform: translateX(-145%) skewX(-12deg);
+    animation: bookLightSweep 6.5s ease-in-out infinite;
+  }
+
+  .real-book-cover {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    transform: perspective(1000px) rotateY(-6deg) rotateX(2deg);
+    transition: transform 350ms ease, filter 350ms ease;
+  }
+
+  .chapter-hero-card.book-showcase:hover .real-book-cover {
+    transform: perspective(1000px) rotateY(-2deg) rotateX(1deg) scale(1.025);
+    filter: brightness(1.08) contrast(1.04);
+  }
+
+  .book-flare {
+    position: absolute;
+    top: 7%;
+    right: 11%;
+    width: 190px;
+    height: 190px;
+    z-index: 1;
+    background:
+      radial-gradient(circle, rgba(255, 249, 191, 0.42), rgba(0, 229, 255, 0.17) 33%, transparent 70%);
+    filter: blur(10px);
+    opacity: 0.8;
+    animation: moonFlarePulse 4.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .book-flare::after {
+    content: "";
+    position: absolute;
+    inset: 42%;
+    background: rgba(255, 255, 215, 0.75);
+    border-radius: 999px;
+    box-shadow:
+      0 0 28px rgba(255, 255, 210, 0.65),
+      0 0 58px rgba(0, 229, 255, 0.25);
+  }
+
+  .book-orb {
+    position: absolute;
+    z-index: 1;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(0, 229, 255, 0.85);
+    box-shadow: 0 0 18px rgba(0, 229, 255, 0.75);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .book-orb-one {
+    top: 18%;
+    left: 14%;
+    animation: orbDriftOne 7s ease-in-out infinite;
+  }
+
+  .book-orb-two {
+    top: 48%;
+    right: 10%;
+    width: 7px;
+    height: 7px;
+    background: rgba(255, 79, 216, 0.85);
+    box-shadow: 0 0 18px rgba(255, 79, 216, 0.75);
+    animation: orbDriftTwo 8s ease-in-out infinite;
+  }
+
+  .book-orb-three {
+    bottom: 24%;
+    left: 20%;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 239, 150, 0.9);
+    box-shadow: 0 0 18px rgba(255, 239, 150, 0.75);
+    animation: orbDriftThree 6.4s ease-in-out infinite;
+  }
+
   .chapter-watch-card {
     margin-top: 1rem;
     padding: 1rem;
@@ -71,6 +255,16 @@
     color: rgba(255,255,255,0.72);
     font-size: 0.95rem;
     line-height: 1.5;
+  }
+
+  .book-caption-card {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+    margin-top: 1.2rem;
+    background: rgba(0,0,0,0.34);
+    border: 1px solid rgba(0, 229, 255, 0.16);
+    box-shadow: 0 18px 45px rgba(0,0,0,0.22);
   }
 
   .video-feature {
@@ -199,9 +393,114 @@
     line-height: 1.7;
   }
 
+  .reading-note .hero-actions {
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  @keyframes bookFloat {
+    0%, 100% {
+      transform: translateY(0) rotate(-0.7deg);
+    }
+
+    50% {
+      transform: translateY(-14px) rotate(0.7deg);
+    }
+  }
+
+  @keyframes bookShadowPulse {
+    0%, 100% {
+      opacity: 0.45;
+      transform: scale(0.95) rotate(-4deg);
+    }
+
+    50% {
+      opacity: 0.75;
+      transform: scale(1.08) rotate(-4deg);
+    }
+  }
+
+  @keyframes bookLightSweep {
+    0%, 48% {
+      transform: translateX(-145%) skewX(-12deg);
+      opacity: 0;
+    }
+
+    58% {
+      opacity: 0.85;
+    }
+
+    74%, 100% {
+      transform: translateX(145%) skewX(-12deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes bookAuraSpin {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes moonFlarePulse {
+    0%, 100% {
+      opacity: 0.55;
+      transform: scale(0.92);
+    }
+
+    50% {
+      opacity: 0.95;
+      transform: scale(1.08);
+    }
+  }
+
+  @keyframes orbDriftOne {
+    0%, 100% {
+      transform: translate(0, 0);
+      opacity: 0.45;
+    }
+
+    50% {
+      transform: translate(18px, -24px);
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes orbDriftTwo {
+    0%, 100% {
+      transform: translate(0, 0);
+      opacity: 0.4;
+    }
+
+    50% {
+      transform: translate(-24px, 18px);
+      opacity: 0.9;
+    }
+  }
+
+  @keyframes orbDriftThree {
+    0%, 100% {
+      transform: translate(0, 0);
+      opacity: 0.45;
+    }
+
+    50% {
+      transform: translate(20px, 14px);
+      opacity: 0.95;
+    }
+  }
+
   @media (max-width: 900px) {
     .video-shell {
       grid-template-columns: 1fr;
+    }
+
+    .chapter-hero-card.book-showcase {
+      min-height: auto;
     }
   }
 
@@ -214,6 +513,32 @@
     .playlist-info,
     .reading-note {
       border-radius: 24px;
+    }
+
+    .chapter-hero-card.book-showcase {
+      padding: 1.35rem;
+    }
+
+    .book-float-stage {
+      width: min(94%, 320px);
+    }
+
+    .book-flare {
+      width: 130px;
+      height: 130px;
+      top: 8%;
+      right: 6%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chapter-hero-card.book-showcase::before,
+    .book-float-stage,
+    .book-float-stage::before,
+    .book-float-stage::after,
+    .book-flare,
+    .book-orb {
+      animation: none;
     }
   }
 </style>
@@ -244,14 +569,24 @@
       </div>
     </div>
 
-    <div class="chapter-hero-card">
-      <div class="book-cover large">
-        <span>The Man in the</span>
-        <strong>Ball Cap</strong>
-        <em>Pepe Miguel</em>
+    <div class="chapter-hero-card book-showcase" aria-label="The Man in the Ball Cap book showcase">
+      <div class="book-orb book-orb-one"></div>
+      <div class="book-orb book-orb-two"></div>
+      <div class="book-orb book-orb-three"></div>
+
+      <div class="book-flare"></div>
+
+      <div class="book-float-stage">
+        <img
+          class="real-book-cover"
+          src="{{ url_for('static', filename='images/BOOK3D.png') }}"
+          alt="The Man in the Ball Cap book cover"
+          loading="eager"
+          fetchpriority="high"
+        >
       </div>
 
-      <div class="chapter-watch-card">
+      <div class="chapter-watch-card book-caption-card">
         <strong>Now featuring the first 20 video readings</strong>
         <span>
           Begin with the opening chapters, follow the playlist in order, and experience
@@ -367,7 +702,7 @@
         easier to discover, easier to share, and easier to experience together.
       </p>
 
-      <div class="hero-actions" style="justify-content:center; margin-top:1.5rem;">
+      <div class="hero-actions">
         <a class="btn btn-primary" href="{{ url_for('blogs') }}">Read updates</a>
         <a class="btn btn-donate" href="{{ url_for('donate') }}">Buy the Co-op a Coffee</a>
       </div>
