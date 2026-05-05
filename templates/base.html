@@ -690,6 +690,37 @@
   </footer>
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-  {% block extra_scripts %}{% endblock %}
+
+  <!-- Google Ads conversion event helper -->
+<script>
+  function gtag_report_conversion(url) {
+    var callback = function () {
+      if (typeof(url) !== 'undefined') {
+        window.location = url;
+      }
+    };
+  
+    if (typeof gtag === 'function') {
+      gtag('event', 'conversion', {
+        'send_to': 'AW-16512731660/mdXICPyLzaAZEIyU8cE9',
+        'event_callback': callback
+      });
+  
+      return false;
+    }
+  
+    if (typeof(url) !== 'undefined') {
+      window.location = url;
+    }
+  
+    return false;
+  }
+  </script>
+
+
+
+
+
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>
