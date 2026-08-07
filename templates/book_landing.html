@@ -84,7 +84,10 @@
       <div class="container landing-two-col">
         <article class="book-feature-card reveal">
           <p class="eyebrow">{% if page_lang == 'es' %}La historia{% else %}Why read it{% endif %}</p>
-          <h2>{% if page_lang == 'es' %}Un misterio con lugar, memoria y símbolos.{% else %}A mystery built around place, memory, and symbols.{% endif %}</h2>
+          <h2>{% if page_lang == 'es' %}Un misterio con lugar, memoria y símbolos.{% else %}{{ landing.story_heading | default('A mystery with danger, atmosphere, and a case worth following.') }}{% endif %}</h2>
+          {% if landing.story_intro %}
+            <p>{{ landing.story_intro }}</p>
+          {% endif %}
           <ul class="book-feature-list">
             {% for item in landing.audience %}
               <li><span aria-hidden="true">-</span><div>{{ item }}</div></li>
@@ -105,10 +108,10 @@
             <p>
               {% if page_lang == 'es' %}
                 Lee una muestra Kindle en tu navegador y compra la edición española cuando estés listo.
-              {% else %}
-                Read a Kindle sample in your browser, then choose the edition and retailer that fit you.
-              {% endif %}
-            </p>
+            {% else %}
+              Read a Kindle sample in your browser, then choose the edition that feels right.
+            {% endif %}
+          </p>
           </div>
           <div class="book-feature-card kindle-preview-card reveal delay-1">
             {{ book_ui.preview_embed('landing_preview') }}
@@ -126,7 +129,7 @@
             {% if page_lang == 'es' %}
               La edición española aparece primero en esta página, y las opciones en inglés siguen disponibles.
             {% else %}
-              Retailer purchases stay available, and the signed direct edition is available through JSM Cooperative.
+              Choose a retailer edition, or order the signed direct edition from JSM Cooperative.
             {% endif %}
           </p>
           {% if landing.signed_primary or landing.signed_after_preview %}

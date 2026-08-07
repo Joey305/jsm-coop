@@ -90,8 +90,8 @@ BOOK_PRODUCT = {
     "setting": "A Coruña, Spain",
     "author": "JSM Cooperative",
     "description": (
-        "A literary mystery set in A Coruña, Spain, where memory, symbols, shadow, "
-        "and purpose collide."
+        "A dark mystery set in A Coruña, Spain, where private investigator Pepe Miguel follows "
+        "a dangerous case through secrets, occult rituals, and rising danger."
     ),
     "cover": "images/BOOK3D.png",
     "cover_webp": "images/BOOK3D.webp",
@@ -188,7 +188,7 @@ PAGE_META = {
     },
     "book": {
         "title": "The Man in the Ball Cap | Mystery Set in A Coruña, Spain",
-        "description": "Read or buy The Man in the Ball Cap, a literary mystery set in A Coruña, Spain, where memory, symbols, and place collide.",
+        "description": "Read or buy The Man in the Ball Cap, a dark mystery set in A Coruña, Spain, with secrets, occult rituals, and a dangerous case.",
         "image": "images/BOOK3D.png",
     },
     "book_signed": {
@@ -270,16 +270,18 @@ LANDING_PAGES = {
         "path": "/mystery-book-spain",
         "lang": "en",
         "eyebrow": "Literary Mystery Set In Spain",
-        "headline": "A mystery in A Coruña where memory refuses to stay buried.",
-        "lede": "Start with the story: a man in a ball cap, a city on the Galician coast, and a trail of symbols that turns memory into a mystery.",
+        "headline": "A dark mystery set on the Galician coast.",
+        "lede": "Private investigator Pepe Miguel follows a dangerous case through A Coruña, where occult rituals, buried secrets, and rising danger point toward a killer who may strike again.",
         "primary_label": "Order the Signed Edition",
         "secondary_label": "Read Free Preview",
         "signed_primary": True,
         "impact": "Your purchase also supports JSM Cooperative's mission-aligned nonprofit work.",
+        "story_heading": "Follow the clues through A Coruña.",
+        "story_intro": "This page is for readers who want an atmospheric mystery with a real sense of place. The case begins with Pepe Miguel and grows darker as secrets, symbols, and danger gather around the investigation.",
         "audience": [
             "Atmospheric mystery readers",
             "Readers drawn to books set in Spain and Galicia",
-            "Readers who like memory, symbolism, and place woven into suspense",
+            "Readers who like clue-driven suspense with a darker edge",
         ],
         "meta": {
             "title": "Mystery Book Set in Spain | The Man in the Ball Cap",
@@ -290,16 +292,18 @@ LANDING_PAGES = {
         "path": "/book-that-gives-back",
         "lang": "en",
         "eyebrow": "A Novel With Impact",
-        "headline": "Buy a mystery novel that helps fuel JSM Cooperative's mission.",
-        "lede": "The Man in the Ball Cap gives readers an atmospheric mystery and gives JSM Cooperative another way to fund creative, nonprofit-aligned work.",
+        "headline": "A signed mystery novel whose purchase supports nonprofit work.",
+        "lede": "Order a signed copy of The Man in the Ball Cap and read a dark A Coruña mystery while helping JSM Cooperative fund mission-aligned impact.",
         "primary_label": "Buy Directly from JSM",
         "secondary_label": "Read the Preview",
         "signed_primary": True,
-        "impact": "JSM's current site states: 100% of novel profits donated.",
+        "impact": "100% of novel profits donated.",
+        "story_heading": "A book gift with a story behind it.",
+        "story_intro": "The signed direct edition gives readers a physical paperback, a personal inscription, and a clear connection to the cooperative's work.",
         "audience": [
             "Mission-driven gift buyers",
-            "Readers who want purchases to support a cause",
-            "Supporters of creative nonprofit fundraising",
+            "Readers who want a suspense novel with a concrete giving connection",
+            "Supporters of books, storytelling, and nonprofit impact",
         ],
         "meta": {
             "title": "Book That Gives Back | The Man in the Ball Cap",
@@ -310,17 +314,19 @@ LANDING_PAGES = {
         "path": "/free-book-preview",
         "lang": "en",
         "eyebrow": "Free Kindle Preview",
-        "headline": "Read a free preview before you choose your edition.",
-        "lede": "Sample The Man in the Ball Cap in your browser, then choose Amazon US, Barnes & Noble, Amazon Spain, or a future direct edition.",
+        "headline": "Read the opening before deciding.",
+        "lede": "Sample The Man in the Ball Cap in your browser and see whether Pepe Miguel's A Coruña case pulls you in.",
         "primary_label": "Start Free Preview",
         "secondary_label": "Order the Signed Copy",
         "signed_after_preview": True,
-        "impact": "If the preview pulls you into the story, your purchase also helps JSM Cooperative keep the Camino moving.",
+        "impact": "If the preview pulls you into the story, you can choose the retailer edition or order a signed copy directly from JSM.",
+        "story_heading": "Start with the first pages.",
+        "story_intro": "No pressure, no guesswork. Read a sample, get a feel for the mystery, and choose your edition only if the case has you turning pages.",
         "preview_first": True,
         "audience": [
             "Readers who want to sample before buying",
             "Mystery fans comparing their next read",
-            "Visitors from Google Ads who need a lower-commitment first step",
+            "Gift buyers checking the tone before ordering",
         ],
         "meta": {
             "title": "Free Book Preview | The Man in the Ball Cap",

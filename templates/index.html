@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "partials/book_components.html" as book_ui with context %}
 
 {% block extra_head %}
 <style>
@@ -10,10 +11,10 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    min-height: min(92vh, 920px);
+    min-height: min(84vh, 780px);
     display: flex;
     align-items: center;
-    padding: clamp(5rem, 9vw, 8rem) 0 clamp(3rem, 7vw, 5rem);
+    padding: clamp(4.5rem, 7vw, 6.4rem) 0 clamp(2.4rem, 5vw, 4rem);
     background:
       radial-gradient(circle at 15% 18%, rgba(0, 234, 255, 0.2), transparent 32%),
       radial-gradient(circle at 82% 18%, rgba(250, 204, 21, 0.12), transparent 28%),
@@ -50,6 +51,7 @@
 
   .home-orb {
     position: absolute;
+    display: none;
     border-radius: 999px;
     filter: blur(4px);
     opacity: 0.55;
@@ -97,8 +99,8 @@
     position: relative;
     z-index: 2;
     display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
-    gap: clamp(2rem, 5vw, 4rem);
+    grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.82fr);
+    gap: clamp(1.8rem, 4vw, 3.25rem);
     align-items: center;
   }
 
@@ -119,11 +121,11 @@
   }
 
   .home-hero h1 {
-    max-width: 760px;
+    max-width: 710px;
     margin: 0;
-    font-size: clamp(3.3rem, 8.5vw, 7.5rem);
-    line-height: 0.88;
-    letter-spacing: -0.085em;
+    font-size: clamp(3rem, 6.3vw, 5.8rem);
+    line-height: 0.96;
+    letter-spacing: 0;
     color: #ffffff;
   }
 
@@ -151,8 +153,8 @@
   }
 
   .home-hero-lede {
-    max-width: 670px;
-    margin: 1.35rem 0 0;
+    max-width: 620px;
+    margin: 1.2rem 0 0;
     color: rgba(203, 213, 225, 0.84);
     font-size: clamp(1.08rem, 2vw, 1.28rem);
     line-height: 1.75;
@@ -163,6 +165,26 @@
     flex-wrap: wrap;
     gap: 0.85rem;
     margin-top: 1.6rem;
+  }
+
+  .home-hero-secondary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 0.85rem;
+  }
+
+  .home-hero-secondary-actions a {
+    color: rgba(226, 232, 240, 0.88);
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .home-hero-secondary-actions a:hover,
+  .home-hero-secondary-actions a:focus-visible {
+    color: #4efedc;
+    text-decoration: underline;
+    outline: none;
   }
 
   .home-hero-actions .btn {
@@ -193,7 +215,7 @@
     position: relative;
     display: grid;
     place-items: center;
-    min-height: 560px;
+    min-height: 0;
   }
 
   .book-showcase-wrap::before {
@@ -215,8 +237,7 @@
         transparent
       );
     filter: blur(22px);
-    opacity: 0.8;
-    animation: homeSpinGlow 18s linear infinite;
+    opacity: 0.35;
   }
 
   @keyframes homeSpinGlow {
@@ -228,18 +249,17 @@
   .book-showcase-card {
     position: relative;
     z-index: 2;
-    width: min(100%, 520px);
-    padding: clamp(1.1rem, 3vw, 1.6rem);
-    border-radius: 34px;
+    width: min(100%, 460px);
+    padding: clamp(1rem, 2.2vw, 1.35rem);
+    border-radius: 22px;
     background:
-      radial-gradient(circle at top, rgba(0, 234, 255, 0.12), transparent 42%),
-      linear-gradient(145deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.92));
-    border: 1px solid rgba(0, 234, 255, 0.22);
+      radial-gradient(circle at top, rgba(0, 234, 255, 0.08), transparent 38%),
+      linear-gradient(145deg, rgba(15, 23, 42, 0.64), rgba(2, 6, 23, 0.88));
+    border: 1px solid rgba(148, 163, 184, 0.18);
     box-shadow:
-      0 32px 90px rgba(0, 0, 0, 0.42),
-      0 0 42px rgba(0, 234, 255, 0.12),
-      inset 0 0 34px rgba(0, 234, 255, 0.04);
-    backdrop-filter: blur(18px);
+      0 24px 70px rgba(0, 0, 0, 0.34),
+      0 0 26px rgba(0, 234, 255, 0.07);
+    backdrop-filter: blur(12px);
   }
 
   .book-showcase-badge {
@@ -262,32 +282,23 @@
     position: relative;
     z-index: 3;
     display: block;
-    width: min(100%, 430px);
+    width: auto;
+    max-width: 100%;
+    max-height: clamp(320px, 46vh, 440px);
+    height: auto;
     margin: 0 auto;
     filter:
-      drop-shadow(0 34px 42px rgba(0, 0, 0, 0.66))
-      drop-shadow(0 0 22px rgba(0, 234, 255, 0.12));
-    animation: homeBookFloat 6.5s ease-in-out infinite;
-  }
-
-  @keyframes homeBookFloat {
-    0%, 100% {
-      transform: translateY(0) rotate(-1deg);
-    }
-
-    50% {
-      transform: translateY(-14px) rotate(1deg);
-    }
+      drop-shadow(0 26px 34px rgba(0, 0, 0, 0.58))
+      drop-shadow(0 0 16px rgba(0, 234, 255, 0.08));
   }
 
   .book-showcase-copy {
     position: relative;
     z-index: 3;
-    margin-top: -0.25rem;
-    padding: 1rem;
-    border-radius: 24px;
-    background: rgba(2, 6, 23, 0.54);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 0.65rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
   }
 
   .book-showcase-copy h2 {
@@ -295,13 +306,17 @@
     color: #ffffff;
     font-size: clamp(1.4rem, 3vw, 2rem);
     line-height: 1.05;
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
   }
 
   .book-showcase-copy p {
     margin: 0.65rem 0 0;
     color: rgba(203, 213, 225, 0.78);
     line-height: 1.65;
+  }
+
+  .book-showcase-actions {
+    margin-top: 0.95rem;
   }
 
   .section-heading.home-section-heading {
@@ -614,7 +629,7 @@
     pointer-events: none;
   }
 
-  @media (max-width: 1050px) {
+  @media (max-width: 980px) {
     .home-hero-grid,
     .home-novel-grid,
     .home-camino-grid {
@@ -638,7 +653,8 @@
     }
 
     .home-hero h1 {
-      font-size: clamp(3rem, 17vw, 5.3rem);
+      font-size: clamp(2.6rem, 12vw, 4.2rem);
+      line-height: 1;
     }
 
     .home-hero-actions .btn,
@@ -648,12 +664,17 @@
     }
 
     .book-showcase-card {
-      border-radius: 26px;
+      width: min(100%, 340px);
+      border-radius: 18px;
     }
 
     .book-showcase-badge {
       top: 0.75rem;
       right: 0.75rem;
+    }
+
+    .book-showcase-img {
+      max-height: clamp(220px, 31vh, 280px);
     }
 
     .home-kindle-frame iframe {
@@ -1090,26 +1111,19 @@
         </h1>
 
         <p class="home-hero-lede">
-          JSM Cooperative turns books, creative campaigns, and community storytelling into real-world
-          support for mission-aligned nonprofit impact — beginning with our debut novel,
-          <em>The Man in the Ball Cap</em>.
+          JSM Cooperative begins with <em>The Man in the Ball Cap</em>, a dark mystery set in
+          A Coruña, Spain. Follow private investigator Pepe Miguel as a dangerous case leads
+          into secrets, occult rituals, and a race to stop the next killing.
         </p>
 
         <div class="home-hero-actions">
           <a class="btn btn-primary" href="{{ url_for('book') }}">Explore the Book</a>
+          {{ book_ui.signed_copy_button('Order a Signed Copy', 'home_hero', 'btn btn-buy') }}
+        </div>
 
-          <button
-            type="button"
-            class="btn btn-buy"
-            data-purchase-open
-            aria-haspopup="dialog"
-            aria-controls="purchase-modal"
-          >
-            Buy the Book
-          </button>
-
-          <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate Now</a>
-          <a class="btn btn-ghost" href="{{ url_for('novel_subscription') }}">Join The Camino</a>
+        <div class="home-hero-secondary-actions" aria-label="Secondary book actions">
+          <a href="{{ url_for('book') }}#preview" data-analytics-event="book_preview_click" data-cta-location="home_hero_secondary">Read Preview</a>
+          <a href="{{ url_for('donate') }}">Support JSM</a>
         </div>
 
         <div class="home-proof-row">
@@ -1140,22 +1154,13 @@
           <div class="book-showcase-copy">
             <h2>The Man in the Ball Cap</h2>
             <p>
-              A mystery set in A Coruña, Spain — where memory, symbols, shadow, and purpose collide.
+              Pepe Miguel follows a case through A Coruña that grows darker with every clue.
             </p>
 
-            <div class="home-hero-actions" style="margin-top: 1rem;">
+            <div class="home-hero-actions book-showcase-actions">
               <a class="btn btn-primary" href="{{ url_for('book') }}#preview" data-analytics-event="book_preview_click" data-cta-location="home_book_card">Read Preview</a>
 
-              <button
-                type="button"
-                class="btn btn-ghost"
-                data-purchase-open
-                data-cta-location="home_book_card"
-                aria-haspopup="dialog"
-                aria-controls="purchase-modal"
-              >
-                Purchase Options
-              </button>
+              <a class="btn btn-ghost" href="{{ url_for('book_signed') }}">Signed Edition</a>
             </div>
           </div>
         </div>
