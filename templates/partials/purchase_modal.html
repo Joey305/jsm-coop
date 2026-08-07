@@ -28,39 +28,38 @@
     </p>
 
     <div class="purchase-options">
-      <a
-        class="purchase-option-card"
-        href="https://www.barnesandnoble.com/w/the-man-in-the-ballcap-jsm-cooperative/1144453545?ean=9798822929067"
-        onclick="return gtag_report_conversion(this.href);"
-      >
-        <span class="purchase-option-icon">📖</span>
-        <span>
-          <strong>Barnes &amp; Noble</strong>
-          <em>Paperback edition</em>
-        </span>
-      </a>
+      {% for retailer in book_retailers %}
+        <a
+          class="purchase-option-card"
+          href="{{ retailer.url }}"
+          data-analytics-event="{{ retailer.event }}"
+          data-retailer="{{ retailer.retailer }}"
+          data-book-language="{{ retailer.book_language }}"
+          data-cta-location="purchase_modal"
+        >
+          <span class="purchase-option-icon" aria-hidden="true">{{ loop.index }}</span>
+          <span>
+            <strong>{{ retailer.label }}</strong>
+            <em>{{ retailer.edition }}</em>
+          </span>
+        </a>
+      {% endfor %}
 
       <a
         class="purchase-option-card"
-        href="https://www.amazon.com/Man-Ballcap-JSM-Cooperative-ebook/dp/B0CPKTVMYX"
-        onclick="return gtag_report_conversion(this.href);"
+        href="{{ url_for('direct_book_checkout') }}"
+        data-analytics-event="signed_copy_checkout_click"
+        data-analytics-events="direct_checkout_started"
+        data-retailer="direct"
+        data-book-language="en"
+        data-cta-location="purchase_modal"
+        data-value="{{ direct_checkout_price_amount }}"
+        data-currency="{{ direct_checkout_price_currency }}"
       >
-        <span class="purchase-option-icon">🔥</span>
+        <span class="purchase-option-icon" aria-hidden="true">JSM</span>
         <span>
-          <strong>Amazon</strong>
-          <em>Kindle / English edition</em>
-        </span>
-      </a>
-
-      <a
-        class="purchase-option-card"
-        href="https://www.amazon.es/dp/B0D2MB8JWZ?_encoding=UTF8&amp;psc=1&amp;ref=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1&amp;ref_=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1&amp;social_share=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1"
-        onclick="return gtag_report_conversion(this.href);"
-      >
-        <span class="purchase-option-icon">🇪🇸</span>
-        <span>
-          <strong>Spanish Copy</strong>
-          <em>Amazon Spain edition</em>
+          <strong>Signed direct edition</strong>
+          <em>{% if direct_checkout_configured %}{{ signed_book_price_display }} · PayPal checkout{% else %}Coming soon{% endif %}</em>
         </span>
       </a>
     </div>

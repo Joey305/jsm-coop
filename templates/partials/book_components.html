@@ -1,0 +1,189 @@
+{% macro book_cover(eager=false, compact=false) %}
+  <picture>
+    <source srcset="{{ url_for('static', filename=book_product.cover_webp) }}" type="image/webp">
+    <img
+      class="{{ 'landing-book-cover' if compact else 'book-cover-img' }}"
+      src="{{ url_for('static', filename=book_product.cover) }}"
+      alt="{{ book_product.title }} book cover"
+      width="1500"
+      height="1150"
+      loading="{{ 'eager' if eager else 'lazy' }}"
+      decoding="{{ 'sync' if eager else 'async' }}"
+      onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+    >
+  </picture>
+{% endmacro %}
+
+{% macro buy_button(label='Buy The Book', location='unknown', style='btn btn-primary', retailer_key='') %}
+  {% set selected = (book_retailers | selectattr('key', 'equalto', retailer_key) | list | first) if retailer_key else none %}
+  {% if selected %}
+    <a
+      class="{{ style }}"
+      href="{{ selected.url }}"
+      target="_blank"
+      rel="noopener noreferrer"
+      data-analytics-event="{{ selected.event }}"
+      data-retailer="{{ selected.retailer }}"
+      data-book-language="{{ selected.book_language }}"
+      data-cta-location="{{ location }}"
+    >
+      {{ label }}
+    </a>
+  {% else %}
+    <button
+      type="button"
+      class="{{ style }}"
+      data-purchase-open
+      data-cta-location="{{ location }}"
+      aria-haspopup="dialog"
+      aria-controls="purchase-modal"
+    >
+      {{ label }}
+    </button>
+  {% endif %}
+{% endmacro %}
+
+{% macro signed_copy_button(label='Order Signed Copy', location='unknown', style='btn btn-primary', include_price=false) %}
+  {% if direct_checkout_configured %}
+    <a
+      class="{{ style }}"
+      href="{{ url_for('direct_book_checkout') }}"
+      data-analytics-event="signed_copy_checkout_click"
+      data-analytics-events="direct_checkout_started"
+      data-retailer="direct"
+      data-book-language="en"
+      data-cta-location="{{ location }}"
+      data-value="{{ direct_checkout_price_amount }}"
+      data-currency="{{ direct_checkout_price_currency }}"
+    >
+      {{ label }}{% if include_price %} · {{ signed_book_price_display }}{% endif %}
+    </a>
+  {% else %}
+    <span class="{{ style }} is-disabled" aria-disabled="true">
+      Coming Soon{% if include_price %} · {{ signed_book_price_display }}{% endif %}
+    </span>
+  {% endif %}
+{% endmacro %}
+
+{% macro preview_button(label='Read Free Preview', location='unknown', style='btn btn-ghost') %}
+  <a
+    class="{{ style }}"
+    href="#preview"
+    data-analytics-event="book_preview_click"
+    data-book-language="{{ 'es' if page_lang is defined and page_lang == 'es' else 'en' }}"
+    data-cta-location="{{ location }}"
+  >
+    {{ label }}
+  </a>
+{% endmacro %}
+
+{% macro signed_preview_button(label='Read a Free Preview', location='unknown', style='btn btn-ghost') %}
+  <a
+    class="{{ style }}"
+    href="#preview"
+    data-analytics-event="signed_copy_preview_click"
+    data-analytics-events="signed_page_preview_click book_preview_click"
+    data-book-language="en"
+    data-cta-location="{{ location }}"
+  >
+    {{ label }}
+  </a>
+{% endmacro %}
+
+{% macro retailer_selector(location='retailer_selector', include_direct=true) %}
+  <div class="retailer-grid">
+    {% for retailer in book_retailers %}
+      <a
+        class="retailer-card"
+        href="{{ retailer.url }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-analytics-event="{{ retailer.event }}"
+        data-retailer="{{ retailer.retailer }}"
+        data-book-language="{{ retailer.book_language }}"
+        data-cta-location="{{ location }}"
+      >
+        <span class="retailer-icon" aria-hidden="true">{{ loop.index }}</span>
+        <span><strong>{{ retailer.label }}</strong><em>{{ retailer.edition }}</em></span>
+      </a>
+    {% endfor %}
+
+    {% if include_direct %}
+      <a
+        class="retailer-card"
+        href="{{ url_for('direct_book_checkout') }}"
+        data-analytics-event="signed_copy_checkout_click"
+        data-analytics-events="direct_checkout_started"
+        data-retailer="direct"
+        data-book-language="{{ 'es' if page_lang is defined and page_lang == 'es' else 'en' }}"
+        data-cta-location="{{ location }}"
+        data-value="{{ direct_checkout_price_amount }}"
+        data-currency="{{ direct_checkout_price_currency }}"
+      >
+        <span class="retailer-icon" aria-hidden="true">JSM</span>
+        <span>
+          <strong>Direct / signed edition</strong>
+          <em>{% if direct_checkout_configured %}Signed direct edition · {{ signed_book_price_display }}{% else %}Coming soon{% endif %}</em>
+        </span>
+      </a>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro preview_embed(location='preview_embed') %}
+  <div
+    class="jsm-kindle-wrap"
+    data-preview-zone
+    data-preview-event="{{ 'signed_copy_preview_click' if location.startswith('signed') else 'book_preview_click' }}"
+    data-book-language="{{ 'es' if page_lang is defined and page_lang == 'es' else 'en' }}"
+    data-cta-location="{{ location }}"
+  >
+    <iframe
+      type="text/html"
+      sandbox="allow-scripts allow-same-origin allow-popups"
+      width="336"
+      height="550"
+      frameborder="0"
+      allowfullscreen
+      style="max-width:100%;"
+      src="{{ book_product.preview_url }}"
+      title="Kindle preview for {{ book_product.title }}"
+    ></iframe>
+  </div>
+{% endmacro %}
+
+{% macro impact_message(copy, heading='Your Purchase Has an Impact') %}
+  <article class="impact-message">
+    <p class="eyebrow">JSM Cooperative</p>
+    <h2>{{ heading }}</h2>
+    <p>{{ copy }}</p>
+  </article>
+{% endmacro %}
+
+{% macro reviews_section(reviews) %}
+  {% if reviews %}
+    <section class="section">
+      <div class="container">
+        <div class="book-section-heading reveal">
+          <p class="eyebrow">Reader Notes</p>
+          <h2>What Readers Are Saying</h2>
+        </div>
+        <div class="card-grid three">
+          {% for review in reviews %}
+            <article class="glass-card reveal">
+              <p>{{ review.quote }}</p>
+              <strong>{{ review.name }}</strong>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+{% endmacro %}
+
+{% macro sticky_mobile_cta(primary_label='Buy the Book', secondary_label='Read Preview', retailer_key='') %}
+  <div class="mobile-sticky-cta" aria-label="Book actions">
+    {{ preview_button(secondary_label, 'mobile_sticky', 'btn btn-ghost') }}
+    {{ buy_button(primary_label, 'mobile_sticky', 'btn btn-primary', retailer_key) }}
+  </div>
+{% endmacro %}

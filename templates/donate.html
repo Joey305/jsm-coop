@@ -667,11 +667,11 @@
         </div>
 
         <div class="hero-button-row">
-          <a class="coffee-button-link" href="#support-options">
+          <a class="coffee-button-link" href="#support-options" data-analytics-event="donation_click" data-cta-location="donate_hero">
             ☕ Buy the Co-op a Coffee!
           </a>
 
-          <a class="newsletter-anchor-link" href="#camino-newsletter">
+          <a class="newsletter-anchor-link" href="#camino-newsletter" data-analytics-event="newsletter_signup" data-cta-location="donate_hero">
             📬 Join The Camino Newsletter
           </a>
         </div>
@@ -688,7 +688,7 @@
             and strengthens the community that makes our nonprofit partnerships possible.
           </p>
 
-          <form class="main-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+          <form class="main-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top" data-analytics-event="donation_click" data-cta-location="donate_main">
             <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
             <button type="submit" class="main-donate-button" title="Donate securely with PayPal">
               <span><span class="donate-heart">💙</span> Donate Now — Fuel the Camino</span>
@@ -768,7 +768,7 @@
           </p>
         </div>
 
-        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top" data-analytics-event="donation_click" data-cta-location="donate_coffee">
           <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
           <button type="submit" class="donate-mini-button gold">Buy the Co-op a Coffee!</button>
         </form>
@@ -784,7 +784,7 @@
           </p>
         </div>
 
-        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top" data-analytics-event="donation_click" data-cta-location="donate_reader">
           <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
           <button type="submit" class="donate-mini-button">Back the Stories</button>
         </form>
@@ -800,7 +800,7 @@
           </p>
         </div>
 
-        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top" data-analytics-event="donation_click" data-cta-location="donate_impact">
           <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
           <button type="submit" class="donate-mini-button green">Support the SDGs</button>
         </form>
@@ -816,7 +816,7 @@
           </p>
         </div>
 
-        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top">
+        <form class="mini-paypal-form" action="https://www.paypal.com/donate" method="post" target="_top" data-analytics-event="donation_click" data-cta-location="donate_camino">
           <input type="hidden" name="hosted_button_id" value="{{ paypal_donate_button_id }}">
           <button type="submit" class="donate-mini-button rainbow">Join the Camino</button>
         </form>
@@ -856,7 +856,9 @@
               action="{{ mailchimp_action_url }}"
               method="post"
               target="_blank"
-              novalidate>
+              novalidate
+              data-analytics-event="newsletter_signup"
+              data-cta-location="donate_newsletter">
 
           <div class="form-row">
             <input type="text" name="FNAME" placeholder="First name" aria-label="First name">

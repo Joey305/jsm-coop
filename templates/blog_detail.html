@@ -434,12 +434,17 @@
 
       {% if post.cover %}
         <div class="blog-cover-wrap">
-          <img
-            src="{{ post.cover }}"
-            alt="{{ post.title }} cover image"
-            loading="lazy"
-            onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
-          >
+          <picture>
+            {% if post.cover_webp %}
+              <source srcset="{{ post.cover_webp }}" type="image/webp">
+            {% endif %}
+            <img
+              src="{{ post.cover }}"
+              alt="{{ post.title }} cover image"
+              loading="lazy"
+              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+            >
+          </picture>
         </div>
       {% endif %}
     </div>
@@ -492,4 +497,11 @@
     });
   });
 </script>
+{% if post.slug == 'mystery-memory-galicia-man-in-the-ball-cap' %}
+  <script>
+    window.JSMAnalytics && window.JSMAnalytics.track("pillar_article_view", {
+      cta_location: "pillar_article"
+    });
+  </script>
+{% endif %}
 {% endblock %}

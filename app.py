@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from functools import wraps
-from urllib.parse import urlencode, quote
+from urllib.parse import urlencode, quote, urlsplit, urlunsplit, parse_qsl
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 from werkzeug.utils import secure_filename
@@ -22,6 +22,7 @@ from flask import (
     session,
     abort,
     jsonify,
+    Response,
 )
 from markupsafe import Markup
 import markdown as md
@@ -31,6 +32,7 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 BLOG_DIR = BASE_DIR / "blogs"
+DEFAULT_SIGNED_BOOK_PAYMENT_LINK = "https://www.paypal.com/ncp/payment/SLQDNTABMS9JS"
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -39,6 +41,15 @@ app.config["SITE_NAME"] = os.getenv("SITE_NAME", "JSM Cooperative Corporation")
 app.config["SITE_DOMAIN"] = os.getenv("SITE_DOMAIN", "https://jsmcoop.com")
 app.config["CONTACT_EMAIL"] = os.getenv("CONTACT_EMAIL", "books@jsmcoop.com")
 app.config["PAYPAL_DONATE_BUTTON_ID"] = os.getenv("PAYPAL_DONATE_BUTTON_ID", "TLWCSL2KJDZQU")
+app.config["GA_MEASUREMENT_ID"] = os.getenv("GA_MEASUREMENT_ID", "").strip()
+app.config["PAYPAL_SIGNED_BOOK_URL"] = os.getenv("PAYPAL_SIGNED_BOOK_URL", DEFAULT_SIGNED_BOOK_PAYMENT_LINK).strip()
+app.config["BOOK_DIRECT_CHECKOUT_URL"] = os.getenv(
+    "BOOK_DIRECT_CHECKOUT_URL",
+    app.config["PAYPAL_SIGNED_BOOK_URL"],
+).strip()
+app.config["BOOK_DIRECT_PROVIDER"] = os.getenv("BOOK_DIRECT_PROVIDER", "PayPal").strip()
+app.config["BOOK_DIRECT_PRICE_AMOUNT"] = os.getenv("BOOK_DIRECT_PRICE_AMOUNT", "15.00").strip()
+app.config["BOOK_DIRECT_PRICE_CURRENCY"] = os.getenv("BOOK_DIRECT_PRICE_CURRENCY", "USD").strip().upper()
 app.config["BLOG_IMAGE_UPLOAD_DIR"] = BASE_DIR / "static" / "images" / "blog"
 app.config["BLOG_VIDEO_UPLOAD_DIR"] = BASE_DIR / "static" / "videos" / "blog"
 
@@ -71,6 +82,273 @@ NAV_ITEMS = [
     ("Donate", "donate"),
     ("Contact", "contact"),
 ]
+
+BOOK_PRODUCT = {
+    "title": "The Man in the Ball Cap",
+    "subtitle": "A mystery set in A Coruña, Spain",
+    "genre": "Literary mystery",
+    "setting": "A Coruña, Spain",
+    "author": "JSM Cooperative",
+    "description": (
+        "A literary mystery set in A Coruña, Spain, where memory, symbols, shadow, "
+        "and purpose collide."
+    ),
+    "cover": "images/BOOK3D.png",
+    "cover_webp": "images/BOOK3D.webp",
+    "preview_asin": "B0CPKTVMYX",
+    "preview_url": (
+        "https://read.amazon.com/kp/card?asin=B0CPKTVMYX&preview=inline&linkCode=kpe&"
+        "ref_=cm_sw_r_kb_dp_6ZFC66VA6C4D8CH1W11N"
+    ),
+}
+
+BOOK_RETAILERS = [
+    {
+        "key": "barnes_noble",
+        "label": "Barnes & Noble",
+        "edition": "Paperback edition",
+        "retailer": "barnes_noble",
+        "book_language": "en",
+        "event": "retailer_click_barnes_noble",
+        "url": "https://www.barnesandnoble.com/w/the-man-in-the-ballcap-jsm-cooperative/1144453545?ean=9798822929067",
+    },
+    {
+        "key": "amazon_us",
+        "label": "Amazon US",
+        "edition": "Kindle / English edition",
+        "retailer": "amazon_us",
+        "book_language": "en",
+        "event": "retailer_click_amazon_us",
+        "url": "https://www.amazon.com/Man-Ballcap-JSM-Cooperative-ebook/dp/B0CPKTVMYX",
+    },
+    {
+        "key": "amazon_es",
+        "label": "Amazon Spain",
+        "edition": "Spanish edition",
+        "retailer": "amazon_es",
+        "book_language": "es",
+        "event": "retailer_click_amazon_es",
+        "url": "https://www.amazon.es/dp/B0D2MB8JWZ?_encoding=UTF8&psc=1&ref=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1&ref_=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1&social_share=cm_sw_r_cp_ud_dp_S0G3AYNGCN99JYH66EG9_1",
+    },
+]
+
+SIGNED_BOOK_IMAGES = {
+    "mockup": {
+        "src": "images/book-signed/the-man-in-the-ballcap-3d-book-mockup.jpg",
+        "webp": "images/book-signed/the-man-in-the-ballcap-3d-book-mockup.webp",
+        "alt": "3D mockup of The Man in the Ball Cap signed direct edition",
+        "width": 1500,
+        "height": 1150,
+    },
+    "front_cover": {
+        "src": "images/book-signed/the-man-in-the-ballcap-front-cover.jpg",
+        "webp": "images/book-signed/the-man-in-the-ballcap-front-cover.webp",
+        "alt": "Front cover of The Man in the Ball Cap",
+        "width": 907,
+        "height": 1360,
+    },
+    "back_cover": {
+        "src": "images/book-signed/the-man-in-the-ballcap-back-cover.jpg",
+        "webp": "images/book-signed/the-man-in-the-ballcap-back-cover.webp",
+        "alt": "Back cover of The Man in the Ball Cap",
+        "width": 907,
+        "height": 1360,
+    },
+    "signed_clean": {
+        "src": "images/book-signed/the-man-in-the-ballcap-signed-title-page-clean.jpg",
+        "webp": "images/book-signed/the-man-in-the-ballcap-signed-title-page-clean.webp",
+        "alt": "Signed title page with #JoinTheCamino inscription",
+        "width": 1152,
+        "height": 1536,
+    },
+    "signed_author": {
+        "src": "images/book-signed/the-man-in-the-ballcap-signed-copy-author-photo.jpg",
+        "webp": "images/book-signed/the-man-in-the-ballcap-signed-copy-author-photo.webp",
+        "alt": "JSM Cooperative author holding a signed copy of The Man in the Ball Cap",
+        "width": 1152,
+        "height": 1536,
+    },
+    "signed_handheld": {
+        "src": "images/book-signed/the-man-in-the-ballcap-signed-title-page-handheld.jpg",
+        "webp": "images/book-signed/the-man-in-the-ballcap-signed-title-page-handheld.webp",
+        "alt": "Handheld signed title page of The Man in the Ball Cap",
+        "width": 1152,
+        "height": 1536,
+    },
+}
+
+PAGE_META = {
+    "home": {
+        "title": "JSM Cooperative Corporation",
+        "description": "JSM Cooperative publishes stories, supports mission-aligned nonprofit impact, and invites readers to join creative campaigns that give back.",
+    },
+    "about": {
+        "title": "About JSM Cooperative",
+        "description": "Learn how JSM Cooperative uses storytelling, publishing, and community support to advance nonprofit-aligned impact.",
+    },
+    "book": {
+        "title": "The Man in the Ball Cap | Mystery Set in A Coruña, Spain",
+        "description": "Read or buy The Man in the Ball Cap, a literary mystery set in A Coruña, Spain, where memory, symbols, and place collide.",
+        "image": "images/BOOK3D.png",
+    },
+    "book_signed": {
+        "title": "Signed Copy of The Man in the Ball Cap | Direct From JSM",
+        "description": "Order a personally signed physical paperback of The Man in the Ball Cap direct from JSM Cooperative for $15 plus shipping.",
+        "image": SIGNED_BOOK_IMAGES["mockup"]["src"],
+    },
+    "checkout_success": {
+        "title": "Thank You for Supporting JSM Cooperative",
+        "description": "Thank you for returning from PayPal after ordering The Man in the Ball Cap signed copy.",
+        "image": SIGNED_BOOK_IMAGES["signed_clean"]["src"],
+    },
+    "checkout_cancel": {
+        "title": "Checkout Was Not Completed",
+        "description": "Return to the signed-copy page, try PayPal checkout again, or read a free preview of The Man in the Ball Cap.",
+        "image": SIGNED_BOOK_IMAGES["mockup"]["src"],
+    },
+    "pillar_article": {
+        "title": "Mystery, Memory & Galicia | The World Behind The Man in the Ball Cap",
+        "description": "Explore Galicia, A Coruña, mystery fiction, memory, atmosphere, and the world behind The Man in the Ball Cap.",
+        "image": SIGNED_BOOK_IMAGES["front_cover"]["src"],
+    },
+    "blogs": {
+        "title": "JSM Cooperative Blog",
+        "description": "Read updates from JSM Cooperative about books, nonprofit impact, publishing, and the Camino campaign.",
+    },
+    "projects": {
+        "title": "Community Projects",
+        "description": "Explore JSM Cooperative projects connecting creative publishing, education, health, empathy, and community support.",
+    },
+    "donate": {
+        "title": "Donate to JSM Cooperative",
+        "description": "Support JSM Cooperative's storytelling, publishing, and nonprofit-aligned work through a secure donation path.",
+    },
+    "team": {
+        "title": "Our Team",
+        "description": "Meet the JSM Cooperative team behind the publishing, creative campaigns, and mission-aligned nonprofit work.",
+    },
+    "chapter_readings": {
+        "title": "Chapter Readings",
+        "description": "Listen to and explore chapter readings and story updates from The Man in the Ball Cap.",
+    },
+    "novel_subscription": {
+        "title": "Join The Camino Novel Subscription",
+        "description": "Join JSM Cooperative's monthly novel subscription campaign supporting books, readers, and nonprofit-aligned impact.",
+    },
+    "newsletter_page": {
+        "title": "JSM Cooperative Newsletter",
+        "description": "Join The Camino newsletter for updates on books, blogs, community campaigns, and nonprofit impact.",
+    },
+    "contact": {
+        "title": "Contact JSM Cooperative",
+        "description": "Contact JSM Cooperative about books, publishing, donations, partnerships, and community campaigns.",
+    },
+    "privacy": {
+        "title": "Privacy Policy",
+        "description": "Read the JSM Cooperative privacy policy for website, newsletter, and contact form information.",
+    },
+    "terms": {
+        "title": "Terms and Disclaimer",
+        "description": "Read JSM Cooperative terms, disclaimers, and website use information.",
+    },
+    "instagram": {
+        "title": "JSM Cooperative on Instagram",
+        "description": "Find JSM Cooperative's Instagram profile for book updates, creative campaigns, and community impact.",
+    },
+    "tiktok": {
+        "title": "JSM Cooperative on TikTok",
+        "description": "Find JSM Cooperative's TikTok profile for book updates, creative campaigns, and community impact.",
+    },
+    "youtube": {
+        "title": "JSM Cooperative on YouTube",
+        "description": "Find JSM Cooperative's YouTube channel for chapter readings, videos, and creative campaign updates.",
+    },
+}
+
+LANDING_PAGES = {
+    "mystery_book_spain": {
+        "path": "/mystery-book-spain",
+        "lang": "en",
+        "eyebrow": "Literary Mystery Set In Spain",
+        "headline": "A mystery in A Coruña where memory refuses to stay buried.",
+        "lede": "Start with the story: a man in a ball cap, a city on the Galician coast, and a trail of symbols that turns memory into a mystery.",
+        "primary_label": "Order the Signed Edition",
+        "secondary_label": "Read Free Preview",
+        "signed_primary": True,
+        "impact": "Your purchase also supports JSM Cooperative's mission-aligned nonprofit work.",
+        "audience": [
+            "Atmospheric mystery readers",
+            "Readers drawn to books set in Spain and Galicia",
+            "Readers who like memory, symbolism, and place woven into suspense",
+        ],
+        "meta": {
+            "title": "Mystery Book Set in Spain | The Man in the Ball Cap",
+            "description": "Discover The Man in the Ball Cap, a literary mystery set in A Coruña, Spain, with a free preview and purchase options.",
+        },
+    },
+    "book_that_gives_back": {
+        "path": "/book-that-gives-back",
+        "lang": "en",
+        "eyebrow": "A Novel With Impact",
+        "headline": "Buy a mystery novel that helps fuel JSM Cooperative's mission.",
+        "lede": "The Man in the Ball Cap gives readers an atmospheric mystery and gives JSM Cooperative another way to fund creative, nonprofit-aligned work.",
+        "primary_label": "Buy Directly from JSM",
+        "secondary_label": "Read the Preview",
+        "signed_primary": True,
+        "impact": "JSM's current site states: 100% of novel profits donated.",
+        "audience": [
+            "Mission-driven gift buyers",
+            "Readers who want purchases to support a cause",
+            "Supporters of creative nonprofit fundraising",
+        ],
+        "meta": {
+            "title": "Book That Gives Back | The Man in the Ball Cap",
+            "description": "Buy The Man in the Ball Cap and support JSM Cooperative's mission-aligned nonprofit work through impact-centered publishing.",
+        },
+    },
+    "free_book_preview": {
+        "path": "/free-book-preview",
+        "lang": "en",
+        "eyebrow": "Free Kindle Preview",
+        "headline": "Read a free preview before you choose your edition.",
+        "lede": "Sample The Man in the Ball Cap in your browser, then choose Amazon US, Barnes & Noble, Amazon Spain, or a future direct edition.",
+        "primary_label": "Start Free Preview",
+        "secondary_label": "Order the Signed Copy",
+        "signed_after_preview": True,
+        "impact": "If the preview pulls you into the story, your purchase also helps JSM Cooperative keep the Camino moving.",
+        "preview_first": True,
+        "audience": [
+            "Readers who want to sample before buying",
+            "Mystery fans comparing their next read",
+            "Visitors from Google Ads who need a lower-commitment first step",
+        ],
+        "meta": {
+            "title": "Free Book Preview | The Man in the Ball Cap",
+            "description": "Read a free Kindle preview of The Man in the Ball Cap, then choose your preferred purchase option.",
+        },
+    },
+    "spanish_ballcap": {
+        "path": "/es/el-hombre-de-la-gorra",
+        "lang": "es",
+        "eyebrow": "Misterio Literario En A Coruña",
+        "headline": "Un misterio en A Coruña donde la memoria deja señales.",
+        "lede": "El Hombre de la Gorra invita al lector a entrar en una historia de símbolos, sombras y recuerdos en la costa gallega.",
+        "primary_label": "Comprar edición española",
+        "secondary_label": "Leer muestra gratis",
+        "impact": "Tu compra también apoya la misión de JSM Cooperative y su trabajo creativo con impacto social.",
+        "audience_heading": "Para lectores que buscan",
+        "audience": [
+            "Misterios atmosféricos con sentido literario",
+            "Historias ambientadas en España y Galicia",
+            "Novelas donde el lugar, la memoria y los símbolos importan",
+        ],
+        "meta": {
+            "title": "El Hombre de la Gorra | Misterio literario en A Coruña",
+            "description": "Compra o lee una muestra de El Hombre de la Gorra, la edición en español de The Man in the Ball Cap.",
+        },
+        "primary_retailer": "amazon_es",
+    },
+}
 
 
 
@@ -122,6 +400,249 @@ def build_safe_upload_filename(original_filename, requested_filename=""):
     return safe_filename, original_ext
 
 
+def absolute_url(path):
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+
+    root = app.config["SITE_DOMAIN"].rstrip("/")
+    if not path.startswith("/"):
+        path = f"/{path}"
+
+    return f"{root}{path}"
+
+
+def static_absolute_url(filename):
+    return absolute_url(url_for("static", filename=filename))
+
+
+def get_organization_schema():
+    return {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": app.config["SITE_NAME"],
+        "url": app.config["SITE_DOMAIN"].rstrip("/"),
+        "logo": static_absolute_url("images/Logo.png"),
+        "email": app.config["CONTACT_EMAIL"],
+        "sameAs": [
+            app.config["YOUTUBE_URL"],
+            app.config["TIKTOK_URL"],
+            app.config["INSTAGRAM_URL"],
+        ],
+    }
+
+
+def get_book_schema():
+    return {
+        "@context": "https://schema.org",
+        "@type": "Book",
+        "name": BOOK_PRODUCT["title"],
+        "author": {
+            "@type": "Organization",
+            "name": BOOK_PRODUCT["author"],
+        },
+        "genre": BOOK_PRODUCT["genre"],
+        "description": BOOK_PRODUCT["description"],
+        "image": static_absolute_url(BOOK_PRODUCT["cover"]),
+        "inLanguage": ["en", "es"],
+        "offers": [
+            {
+                "@type": "Offer",
+                "url": retailer["url"],
+                "availability": "https://schema.org/InStock",
+                "seller": {
+                    "@type": "Organization",
+                    "name": retailer["label"],
+                },
+            }
+            for retailer in BOOK_RETAILERS
+        ],
+    }
+
+
+def get_signed_book_offer_schema():
+    return {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Signed Copy of The Man in the Ball Cap",
+        "description": "A personally signed physical paperback ordered directly from JSM Cooperative.",
+        "image": static_absolute_url(SIGNED_BOOK_IMAGES["mockup"]["src"]),
+        "brand": {
+            "@type": "Organization",
+            "name": app.config["SITE_NAME"],
+        },
+        "offers": {
+            "@type": "Offer",
+            "url": absolute_url("/book/signed"),
+            "price": app.config["BOOK_DIRECT_PRICE_AMOUNT"],
+            "priceCurrency": app.config["BOOK_DIRECT_PRICE_CURRENCY"],
+            "availability": "https://schema.org/InStock",
+            "seller": {
+                "@type": "Organization",
+                "name": app.config["SITE_NAME"],
+            },
+        },
+    }
+
+
+def get_article_schema(post, canonical_path):
+    return {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": post["title"],
+        "description": post["excerpt"],
+        "author": {
+            "@type": "Organization",
+            "name": post["author"],
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": app.config["SITE_NAME"],
+            "logo": {
+                "@type": "ImageObject",
+                "url": static_absolute_url("images/Logo.png"),
+            },
+        },
+        "datePublished": post["date"],
+        "mainEntityOfPage": absolute_url(canonical_path),
+        "image": absolute_url(post["cover"]) if post["cover"].startswith("/") else static_absolute_url(post["cover"]),
+    }
+
+
+def get_breadcrumb_schema(items):
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": index + 1,
+                "name": item["name"],
+                "item": absolute_url(item["url"]),
+            }
+            for index, item in enumerate(items)
+        ],
+    }
+
+
+def build_page_meta(endpoint, path=None, overrides=None):
+    base = PAGE_META.get(endpoint, {}).copy()
+    overrides = overrides or {}
+    base.update(overrides)
+
+    if path is None:
+        path = request.path
+
+    base.setdefault("title", app.config["SITE_NAME"])
+    base.setdefault("description", "Stories that fund a better world through publishing and nonprofit-aligned impact.")
+    base.setdefault("canonical_url", absolute_url(path))
+    base.setdefault("og_title", base["title"])
+    base.setdefault("og_description", base["description"])
+
+    image = base.get("image") or "images/Logo.png"
+    base.setdefault("og_image", static_absolute_url(image))
+
+    return base
+
+
+def render_public_template(template_name, endpoint, **context):
+    meta_overrides = context.pop("meta", None)
+    context["page_meta"] = build_page_meta(endpoint, overrides=meta_overrides)
+    return render_template(template_name, **context)
+
+
+def campaign_module_html(kind):
+    modules = {
+        "discover": {
+            "kicker": "Discover the Novel",
+            "title": "Meet Pepe Miguel in A Coruña.",
+            "copy": "Start with the book page for the full mystery hook, free preview, and available editions.",
+            "href": url_for("book"),
+            "label": "Explore the Book",
+            "event": "pillar_to_book_click",
+            "style": "article-btn-cyan",
+        },
+        "preview": {
+            "kicker": "Read a Free Preview",
+            "title": "Sample the opening before you buy.",
+            "copy": "The Kindle preview lets you step into the atmosphere of the story in your browser.",
+            "href": f"{url_for('book')}#preview",
+            "label": "Read the Preview",
+            "event": "pillar_preview_click",
+            "style": "article-btn-outline",
+        },
+        "signed": {
+            "kicker": "Signed #JoinTheCamino Edition",
+            "title": "Order a signed physical copy direct from JSM.",
+            "copy": "$15 + shipping. Direct-order copies are personally signed and include the #JoinTheCamino inscription.",
+            "href": url_for("book_signed"),
+            "label": "Order the Signed Edition",
+            "event": "pillar_signed_copy_click",
+            "style": "article-btn-gold",
+        },
+        "impact": {
+            "kicker": "About JSM Cooperative",
+            "title": "Stories that fund a better world.",
+            "copy": "Learn how JSM Cooperative connects publishing, community, and mission-aligned nonprofit impact.",
+            "href": url_for("about"),
+            "label": "Learn About JSM",
+            "event": "pillar_to_book_click",
+            "style": "article-btn-outline",
+        },
+    }
+
+    module = modules.get(kind)
+    if not module:
+        return ""
+
+    return f"""
+<aside class="article-conversion-card">
+  <p class="article-conversion-kicker">{module["kicker"]}</p>
+  <h3>{module["title"]}</h3>
+  <p>{module["copy"]}</p>
+  <a class="article-btn {module["style"]}" href="{module["href"]}" data-analytics-event="{module["event"]}" data-cta-location="pillar_article_{kind}">{module["label"]}</a>
+</aside>
+"""
+
+
+def render_campaign_modules(body):
+    return re.sub(
+        r"\{\{\s*campaign_cta:([a-z_]+)\s*\}\}",
+        lambda match: campaign_module_html(match.group(1)),
+        body,
+    )
+
+
+def public_sitemap_routes():
+    routes = [
+        ("home", {}),
+        ("about", {}),
+        ("book", {}),
+        ("blogs", {}),
+        ("projects", {}),
+        ("donate", {}),
+        ("team", {}),
+        ("chapter_readings", {}),
+        ("novel_subscription", {}),
+        ("newsletter_page", {}),
+        ("contact", {}),
+        ("privacy", {}),
+        ("terms", {}),
+        ("instagram", {}),
+        ("tiktok", {}),
+        ("youtube", {}),
+        ("book_signed", {}),
+        ("mystery_book_spain", {}),
+        ("book_that_gives_back", {}),
+        ("free_book_preview", {}),
+        ("spanish_ballcap", {}),
+    ]
+
+    for post in get_posts():
+        endpoint = "blog_article" if post["slug"] == "mystery-memory-galicia-man-in-the-ball-cap" else "blog_detail"
+        routes.append((endpoint, {"slug": post["slug"]}))
+
+    return routes
+
 
 @app.context_processor
 def inject_globals():
@@ -131,6 +652,16 @@ def inject_globals():
         "site_domain": app.config["SITE_DOMAIN"],
         "contact_email": app.config["CONTACT_EMAIL"],
         "paypal_donate_button_id": app.config["PAYPAL_DONATE_BUTTON_ID"],
+        "ga_measurement_id": app.config["GA_MEASUREMENT_ID"],
+        "book_product": BOOK_PRODUCT,
+        "book_retailers": BOOK_RETAILERS,
+        "direct_checkout_configured": bool(app.config["BOOK_DIRECT_CHECKOUT_URL"]),
+        "direct_checkout_provider": app.config["BOOK_DIRECT_PROVIDER"],
+        "direct_checkout_price_amount": app.config["BOOK_DIRECT_PRICE_AMOUNT"],
+        "direct_checkout_price_currency": app.config["BOOK_DIRECT_PRICE_CURRENCY"],
+        "signed_book_images": SIGNED_BOOK_IMAGES,
+        "signed_book_price_display": "$15 + shipping",
+        "organization_schema": get_organization_schema(),
         "mailchimp_action_url": app.config["MAILCHIMP_ACTION_URL"],
         "mailchimp_honeypot_name": app.config["MAILCHIMP_HONEYPOT_NAME"],
         "current_year": datetime.now().year,
@@ -190,10 +721,19 @@ def read_blog_file(path):
     raw = path.read_text(encoding="utf-8")
     metadata, body = parse_front_matter(raw)
     slug = path.stem
+    rendered_body = render_campaign_modules(body)
+    cover = metadata.get("cover", "/static/images/jsm-placeholder.svg")
+    cover_webp = ""
+
+    if cover.startswith("/static/"):
+        cover_path = BASE_DIR / cover.removeprefix("/static/")
+        webp_path = cover_path.with_suffix(".webp")
+        if webp_path.exists():
+            cover_webp = f"/static/{webp_path.relative_to(BASE_DIR / 'static')}"
 
     html = Markup(
         md.markdown(
-            body,
+            rendered_body,
             extensions=["extra", "toc", "tables", "attr_list"],
         )
     )
@@ -204,7 +744,8 @@ def read_blog_file(path):
         "date": metadata.get("date", "Undated"),
         "author": metadata.get("author", "JSM Cooperative"),
         "excerpt": metadata.get("excerpt", body[:180].replace("\n", " ") + "..."),
-        "cover": metadata.get("cover", "/static/images/jsm-placeholder.svg"),
+        "cover": cover,
+        "cover_webp": cover_webp,
         "tags": [t.strip() for t in metadata.get("tags", "").split(",") if t.strip()],
         "body": body,
         "html": html,
@@ -402,73 +943,127 @@ def render_mailchimp_forward_form(email, first_name="", last_name="", phone=""):
 @app.route("/")
 def home():
     posts = get_posts()[:3]
-    return render_template("index.html", title="Home", posts=posts)
+    return render_public_template("index.html", "home", title="Home", posts=posts)
 
 
 @app.route("/about")
 def about():
-    return render_template("about.html", title="About")
+    return render_public_template("about.html", "about", title="About")
 
 
 @app.route("/book")
 def book():
-    return render_template("book.html", title="The Man in the Ball Cap")
+    page_meta = {
+        "hreflang": {
+            "en": absolute_url("/book"),
+            "es": absolute_url("/es/el-hombre-de-la-gorra"),
+        },
+    }
+    schemas = [
+        get_book_schema(),
+        get_breadcrumb_schema(
+            [
+                {"name": "Home", "url": "/"},
+                {"name": BOOK_PRODUCT["title"], "url": "/book"},
+            ]
+        ),
+    ]
+    return render_public_template(
+        "book.html",
+        "book",
+        title=BOOK_PRODUCT["title"],
+        meta=page_meta,
+        structured_data=schemas,
+    )
 
 
 @app.route("/blogs")
 def blogs():
     posts = get_posts()
-    return render_template("blogs.html", title="Blogs", posts=posts)
+    return render_public_template("blogs.html", "blogs", title="Blogs", posts=posts)
 
 
 @app.route("/blogs/<slug>")
 def blog_detail(slug):
+    return render_blog_post(slug, canonical_prefix="/blogs")
+
+
+@app.route("/blog/<slug>")
+def blog_article(slug):
+    return render_blog_post(slug, canonical_prefix="/blog")
+
+
+def render_blog_post(slug, canonical_prefix="/blogs"):
     post = get_post(slug)
 
     if not post:
         abort(404)
 
-    return render_template("blog_detail.html", title=post["title"], post=post)
+    canonical_path = f"{canonical_prefix}/{post['slug']}"
+    meta = {
+        "title": post["title"],
+        "description": post["excerpt"],
+        "canonical_url": absolute_url(canonical_path),
+        "image": post["cover"].replace("/static/", "") if post["cover"].startswith("/static/") else "images/jsm-placeholder.svg",
+    }
+    schemas = [
+        get_article_schema(post, canonical_path),
+        get_breadcrumb_schema(
+            [
+                {"name": "Home", "url": "/"},
+                {"name": "Blogs", "url": "/blogs"},
+                {"name": post["title"], "url": canonical_path},
+            ]
+        )
+    ]
+    return render_public_template(
+        "blog_detail.html",
+        "blogs",
+        title=post["title"],
+        post=post,
+        meta=meta,
+        structured_data=schemas,
+    )
 
 
 @app.route("/projects")
 def projects():
-    return render_template("projects.html", title="Community Projects")
+    return render_public_template("projects.html", "projects", title="Community Projects")
 
 
 @app.route("/donate")
 def donate():
-    return render_template("donate.html", title="Donate")
+    return render_public_template("donate.html", "donate", title="Donate")
 
 
 @app.route("/team")
 def team():
-    return render_template("team.html", title="Our Team")
+    return render_public_template("team.html", "team", title="Our Team")
 
 
 @app.route("/chapter-readings")
 def chapter_readings():
-    return render_template("chapter_readings.html", title="Chapter Readings")
+    return render_public_template("chapter_readings.html", "chapter_readings", title="Chapter Readings")
 
 
 @app.route("/novel-subscription")
 def novel_subscription():
-    return render_template("novel_subscription.html", title="Novel Subscription")
+    return render_public_template("novel_subscription.html", "novel_subscription", title="Novel Subscription")
 
 
 @app.route("/instagram")
 def instagram():
-    return render_template("social.html", title="Instagram", platform="Instagram")
+    return render_public_template("social.html", "instagram", title="Instagram", platform="Instagram")
 
 
 @app.route("/tiktok")
 def tiktok():
-    return render_template("social.html", title="TikTok", platform="TikTok")
+    return render_public_template("social.html", "tiktok", title="TikTok", platform="TikTok")
 
 
 @app.route("/youtube")
 def youtube():
-    return render_template("social.html", title="YouTube", platform="YouTube")
+    return render_public_template("social.html", "youtube", title="YouTube", platform="YouTube")
 
 
 @app.route("/contactus")
@@ -483,12 +1078,12 @@ def novel_fundraiser_shortlink():
 
 @app.route("/privacy")
 def privacy():
-    return render_template("privacy.html", title="Privacy Policy")
+    return render_public_template("privacy.html", "privacy", title="Privacy Policy")
 
 
 @app.route("/terms")
 def terms():
-    return render_template("terms.html", title="Terms / Disclaimer")
+    return render_public_template("terms.html", "terms", title="Terms / Disclaimer")
 
 
 @app.route("/contact", methods=["GET", "POST"])
@@ -506,7 +1101,7 @@ def contact():
         mailto_url = build_mailto_url(name, email, subject, message)
         return redirect(mailto_url)
 
-    return render_template("contact.html", title="Contact")
+    return render_public_template("contact.html", "contact", title="Contact")
 
 
 @app.route("/newsletter", methods=["GET", "POST"])
@@ -523,7 +1118,192 @@ def newsletter_page():
 
         return render_mailchimp_forward_form(email, first_name, last_name, phone)
 
-    return render_template("newsletter.html", title="Newsletter")
+    return render_public_template("newsletter.html", "newsletter_page", title="Newsletter")
+
+
+@app.route("/book/signed")
+def book_signed():
+    meta = {
+        "canonical_url": absolute_url("/book/signed"),
+        "image": SIGNED_BOOK_IMAGES["mockup"]["src"],
+    }
+    schemas = [
+        get_book_schema(),
+        get_signed_book_offer_schema(),
+        get_breadcrumb_schema(
+            [
+                {"name": "Home", "url": "/"},
+                {"name": BOOK_PRODUCT["title"], "url": "/book"},
+                {"name": "Signed Copy", "url": "/book/signed"},
+            ]
+        ),
+    ]
+    return render_public_template(
+        "book_signed.html",
+        "book_signed",
+        title="Signed Copy",
+        meta=meta,
+        structured_data=schemas,
+        reduced_nav=True,
+    )
+
+
+@app.route("/signed-copy")
+def signed_copy_alias():
+    return redirect(url_for("book_signed"), code=301)
+
+
+def render_landing_page(key):
+    landing = LANDING_PAGES[key]
+    path = landing["path"]
+    meta = landing["meta"].copy()
+    meta.update(
+        {
+            "canonical_url": absolute_url(path),
+            "image": BOOK_PRODUCT["cover"],
+            "lang": landing["lang"],
+            "hreflang": {
+                "en": absolute_url("/book"),
+                "es": absolute_url("/es/el-hombre-de-la-gorra"),
+            },
+        }
+    )
+    schemas = [
+        get_book_schema(),
+        get_breadcrumb_schema(
+            [
+                {"name": "Home", "url": "/"},
+                {"name": BOOK_PRODUCT["title"], "url": "/book"},
+                {"name": landing["meta"]["title"].split("|")[0].strip(), "url": path},
+            ]
+        ),
+    ]
+    primary_retailer_key = landing.get("primary_retailer", "amazon_us")
+    primary_retailer = next(
+        (retailer for retailer in BOOK_RETAILERS if retailer["key"] == primary_retailer_key),
+        BOOK_RETAILERS[1],
+    )
+    return render_template(
+        "book_landing.html",
+        title=landing["meta"]["title"].split("|")[0].strip(),
+        page_meta=build_page_meta(key, path=path, overrides=meta),
+        structured_data=schemas,
+        landing=landing,
+        primary_retailer=primary_retailer,
+        page_lang=landing["lang"],
+        reduced_nav=True,
+    )
+
+
+@app.route("/mystery-book-spain")
+def mystery_book_spain():
+    return render_landing_page("mystery_book_spain")
+
+
+@app.route("/book-that-gives-back")
+def book_that_gives_back():
+    return render_landing_page("book_that_gives_back")
+
+
+@app.route("/free-book-preview")
+def free_book_preview():
+    return render_landing_page("free_book_preview")
+
+
+@app.route("/es/el-hombre-de-la-gorra")
+def spanish_ballcap():
+    return render_landing_page("spanish_ballcap")
+
+
+@app.route("/book/checkout/start")
+def direct_book_checkout():
+    checkout_url = app.config["BOOK_DIRECT_CHECKOUT_URL"]
+
+    if not checkout_url:
+        flash("Direct book checkout is not configured yet. Please choose a retailer option.", "info")
+        return redirect(url_for("book_signed"))
+
+    attribution = {
+        key: request.args.get(key)
+        for key in ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"]
+        if request.args.get(key)
+    }
+
+    if attribution:
+        parsed = urlsplit(checkout_url)
+        query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+        query.update(attribution)
+        checkout_url = urlunsplit(
+            (
+                parsed.scheme,
+                parsed.netloc,
+                parsed.path,
+                urlencode(query),
+                parsed.fragment,
+            )
+        )
+
+    return redirect(checkout_url, code=302)
+
+
+@app.route("/book/checkout/success")
+@app.route("/book/signed/thank-you")
+def direct_book_checkout_success():
+    meta = {
+        "title": "Thank You for Returning from PayPal",
+        "description": "Thank you for returning from PayPal after ordering The Man in the Ball Cap signed copy.",
+    }
+    return render_public_template(
+        "checkout_success.html",
+        "checkout_success",
+        title="Thank You",
+        meta=meta,
+    )
+
+
+@app.route("/book/checkout/cancel")
+def direct_book_checkout_cancel():
+    meta = {
+        "title": "Your Checkout Was Not Completed",
+        "description": "Return to the signed-copy page, try PayPal checkout again, or read a free preview.",
+        "canonical_url": absolute_url("/book/checkout/cancel"),
+        "image": SIGNED_BOOK_IMAGES["mockup"]["src"],
+    }
+    return render_public_template(
+        "checkout_cancel.html",
+        "checkout_cancel",
+        title="Checkout Not Completed",
+        meta=meta,
+    )
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin",
+        "Disallow: /admin/",
+        "Disallow: /api/",
+        f"Sitemap: {absolute_url('/sitemap.xml')}",
+    ]
+    return Response("\n".join(lines) + "\n", mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    entries = []
+
+    for endpoint, values in public_sitemap_routes():
+        entries.append(
+            {
+                "loc": absolute_url(url_for(endpoint, **values)),
+                "lastmod": datetime.utcnow().date().isoformat(),
+            }
+        )
+
+    xml = render_template("sitemap.xml", entries=entries)
+    return Response(xml, mimetype="application/xml")
 
 
 @app.route("/api/health")

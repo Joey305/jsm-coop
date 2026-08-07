@@ -1124,13 +1124,18 @@
         <div class="book-showcase-card">
           <div class="book-showcase-badge">Debut Novel</div>
 
-          <img
-            class="book-showcase-img"
-            src="{{ url_for('static', filename='images/BOOK3D.png') }}"
-            alt="The Man in the Ball Cap 3D book cover"
-            loading="eager"
-            onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
-          >
+          <picture>
+            <source srcset="{{ url_for('static', filename='images/BOOK3D.webp') }}" type="image/webp">
+            <img
+              class="book-showcase-img"
+              src="{{ url_for('static', filename='images/BOOK3D.png') }}"
+              alt="The Man in the Ball Cap 3D book cover"
+              width="1500"
+              height="1150"
+              loading="eager"
+              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+            >
+          </picture>
 
           <div class="book-showcase-copy">
             <h2>The Man in the Ball Cap</h2>
@@ -1139,12 +1144,13 @@
             </p>
 
             <div class="home-hero-actions" style="margin-top: 1rem;">
-              <a class="btn btn-primary" href="{{ url_for('book') }}#preview">Read Preview</a>
+              <a class="btn btn-primary" href="{{ url_for('book') }}#preview" data-analytics-event="book_preview_click" data-cta-location="home_book_card">Read Preview</a>
 
               <button
                 type="button"
                 class="btn btn-ghost"
                 data-purchase-open
+                data-cta-location="home_book_card"
                 aria-haspopup="dialog"
                 aria-controls="purchase-modal"
               >
@@ -1164,13 +1170,18 @@
       <div class="home-brand-card reveal">
         <div class="home-brand-logo-wrap">
           <div class="home-brand-logo-orbit">
-            <img
-              class="home-brand-logo"
-              src="{{ url_for('static', filename='images/Logo.png') }}"
-              alt="JSM Cooperative logo"
-              loading="lazy"
-              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
-            >
+            <picture>
+              <source srcset="{{ url_for('static', filename='images/Logo.webp') }}" type="image/webp">
+              <img
+                class="home-brand-logo"
+                src="{{ url_for('static', filename='images/Logo.png') }}"
+                alt="JSM Cooperative logo"
+                width="1254"
+                height="1254"
+                loading="lazy"
+                onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+              >
+            </picture>
           </div>
         </div>
 

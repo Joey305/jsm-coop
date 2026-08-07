@@ -155,6 +155,73 @@ Deployment settings may vary by host. Make sure production secrets are configure
 
 ---
 
+## Environment Variables
+
+Core site configuration:
+
+- `SECRET_KEY`: Flask session secret for production.
+- `SITE_NAME`: Public site name. Defaults to `JSM Cooperative Corporation`.
+- `SITE_DOMAIN`: Canonical public domain, used for sitemap, canonical URLs, Open Graph, and schema. Defaults to `https://jsmcoop.com`.
+- `CONTACT_EMAIL`: Public contact email.
+- `PAYPAL_DONATE_BUTTON_ID`: Hosted PayPal donation button ID.
+- `MAILCHIMP_ACTION_URL`: Mailchimp form POST URL for newsletter signup.
+- `MAILCHIMP_HONEYPOT_NAME`: Mailchimp anti-bot field name.
+- `YOUTUBE_URL`, `TIKTOK_URL`, `INSTAGRAM_URL`: Public social profile URLs.
+
+Analytics and advertising:
+
+- `GA_MEASUREMENT_ID`: Optional GA4 Measurement ID. Leave blank until GA4 is ready; the existing Google Ads tag remains active.
+
+Signed-copy PayPal checkout:
+
+- `PAYPAL_SIGNED_BOOK_URL`: PayPal Payment Link for the signed physical edition. Production value for this release: `https://www.paypal.com/ncp/payment/SLQDNTABMS9JS`.
+- `BOOK_DIRECT_CHECKOUT_URL`: Central checkout URL used by `/book/checkout/start`. Production value for this release: `https://www.paypal.com/ncp/payment/SLQDNTABMS9JS`.
+- `BOOK_DIRECT_PROVIDER`: Checkout provider label. Production value for this release: `PayPal`.
+- `BOOK_DIRECT_PRICE_AMOUNT`: Book price before shipping for analytics display. Production value for this release: `15.00`.
+- `BOOK_DIRECT_PRICE_CURRENCY`: Currency code for direct checkout analytics. Production value for this release: `USD`.
+
+The signed-copy website copy should describe price as `$15 + shipping` because shipping is configured inside PayPal. No PayPal API credentials are required for the Payment Link MVP. Configure PayPal return URLs to `/book/checkout/success` and `/book/checkout/cancel`.
+
+---
+
+## Google Ads / Analytics Events
+
+The site centralizes conversion events in `static/js/main.js` and preserves visit-level attribution for `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, and `gclid`.
+
+Implemented events:
+
+- `purchase_modal_open`
+- `book_preview_click`
+- `retailer_click_amazon_us`
+- `retailer_click_barnes_noble`
+- `retailer_click_amazon_es`
+- `direct_checkout_started`
+- `direct_checkout_returned`
+- `verified_direct_purchase_completed` is reserved for a future server-side PayPal/API verification flow and is not fired by the Payment Link MVP.
+- `signed_copy_page_view`
+- `signed_copy_checkout_click`
+- `signed_copy_preview_click`
+- `signed_page_preview_click`
+- `signed_copy_gallery_interaction`
+- `signed_copy_inscription_info_view`
+- `pillar_article_view`
+- `pillar_to_book_click`
+- `pillar_preview_click`
+- `pillar_signed_copy_click`
+- `newsletter_signup`
+- `donation_click`
+- `camino_subscription_click`
+- `camino_subscription_completed`
+
+Recommended Google Ads conversion actions:
+
+- Primary candidates: `direct_checkout_returned`, `camino_subscription_completed`, and future verified transactions such as `verified_direct_purchase_completed` after server-side verification exists.
+- Secondary signals: `direct_checkout_started`, `retailer_click_amazon_us`, `retailer_click_barnes_noble`, `retailer_click_amazon_es`, `book_preview_click`, `signed_copy_preview_click`, `newsletter_signup`, `purchase_modal_open`.
+
+Retailer outbound clicks and PayPal return visits should not be described as confirmed purchases.
+
+---
+
 
 ## License
 

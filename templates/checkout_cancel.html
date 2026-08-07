@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "partials/book_components.html" as book_ui with context %}
+
+{% macro signed_image(image, class_name='', loading='lazy') %}
+  <picture>
+    <source srcset="{{ url_for('static', filename=image.webp) }}" type="image/webp">
+    <img
+      class="{{ class_name }}"
+      src="{{ url_for('static', filename=image.src) }}"
+      alt="{{ image.alt }}"
+      width="{{ image.width }}"
+      height="{{ image.height }}"
+      loading="{{ loading }}"
+    >
+  </picture>
+{% endmacro %}
+
+{% block content %}
+<section class="checkout-return-page">
+  <div class="container checkout-return-grid">
+    <div class="checkout-return-copy reveal">
+      <p class="eyebrow">Checkout Not Completed</p>
+      <h1>Your checkout wasn't completed.</h1>
+      <p>
+        No pressure and no problem. You can return to the signed-copy page, try PayPal checkout
+        again, or read the free preview before deciding.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-ghost" href="{{ url_for('book_signed') }}">Return to Signed Copy Page</a>
+        {{ book_ui.signed_copy_button('Try PayPal Checkout Again', 'checkout_cancel', 'btn btn-primary') }}
+        <a class="btn btn-ghost" href="{{ url_for('book') }}#preview" data-analytics-event="book_preview_click" data-cta-location="checkout_cancel">Read the Preview</a>
+      </div>
+    </div>
+    <div class="checkout-return-visual reveal delay-1">
+      {{ signed_image(signed_book_images.mockup, 'checkout-return-img', 'eager') }}
+    </div>
+  </div>
+</section>
+{% endblock %}

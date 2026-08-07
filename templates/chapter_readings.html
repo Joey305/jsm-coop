@@ -577,13 +577,18 @@
       <div class="book-flare"></div>
 
       <div class="book-float-stage">
-        <img
-          class="real-book-cover"
-          src="{{ url_for('static', filename='images/BOOK3D.png') }}"
-          alt="The Man in the Ball Cap book cover"
-          loading="eager"
-          fetchpriority="high"
-        >
+        <picture>
+          <source srcset="{{ url_for('static', filename='images/BOOK3D.webp') }}" type="image/webp">
+          <img
+            class="real-book-cover"
+            src="{{ url_for('static', filename='images/BOOK3D.png') }}"
+            alt="The Man in the Ball Cap book cover"
+            width="1500"
+            height="1150"
+            loading="eager"
+            fetchpriority="high"
+          >
+        </picture>
       </div>
 
       <div class="chapter-watch-card book-caption-card">

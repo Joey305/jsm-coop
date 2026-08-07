@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% macro signed_image(image, class_name='', loading='lazy') %}
+  <picture>
+    <source srcset="{{ url_for('static', filename=image.webp) }}" type="image/webp">
+    <img
+      class="{{ class_name }}"
+      src="{{ url_for('static', filename=image.src) }}"
+      alt="{{ image.alt }}"
+      width="{{ image.width }}"
+      height="{{ image.height }}"
+      loading="{{ loading }}"
+    >
+  </picture>
+{% endmacro %}
+
+{% block content %}
+<section class="checkout-return-page">
+  <div class="container checkout-return-grid">
+    <div class="checkout-return-copy reveal">
+      <p class="eyebrow">Returned from PayPal</p>
+      <h1>Thank you for your order and for supporting JSM Cooperative.</h1>
+      <p>
+        PayPal has sent you back to JSM after checkout. Your PayPal receipt is the confirmation
+        source for the order; this website records the return visit separately from verified payment data.
+      </p>
+      <p>
+        If your order was completed in PayPal, JSM will use the details collected there, including
+        shipping address and any optional inscription request, for next steps.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{{ url_for('home') }}">Back to JSM</a>
+        <a class="btn btn-ghost" href="{{ url_for('newsletter_page') }}">Join the Newsletter</a>
+      </div>
+    </div>
+    <div class="checkout-return-visual reveal delay-1">
+      {{ signed_image(signed_book_images.signed_clean, 'checkout-return-img', 'eager') }}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    window.JSMAnalytics && window.JSMAnalytics.track("direct_checkout_returned", {
+      retailer: "direct",
+      book_language: "en",
+      cta_location: "checkout_success",
+      value: "{{ direct_checkout_price_amount }}",
+      currency: "{{ direct_checkout_price_currency }}"
+    });
+  </script>
+{% endblock %}

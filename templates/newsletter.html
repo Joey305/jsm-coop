@@ -28,11 +28,11 @@
       </div>
 
       <div class="newsletter-actions">
-        <a class="btn btn-secondary" href="#join-the-camino">
+        <a class="btn btn-secondary" href="#join-the-camino" data-analytics-event="newsletter_signup" data-cta-location="newsletter_hero">
           📬 Join The Camino
         </a>
 
-        <form action="https://www.paypal.com/donate" method="post" target="_blank" class="inline-paypal-form">
+        <form action="https://www.paypal.com/donate" method="post" target="_blank" class="inline-paypal-form" data-analytics-event="donation_click" data-cta-location="newsletter_hero">
           <input type="hidden" name="hosted_button_id" value="TLWCSL2KJDZQU">
           <button class="btn btn-primary" type="submit">
             ☕ Buy the Co-op a Coffee
@@ -58,6 +58,8 @@
         method="post"
         target="mailchimp-hidden-submit"
         data-mailchimp-form
+        data-analytics-event="newsletter_signup"
+        data-cta-location="newsletter_form"
       >
         <div class="form-row">
           <label for="mce-FNAME">
@@ -203,14 +205,14 @@
       </div>
 
       <div class="donate-button-group">
-        <form action="https://www.paypal.com/donate" method="post" target="_blank">
+        <form action="https://www.paypal.com/donate" method="post" target="_blank" data-analytics-event="donation_click" data-cta-location="newsletter_bottom">
           <input type="hidden" name="hosted_button_id" value="TLWCSL2KJDZQU">
           <button class="btn btn-primary large" type="submit">
             💙 Donate to JSM Cooperative
           </button>
         </form>
 
-        <form action="https://www.paypal.com/donate" method="post" target="_blank">
+        <form action="https://www.paypal.com/donate" method="post" target="_blank" data-analytics-event="donation_click" data-cta-location="newsletter_bottom_coffee">
           <input type="hidden" name="hosted_button_id" value="TLWCSL2KJDZQU">
           <button class="btn btn-secondary large" type="submit">
             ☕ Buy the Co-op a Coffee

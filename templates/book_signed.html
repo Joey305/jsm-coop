@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% import "partials/book_components.html" as book_ui with context %}
+
+{% macro signed_image(image, class_name='', loading='lazy') %}
+  <picture>
+    <source srcset="{{ url_for('static', filename=image.webp) }}" type="image/webp">
+    <img
+      class="{{ class_name }}"
+      src="{{ url_for('static', filename=image.src) }}"
+      alt="{{ image.alt }}"
+      width="{{ image.width }}"
+      height="{{ image.height }}"
+      loading="{{ loading }}"
+      decoding="{{ 'sync' if loading == 'eager' else 'async' }}"
+    >
+  </picture>
+{% endmacro %}
+
+{% block content %}
+<div class="signed-page">
+  <header class="signed-topbar">
+    <a class="landing-brand" href="{{ url_for('home') }}" aria-label="JSM Cooperative home">
+      <img
+        src="{{ url_for('static', filename='images/logo-nav.webp') }}"
+        alt="JSM Cooperative"
+        width="900"
+        height="333"
+      >
+    </a>
+    <nav class="signed-nav" aria-label="Signed copy navigation">
+      <a href="{{ url_for('book') }}">Book</a>
+      <a href="#mission">Mission</a>
+      <a href="{{ url_for('home') }}">Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="signed-hero">
+      <div class="container signed-hero-grid">
+        <div class="signed-hero-copy reveal">
+          <p class="signed-kicker">Signed Edition</p>
+          <h1>Own a Signed Copy of <span>The Man in the Ball Cap</span></h1>
+          <p class="signed-lede">
+            A physical paperback of JSM Cooperative's mystery set in A Coruña, Spain,
+            personally signed direct from JSM and inscribed with #JoinTheCamino.
+          </p>
+          <p class="signed-story-hook">
+            Private investigator Pepe Miguel is pulled into A Coruña's darker edges:
+            secrets, symbols, occult rituals, and unanswered questions.
+          </p>
+
+          <div class="signed-price-row" aria-label="Signed copy price">
+            <strong>{{ signed_book_price_display }}</strong>
+            <span>Shipping is configured inside PayPal.</span>
+          </div>
+
+          <div class="hero-actions">
+            {{ book_ui.signed_copy_button('Order a Signed Copy', 'signed_hero', 'btn btn-primary large', true) }}
+            {{ book_ui.signed_preview_button('Read a Free Preview', 'signed_hero', 'btn btn-ghost large') }}
+          </div>
+
+          <p class="signed-microcopy">
+            Secure checkout powered by PayPal. Purchases support JSM Cooperative's mission-aligned work.
+          </p>
+        </div>
+
+        <div class="signed-hero-visual reveal delay-1">
+          <div class="signed-mockup-frame">
+            {{ signed_image(signed_book_images.mockup, 'signed-mockup-img', 'eager') }}
+          </div>
+          <div class="signed-proof-peek">
+            {{ signed_image(signed_book_images.signed_clean, 'signed-proof-img') }}
+            <span>Signed #JoinTheCamino Edition</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section signed-proof-section">
+      <div class="container signed-proof-grid">
+        <div class="signed-proof-card reveal">
+          {{ signed_image(signed_book_images.signed_clean, 'signed-proof-main') }}
+        </div>
+        <div class="signed-section-copy reveal delay-1">
+          <p class="eyebrow">Real Signed Copy Proof</p>
+          <h2>Signed by JSM Cooperative</h2>
+          <p>
+            Direct-order copies are personally signed and include the #JoinTheCamino inscription.
+            Want the copy made out to someone? You can leave an optional inscription request during checkout.
+          </p>
+          <details class="signed-inscription-details" data-analytics-event="signed_copy_inscription_info_view" data-cta-location="signed_proof">
+            <summary>How inscription requests work</summary>
+            <p>
+              PayPal includes an optional field where buyers can request a name or message.
+              JSM will use that request as guidance without guaranteeing every arbitrary wording request.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container signed-two-col">
+        <article class="signed-section-copy reveal">
+          <p class="eyebrow">About the Story</p>
+          <h2>A mystery from the shadowed streets of A Coruña.</h2>
+          <p>
+            <em>The Man in the Ball Cap</em> follows private investigator Pepe Miguel into a mystery
+            shaped by A Coruña, Galicia. Existing JSM materials describe a world of secrets, symbols,
+            occult rituals, dark motives, and questions that keep pulling the investigation deeper.
+          </p>
+          <p>
+            The nonprofit mission matters, but the first invitation is the story itself:
+            a reader-forward mystery with atmosphere, place, and suspense.
+          </p>
+        </article>
+
+        <article class="signed-section-copy reveal delay-1">
+          <p class="eyebrow">Why Order Direct</p>
+          <h2>The signed direct edition is different.</h2>
+          <ul class="signed-benefit-list">
+            <li>Physical paperback copy</li>
+            <li>Personally signed by JSM Cooperative</li>
+            <li>Includes the #JoinTheCamino inscription</li>
+            <li>Optional inscription request during checkout</li>
+            <li>Direct purchase from JSM Cooperative</li>
+          </ul>
+          {{ book_ui.signed_copy_button('Order Direct from JSM', 'signed_why_direct', 'btn btn-primary', true) }}
+        </article>
+      </div>
+    </section>
+
+    <section class="section signed-gallery-section" id="gallery">
+      <div class="container">
+        <div class="book-section-heading reveal">
+          <p class="eyebrow">Product Gallery</p>
+          <h2>See the signed edition.</h2>
+          <p>Real product images supplied by JSM Cooperative, optimized for the website without altering the signed inscription.</p>
+        </div>
+
+        <div class="signed-gallery">
+          {% set gallery = [
+            signed_book_images.mockup,
+            signed_book_images.front_cover,
+            signed_book_images.signed_clean,
+            signed_book_images.signed_author,
+            signed_book_images.back_cover,
+            signed_book_images.signed_handheld
+          ] %}
+          {% for image in gallery %}
+            <a
+              class="signed-gallery-item"
+              href="{{ url_for('static', filename=image.src) }}"
+              data-analytics-event="signed_copy_gallery_interaction"
+              data-cta-location="signed_gallery"
+            >
+              {{ signed_image(image, 'signed-gallery-img') }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="preview">
+      <div class="container preview-grid">
+        <div class="signed-section-copy reveal">
+          <p class="eyebrow">Read Before You Buy</p>
+          <h2>Preview the story, then order the signed copy.</h2>
+          <p>
+            Use the free Kindle preview to sample the book in your browser. If Pepe Miguel's
+            case catches you, return here for the signed direct edition.
+          </p>
+          <div class="hero-actions">
+            {{ book_ui.signed_copy_button('Order After Previewing', 'signed_after_preview', 'btn btn-primary', true) }}
+          </div>
+        </div>
+        <div class="book-feature-card kindle-preview-card reveal delay-1">
+          {{ book_ui.preview_embed('signed_preview_embed') }}
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="mission">
+      <div class="container signed-two-col">
+        <div class="signed-section-copy reveal">
+          <p class="eyebrow">Purchase Supports the Mission</p>
+          <h2>A book project connected to nonprofit impact.</h2>
+          <p>
+            JSM Cooperative uses creative work, publishing, and community support to fund
+            projects connected to education, health, empathy, and nonprofit impact.
+            The existing site states: 100% of novel profits donated.
+          </p>
+          <a class="btn btn-ghost" href="{{ url_for('about') }}">Learn About JSM Cooperative</a>
+        </div>
+        <div class="signed-human-card reveal delay-1">
+          {{ signed_image(signed_book_images.signed_author, 'signed-human-img') }}
+        </div>
+      </div>
+    </section>
+
+    <section class="section signed-final-cta">
+      <div class="container signed-final-panel reveal">
+        <p class="eyebrow">Ready to Join the Camino?</p>
+        <h2>Order your signed copy.</h2>
+        <p>{{ signed_book_price_display }}. Secure checkout powered by PayPal.</p>
+        <div class="hero-actions">
+          {{ book_ui.signed_copy_button('Order Your Signed Copy', 'signed_final', 'btn btn-primary large', true) }}
+          <a class="btn btn-ghost large" href="{{ url_for('book') }}">Compare All Editions</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="signed-mobile-bar" aria-label="Signed copy actions">
+    <span>{{ signed_book_price_display }}</span>
+    {{ book_ui.signed_copy_button('Order Signed Copy', 'signed_mobile_bar', 'btn btn-primary') }}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    window.JSMAnalytics && window.JSMAnalytics.track("signed_copy_page_view", {
+      cta_location: "signed_page"
+    });
+  </script>
+{% endblock %}

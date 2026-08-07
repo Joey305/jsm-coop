@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% import "partials/book_components.html" as book_ui with context %}
+
+{% block content %}
+<div class="campaign-landing">
+  <header class="landing-topbar">
+    <a class="landing-brand" href="{{ url_for('home') }}" aria-label="JSM Cooperative home">
+      <img
+        src="{{ url_for('static', filename='images/logo-nav.webp') }}"
+        alt="JSM Cooperative"
+        width="900"
+        height="333"
+      >
+    </a>
+    <a class="landing-site-link" href="{{ url_for('home') }}">
+      {% if page_lang == 'es' %}Sitio principal{% else %}Main site{% endif %}
+    </a>
+  </header>
+
+  <main>
+    <section class="landing-hero">
+      <div class="container landing-hero-grid">
+        <div class="landing-copy reveal">
+          <p class="eyebrow">{{ landing.eyebrow }}</p>
+          <h1>{{ landing.headline }}</h1>
+          <p class="landing-lede">{{ landing.lede }}</p>
+
+          <div class="landing-proof-row" aria-label="Book details">
+            <span>{{ book_product.title }}</span>
+            <span>{{ book_product.genre }}</span>
+            <span>{{ book_product.setting }}</span>
+          </div>
+
+          <div class="hero-actions">
+            {% if landing.preview_first %}
+              {{ book_ui.preview_button(landing.primary_label, 'landing_hero', 'btn btn-primary large') }}
+              {% if landing.signed_after_preview %}
+                {{ book_ui.signed_copy_button(landing.secondary_label, 'landing_hero', 'btn btn-ghost large') }}
+              {% else %}
+                {{ book_ui.buy_button(landing.secondary_label, 'landing_hero', 'btn btn-ghost large') }}
+              {% endif %}
+            {% else %}
+              {% if landing.signed_primary %}
+                {{ book_ui.signed_copy_button(landing.primary_label, 'landing_hero', 'btn btn-primary large') }}
+              {% else %}
+                {{ book_ui.buy_button(landing.primary_label, 'landing_hero', 'btn btn-primary large', landing.primary_retailer or '') }}
+              {% endif %}
+              {{ book_ui.preview_button(landing.secondary_label, 'landing_hero', 'btn btn-ghost large') }}
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="landing-cover-panel reveal delay-1">
+          {{ book_ui.book_cover(eager=true, compact=true) }}
+          <div class="landing-cover-caption">
+            <strong>{{ book_product.title }}</strong>
+            <span>{{ book_product.subtitle }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {% if landing.preview_first %}
+      <section class="section" id="preview">
+        <div class="container landing-preview-focus">
+          <div class="book-section-heading reveal">
+            <p class="eyebrow">{{ landing.eyebrow }}</p>
+            <h2>{% if page_lang == 'es' %}Lee una muestra antes de comprar.{% else %}Read before you buy.{% endif %}</h2>
+            <p>{{ landing.impact }}</p>
+          </div>
+          {{ book_ui.preview_embed('landing_preview_focus') }}
+          <div class="landing-after-preview-actions">
+            {% if landing.signed_after_preview %}
+              {{ book_ui.signed_copy_button(landing.secondary_label, 'after_preview', 'btn btn-primary large', true) }}
+            {% else %}
+              {{ book_ui.buy_button(landing.secondary_label, 'after_preview', 'btn btn-primary large') }}
+            {% endif %}
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
+    <section class="section">
+      <div class="container landing-two-col">
+        <article class="book-feature-card reveal">
+          <p class="eyebrow">{% if page_lang == 'es' %}La historia{% else %}Why read it{% endif %}</p>
+          <h2>{% if page_lang == 'es' %}Un misterio con lugar, memoria y símbolos.{% else %}A mystery built around place, memory, and symbols.{% endif %}</h2>
+          <ul class="book-feature-list">
+            {% for item in landing.audience %}
+              <li><span aria-hidden="true">-</span><div>{{ item }}</div></li>
+            {% endfor %}
+          </ul>
+        </article>
+
+        {{ book_ui.impact_message(landing.impact, 'Your Purchase Has an Impact' if page_lang != 'es' else 'Tu compra tiene impacto') }}
+      </div>
+    </section>
+
+    {% if not landing.preview_first %}
+      <section class="section" id="preview">
+        <div class="container preview-grid">
+          <div class="book-feature-card reveal">
+            <p class="eyebrow">{% if page_lang == 'es' %}Muestra gratis{% else %}Free Preview{% endif %}</p>
+            <h2>{% if page_lang == 'es' %}Entra en la historia antes de elegir la edicion.{% else %}Step into the story before choosing your edition.{% endif %}</h2>
+            <p>
+              {% if page_lang == 'es' %}
+                Lee una muestra Kindle en tu navegador y compra la edición española cuando estés listo.
+              {% else %}
+                Read a Kindle sample in your browser, then choose the edition and retailer that fit you.
+              {% endif %}
+            </p>
+          </div>
+          <div class="book-feature-card kindle-preview-card reveal delay-1">
+            {{ book_ui.preview_embed('landing_preview') }}
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
+    <section class="section" id="buy">
+      <div class="container landing-two-col">
+        <div class="book-feature-card reveal">
+          <p class="eyebrow">{% if page_lang == 'es' %}Comprar{% else %}Choose Your Edition{% endif %}</p>
+          <h2>{% if page_lang == 'es' %}Elige donde comprar.{% else %}Choose where to buy.{% endif %}</h2>
+          <p>
+            {% if page_lang == 'es' %}
+              La edición española aparece primero en esta página, y las opciones en inglés siguen disponibles.
+            {% else %}
+              Retailer purchases stay available, and the signed direct edition is available through JSM Cooperative.
+            {% endif %}
+          </p>
+          {% if landing.signed_primary or landing.signed_after_preview %}
+            <div class="hero-actions">
+              {{ book_ui.signed_copy_button('Order the Signed Copy', 'landing_choose_edition', 'btn btn-primary', true) }}
+            </div>
+          {% endif %}
+        </div>
+        <aside class="book-feature-card reveal delay-1">
+          {{ book_ui.retailer_selector('landing_retailer_selector') }}
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  {% if landing.signed_primary %}
+    <div class="mobile-sticky-cta" aria-label="Book actions">
+      {{ book_ui.preview_button(landing.secondary_label, 'mobile_sticky', 'btn btn-ghost') }}
+      {{ book_ui.signed_copy_button(landing.primary_label, 'mobile_sticky', 'btn btn-primary') }}
+    </div>
+  {% elif landing.signed_after_preview %}
+    <div class="mobile-sticky-cta" aria-label="Book actions">
+      {{ book_ui.preview_button(landing.primary_label, 'mobile_sticky', 'btn btn-ghost') }}
+      {{ book_ui.signed_copy_button(landing.secondary_label, 'mobile_sticky', 'btn btn-primary') }}
+    </div>
+  {% else %}
+    {{ book_ui.sticky_mobile_cta(landing.primary_label, landing.secondary_label, landing.primary_retailer or '') }}
+  {% endif %}
+</div>
+{% endblock %}

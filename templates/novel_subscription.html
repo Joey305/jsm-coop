@@ -523,19 +523,20 @@
         </div>
 
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#paypal-section-camino">Start Your Camino Subscription</a>
+          <a class="btn btn-primary" href="#paypal-section-camino" data-analytics-event="camino_subscription_click" data-cta-location="camino_hero">Start Your Camino Subscription</a>
 
           <button
             type="button"
             class="btn btn-ghost"
             data-purchase-open
+            data-cta-location="camino_hero"
             aria-haspopup="dialog"
             aria-controls="purchase-modal"
           >
             Buy The Book First
           </button>
 
-          <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate Instead</a>
+          <a class="btn btn-donate" href="{{ url_for('donate') }}" data-analytics-event="donation_click" data-cta-location="camino_hero">Donate Instead</a>
         </div>
 
         <div class="camino-mini-proof">
@@ -644,8 +645,8 @@
           </p>
 
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#paypal-section-camino">Subscribe Now</a>
-            <a class="btn btn-ghost" href="{{ url_for('book') }}#preview">Read Preview</a>
+            <a class="btn btn-primary" href="#paypal-section-camino" data-analytics-event="camino_subscription_click" data-cta-location="camino_price_card">Subscribe Now</a>
+            <a class="btn btn-ghost" href="{{ url_for('book') }}#preview" data-analytics-event="book_preview_click" data-cta-location="camino_price_card">Read Preview</a>
           </div>
         </aside>
       </div>
@@ -724,20 +725,21 @@
       </p>
 
       <div class="hero-actions">
-        <a class="btn btn-primary" href="{{ url_for('book') }}#preview">Read The Preview</a>
+        <a class="btn btn-primary" href="{{ url_for('book') }}#preview" data-analytics-event="book_preview_click" data-cta-location="camino_final">Read The Preview</a>
 
         <button
           type="button"
           class="btn btn-ghost"
           data-purchase-open
+          data-cta-location="camino_final"
           aria-haspopup="dialog"
           aria-controls="purchase-modal"
         >
           Buy The Book
         </button>
 
-        <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate</a>
-        <a class="btn btn-ghost" href="{{ url_for('newsletter_page') }}">Join Newsletter</a>
+        <a class="btn btn-donate" href="{{ url_for('donate') }}" data-analytics-event="donation_click" data-cta-location="camino_final">Donate</a>
+        <a class="btn btn-ghost" href="{{ url_for('newsletter_page') }}" data-analytics-event="newsletter_signup" data-cta-location="camino_final">Join Newsletter</a>
       </div>
     </div>
   </section>
@@ -787,6 +789,11 @@
 
         onClick: function () {
           reportSubscribeButtonClickConversion();
+          window.JSMAnalytics && window.JSMAnalytics.track("camino_subscription_click", {
+            cta_location: "paypal_button",
+            value: 23.00,
+            currency: "USD"
+          });
         },
 
         createSubscription: function (data, actions) {
@@ -797,6 +804,12 @@
 
         onApprove: function (data, actions) {
           reportCaminoPayPalSubscriptionConversion(data.subscriptionID);
+          window.JSMAnalytics && window.JSMAnalytics.track("camino_subscription_completed", {
+            cta_location: "paypal_button",
+            value: 23.00,
+            currency: "USD",
+            transaction_id: data.subscriptionID || ""
+          });
 
           alert("Thank you for joining the Camino! Subscription ID: " + data.subscriptionID);
         },

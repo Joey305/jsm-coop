@@ -1,14 +1,23 @@
 <!doctype html>
-<html lang="en">
+{% set meta = page_meta if page_meta is defined else {} %}
+{% set html_lang = page_lang if page_lang is defined else meta.get('lang', 'en') %}
+<html lang="{{ html_lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ title or "Home" }} · {{ site_name }}</title>
+  <title>{% block title %}{{ meta.get('title', title or site_name) }}{% if site_name not in meta.get('title', '') %} · {{ site_name }}{% endif %}{% endblock %}</title>
 
-  <meta name="description" content="JSM Cooperative Corporation uses storytelling, publishing, and community support to fund mission-aligned nonprofit impact.">
-  <meta property="og:title" content="{{ title or 'JSM Cooperative Corporation' }}">
-  <meta property="og:description" content="Stories that fund a better world. Walk the Camino with JSM Cooperative.">
-  <meta property="og:type" content="website">
+  <meta name="description" content="{{ meta.get('description', 'Stories that fund a better world through publishing and nonprofit-aligned impact.') }}">
+  <link rel="canonical" href="{{ meta.get('canonical_url', site_domain ~ request.path) }}">
+  <meta property="og:title" content="{{ meta.get('og_title', meta.get('title', title or site_name)) }}">
+  <meta property="og:description" content="{{ meta.get('og_description', meta.get('description', 'Stories that fund a better world. Walk the Camino with JSM Cooperative.')) }}">
+  <meta property="og:image" content="{{ meta.get('og_image', site_domain ~ url_for('static', filename='images/Logo.png')) }}">
+  <meta property="og:url" content="{{ meta.get('canonical_url', site_domain ~ request.path) }}">
+  <meta property="og:type" content="{{ meta.get('og_type', 'website') }}">
+  <meta name="twitter:card" content="summary_large_image">
+  {% for lang, href in meta.get('hreflang', {}).items() %}
+    <link rel="alternate" hreflang="{{ lang }}" href="{{ href }}">
+  {% endfor %}
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16512731660"></script>
   <script>
@@ -17,11 +26,20 @@
     gtag('js', new Date());
 
     gtag('config', 'AW-16512731660');
+    {% if ga_measurement_id %}
+      gtag('config', '{{ ga_measurement_id }}');
+    {% endif %}
   </script>
   
 
   <link rel="icon" href="{{ url_for('static', filename='images/Logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <script type="application/ld+json">{{ organization_schema | tojson }}</script>
+  {% if structured_data is defined %}
+    {% for schema in structured_data %}
+      <script type="application/ld+json">{{ schema | tojson }}</script>
+    {% endfor %}
+  {% endif %}
   
 
   <style>
@@ -462,15 +480,21 @@
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
+  {% if not reduced_nav|default(false) %}
   <header class="site-header" data-header>
     <div class="container header-inner">
       
       <a class="brand brand-logo-link" href="{{ url_for('home') }}" aria-label="JSM Cooperative home">
-        <img
-          class="nav-logo"
-          src="{{ url_for('static', filename='images/logo-nav.png') }}"
-          alt="JSM Cooperative"
-        >
+        <picture>
+          <source srcset="{{ url_for('static', filename='images/logo-nav.webp') }}" type="image/webp">
+          <img
+            class="nav-logo"
+            src="{{ url_for('static', filename='images/logo-nav.png') }}"
+            alt="JSM Cooperative"
+            width="900"
+            height="333"
+          >
+        </picture>
       </a>
 
       <nav class="desktop-nav" aria-label="Primary navigation">
@@ -493,19 +517,34 @@
       </nav>
 
       <div class="header-actions">
-        <a class="btn btn-ghost" href="{{ url_for('book') }}#preview">Read</a>
+        <a
+          class="btn btn-ghost"
+          href="{{ url_for('book') }}#preview"
+          data-analytics-event="book_preview_click"
+          data-cta-location="header"
+        >
+          Read
+        </a>
 
         <button
           type="button"
           class="btn btn-buy"
           data-purchase-open
+          data-cta-location="header"
           aria-haspopup="dialog"
           aria-controls="purchase-modal"
         >
           Buy
         </button>
 
-        <a class="btn btn-donate" href="{{ url_for('donate') }}">Donate</a>
+        <a
+          class="btn btn-donate"
+          href="{{ url_for('donate') }}"
+          data-analytics-event="donation_click"
+          data-cta-location="header"
+        >
+          Donate
+        </a>
 
         <button class="menu-toggle" data-menu-toggle aria-label="Open navigation" aria-expanded="false">
           <span></span>
@@ -525,22 +564,36 @@
         {% endfor %}
 
         <a href="{{ url_for('novel_subscription') }}">Novel Subscription</a>
-        <a href="{{ url_for('book') }}#preview">Read Preview</a>
+        <a
+          href="{{ url_for('book') }}#preview"
+          data-analytics-event="book_preview_click"
+          data-cta-location="mobile_menu"
+        >
+          Read Preview
+        </a>
 
         <button
           type="button"
           class="mobile-purchase-btn"
           data-purchase-open
+          data-cta-location="mobile_menu"
           aria-haspopup="dialog"
           aria-controls="purchase-modal"
         >
           Buy The Book
         </button>
 
-        <a href="{{ url_for('donate') }}">Donate</a>
+        <a
+          href="{{ url_for('donate') }}"
+          data-analytics-event="donation_click"
+          data-cta-location="mobile_menu"
+        >
+          Donate
+        </a>
       </nav>
     </div>
   </header>
+  {% endif %}
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -562,6 +615,7 @@
   {% set instagram_url = social_links.instagram if social_links is defined else 'https://www.instagram.com/jsm.cooperative/' %}
   {% set tiktok_url = social_links.tiktok if social_links is defined else 'https://www.tiktok.com/@jsm.cooperative' %}
 
+  {% if not reduced_nav|default(false) %}
   <footer class="site-footer">
     <div class="container footer-grid">
       <section>
@@ -633,13 +687,30 @@
         <h3>Explore</h3>
 
         <ul class="footer-links">
-          <li><a href="{{ url_for('novel_subscription') }}">Novel Subscription</a></li>
-          <li><a href="{{ url_for('book') }}#preview">Read Book Preview</a></li>
+          <li>
+            <a
+              href="{{ url_for('novel_subscription') }}"
+              data-analytics-event="camino_subscription_click"
+              data-cta-location="footer_explore"
+            >
+              Novel Subscription
+            </a>
+          </li>
+          <li>
+            <a
+              href="{{ url_for('book') }}#preview"
+              data-analytics-event="book_preview_click"
+              data-cta-location="footer_explore"
+            >
+              Read Book Preview
+            </a>
+          </li>
           <li>
             <button
               type="button"
               class="footer-link-button"
               data-purchase-open
+              data-cta-location="footer_explore"
               aria-haspopup="dialog"
               aria-controls="purchase-modal"
             >
@@ -662,10 +733,23 @@
           </p>
 
           <div class="hero-actions" style="margin-bottom: 1rem;">
-            <a class="btn btn-primary" href="{{ url_for('novel_subscription') }}">Novel Subscription</a>
+            <a
+              class="btn btn-primary"
+              href="{{ url_for('novel_subscription') }}"
+              data-analytics-event="camino_subscription_click"
+              data-cta-location="footer_camino"
+            >
+              Novel Subscription
+            </a>
           </div>
 
-          <form class="mini-newsletter" action="{{ url_for('newsletter_page') }}" method="post">
+          <form
+            class="mini-newsletter"
+            action="{{ url_for('newsletter_page') }}"
+            method="post"
+            data-analytics-event="newsletter_signup"
+            data-cta-location="footer"
+          >
             <input type="email" name="email" placeholder="you@example.com" aria-label="Email address" required>
             <button type="submit">Subscribe</button>
           </form>
@@ -688,38 +772,9 @@
       <span>#JOINTHECAMINO · Storytelling-as-solidarity</span>
     </div>
   </footer>
+  {% endif %}
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-  <!-- Google Ads conversion event helper -->
-<script>
-  function gtag_report_conversion(url) {
-    var callback = function () {
-      if (typeof(url) !== 'undefined') {
-        window.location = url;
-      }
-    };
-  
-    if (typeof gtag === 'function') {
-      gtag('event', 'conversion', {
-        'send_to': 'AW-16512731660/mdXICPyLzaAZEIyU8cE9',
-        'event_callback': callback
-      });
-  
-      return false;
-    }
-  
-    if (typeof(url) !== 'undefined') {
-      window.location = url;
-    }
-  
-    return false;
-  }
-  </script>
-
-
-
-
 
 {% block extra_scripts %}{% endblock %}
 </body>
