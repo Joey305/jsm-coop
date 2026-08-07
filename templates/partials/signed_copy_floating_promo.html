@@ -1,0 +1,59 @@
+<aside
+  class="signed-promo"
+  data-signed-promo
+  data-suppress-mobile="{{ 'true' if request.endpoint in ['mystery_book_spain', 'book_that_gives_back', 'free_book_preview', 'spanish_ballcap'] else 'false' }}"
+  aria-label="Signed copy promotion"
+>
+  <button
+    type="button"
+    class="signed-promo-close"
+    data-signed-promo-close
+    aria-label="Close signed copy promotion"
+  >
+    <span aria-hidden="true">&times;</span>
+  </button>
+
+  <div class="signed-promo-media">
+    <picture>
+      <source
+        srcset="{{ url_for('static', filename=signed_book_images.mockup.webp) }}"
+        type="image/webp"
+      >
+      <img
+        src="{{ url_for('static', filename=signed_book_images.mockup.src) }}"
+        alt="{{ signed_book_images.mockup.alt }}"
+        width="{{ signed_book_images.mockup.width }}"
+        height="{{ signed_book_images.mockup.height }}"
+        loading="lazy"
+        decoding="async"
+      >
+    </picture>
+  </div>
+
+  <div class="signed-promo-copy">
+    <p class="signed-promo-kicker">Signed Edition</p>
+    <strong>Get a Signed Copy</strong>
+    <span>The Man in the Ball Cap</span>
+    <em>{{ signed_book_price_display }}</em>
+    <small>Personally signed with #JoinTheCamino.</small>
+  </div>
+
+  <a
+    class="signed-promo-link"
+    href="{{ url_for('book_signed') }}"
+    data-signed-promo-link
+    data-cta-location="floating_signed_copy"
+  >
+    <span class="signed-promo-link-full">View Signed Edition</span>
+    <span class="signed-promo-link-short">View</span>
+  </a>
+</aside>
+
+<button
+  type="button"
+  class="signed-promo-tab"
+  data-signed-promo-tab
+  aria-label="Reopen signed copy promotion"
+>
+  Signed Copy
+</button>

@@ -75,6 +75,7 @@ app.config["INSTAGRAM_URL"] = os.getenv("INSTAGRAM_URL", "https://www.instagram.
 
 NAV_ITEMS = [
     ("Home", "home"),
+    ("Signed Book", "book_signed"),
     ("Newsletter", "newsletter_page"),
     ("Blogs", "blogs"),
     ("Our Team", "team"),
@@ -1150,7 +1151,6 @@ def book_signed():
         title="Signed Copy",
         meta=meta,
         structured_data=schemas,
-        reduced_nav=True,
     )
 
 

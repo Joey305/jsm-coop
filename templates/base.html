@@ -559,11 +559,18 @@
 
         {% for label, endpoint in nav_items %}
           {% if endpoint not in hidden_mobile_endpoints %}
-            <a href="{{ url_for(endpoint) }}">{{ label }}</a>
+            <a href="{{ url_for(endpoint) }}" {% if request.endpoint == endpoint %}class="active"{% endif %}>
+              {{ label }}
+            </a>
           {% endif %}
         {% endfor %}
 
-        <a href="{{ url_for('novel_subscription') }}">Novel Subscription</a>
+        <a
+          href="{{ url_for('novel_subscription') }}"
+          {% if request.endpoint == 'novel_subscription' %}class="active"{% endif %}
+        >
+          Novel Subscription
+        </a>
         <a
           href="{{ url_for('book') }}#preview"
           data-analytics-event="book_preview_click"
@@ -610,6 +617,20 @@
   </main>
 
   {% include "partials/purchase_modal.html" %}
+
+  {% set signed_promo_suppressed_endpoints = [
+    'book_signed',
+    'signed_copy_alias',
+    'direct_book_checkout',
+    'direct_book_checkout_success',
+    'direct_book_checkout_cancel',
+  ] %}
+  {% if request.endpoint
+    and request.endpoint not in signed_promo_suppressed_endpoints
+    and not request.endpoint.startswith('admin_')
+  %}
+    {% include "partials/signed_copy_floating_promo.html" %}
+  {% endif %}
 
   {% set youtube_url = social_links.youtube if social_links is defined else 'https://www.youtube.com/@JSm.cooperative' %}
   {% set instagram_url = social_links.instagram if social_links is defined else 'https://www.instagram.com/jsm.cooperative/' %}
@@ -704,6 +725,9 @@
             >
               Read Book Preview
             </a>
+          </li>
+          <li>
+            <a href="{{ url_for('book_signed') }}">Signed Book</a>
           </li>
           <li>
             <button

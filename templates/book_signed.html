@@ -18,22 +18,6 @@
 
 {% block content %}
 <div class="signed-page">
-  <header class="signed-topbar">
-    <a class="landing-brand" href="{{ url_for('home') }}" aria-label="JSM Cooperative home">
-      <img
-        src="{{ url_for('static', filename='images/logo-nav.webp') }}"
-        alt="JSM Cooperative"
-        width="900"
-        height="333"
-      >
-    </a>
-    <nav class="signed-nav" aria-label="Signed copy navigation">
-      <a href="{{ url_for('book') }}">Book</a>
-      <a href="#mission">Mission</a>
-      <a href="{{ url_for('home') }}">Home</a>
-    </nav>
-  </header>
-
   <main>
     <section class="signed-hero">
       <div class="container signed-hero-grid">

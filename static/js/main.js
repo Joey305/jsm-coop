@@ -304,3 +304,128 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const promo = document.querySelector("[data-signed-promo]");
+  const promoTab = document.querySelector("[data-signed-promo-tab]");
+  if (!promo) return;
+
+  const DISMISS_KEY = "jsm_signed_copy_promo_dismissed";
+  const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+  const SHOW_DELAY_MS = 9000;
+  const REOPEN_DELAY_MS = 2400;
+  const mobileQuery = window.matchMedia("(max-width: 767px)");
+  const suppressMobile = promo.dataset.suppressMobile === "true";
+
+  if (suppressMobile && mobileQuery.matches) {
+    promo.remove();
+    if (promoTab) promoTab.remove();
+    return;
+  }
+
+  const deviceType = () => mobileQuery.matches ? "mobile" : "desktop";
+  const promoPayload = () => ({
+    cta_location: "floating_signed_copy",
+    device_type: deviceType(),
+  });
+
+  const readDismissedUntil = () => {
+    try {
+      return Number(window.localStorage.getItem(DISMISS_KEY) || 0);
+    } catch (error) {
+      return 0;
+    }
+  };
+
+  const writeDismissedUntil = () => {
+    try {
+      window.localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DURATION_MS));
+    } catch (error) {
+      return false;
+    }
+    return true;
+  };
+
+  const showPromoTab = () => {
+    if (!promoTab || mobileQuery.matches) return;
+    window.setTimeout(() => {
+      if (!promo.classList.contains("is-visible")) {
+        promoTab.classList.add("is-visible");
+      }
+    }, REOPEN_DELAY_MS);
+  };
+
+  let hasShown = false;
+  let timerId = null;
+  const dismissedInitially = readDismissedUntil() > Date.now();
+
+  const showPromo = () => {
+    if (hasShown) return;
+    if (suppressMobile && mobileQuery.matches) return;
+    hasShown = true;
+    if (timerId) window.clearTimeout(timerId);
+    promo.classList.add("is-visible");
+    window.JSMAnalytics.track("signed_copy_promo_impression", promoPayload());
+    window.removeEventListener("scroll", onPromoScroll);
+  };
+
+  const getScrollDepth = () => {
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    if (scrollable <= 0) return 1;
+    return window.scrollY / scrollable;
+  };
+
+  function onPromoScroll() {
+    if (getScrollDepth() >= 0.25) showPromo();
+  }
+
+  const closeButton = promo.querySelector("[data-signed-promo-close]");
+  if (closeButton) {
+    closeButton.addEventListener("click", () => {
+      writeDismissedUntil();
+      promo.classList.remove("is-visible");
+      window.JSMAnalytics.track("signed_copy_promo_dismiss", promoPayload());
+      showPromoTab();
+    });
+  }
+
+  const promoLink = promo.querySelector("[data-signed-promo-link]");
+  if (promoLink) {
+    promoLink.addEventListener("click", (event) => {
+      const href = promoLink.getAttribute("href");
+      const opensNewTab = promoLink.target === "_blank" || event.metaKey || event.ctrlKey || event.shiftKey;
+
+      if (opensNewTab || !href || href.startsWith("#") || href.startsWith("mailto:")) {
+        window.JSMAnalytics.track("signed_copy_promo_click", promoPayload());
+        return;
+      }
+
+      event.preventDefault();
+      window.JSMAnalytics.track("signed_copy_promo_click", promoPayload(), () => {
+        window.location.href = href;
+      });
+    });
+  }
+
+  if (promoTab) {
+    promoTab.addEventListener("click", () => {
+      promoTab.classList.remove("is-visible");
+      if (!document.body.contains(promo)) {
+        document.body.appendChild(promo);
+      }
+      promo.classList.add("is-visible");
+      window.JSMAnalytics.track("signed_copy_promo_reopen", promoPayload());
+      const link = promo.querySelector("[data-signed-promo-link]");
+      if (link) link.focus();
+    });
+  }
+
+  if (dismissedInitially) {
+    showPromoTab();
+    return;
+  }
+
+  timerId = window.setTimeout(showPromo, SHOW_DELAY_MS);
+  window.addEventListener("scroll", onPromoScroll, { passive: true });
+  onPromoScroll();
+});
