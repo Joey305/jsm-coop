@@ -1,6 +1,8 @@
 import os
 import re
-from datetime import datetime
+import json
+import base64
+from datetime import datetime, timezone
 from pathlib import Path
 from functools import wraps
 from urllib.parse import urlencode, quote, urlsplit, urlunsplit, parse_qsl
@@ -43,6 +45,10 @@ app.config["CONTACT_EMAIL"] = os.getenv("CONTACT_EMAIL", "books@jsmcoop.com")
 app.config["PAYPAL_DONATE_BUTTON_ID"] = os.getenv("PAYPAL_DONATE_BUTTON_ID", "TLWCSL2KJDZQU")
 app.config["GA_MEASUREMENT_ID"] = os.getenv("GA_MEASUREMENT_ID", "").strip()
 app.config["PAYPAL_SIGNED_BOOK_URL"] = os.getenv("PAYPAL_SIGNED_BOOK_URL", DEFAULT_SIGNED_BOOK_PAYMENT_LINK).strip()
+app.config["PAYPAL_API_BASE_URL"] = os.getenv("PAYPAL_API_BASE_URL", "https://api-m.paypal.com").rstrip("/")
+app.config["PAYPAL_CLIENT_ID"] = os.getenv("PAYPAL_CLIENT_ID", "").strip()
+app.config["PAYPAL_CLIENT_SECRET"] = os.getenv("PAYPAL_CLIENT_SECRET", "").strip()
+app.config["PAYPAL_WEBHOOK_ID"] = os.getenv("PAYPAL_WEBHOOK_ID", "").strip()
 app.config["BOOK_DIRECT_CHECKOUT_URL"] = os.getenv(
     "BOOK_DIRECT_CHECKOUT_URL",
     app.config["PAYPAL_SIGNED_BOOK_URL"],
@@ -52,6 +58,12 @@ app.config["BOOK_DIRECT_PRICE_AMOUNT"] = os.getenv("BOOK_DIRECT_PRICE_AMOUNT", "
 app.config["BOOK_DIRECT_PRICE_CURRENCY"] = os.getenv("BOOK_DIRECT_PRICE_CURRENCY", "USD").strip().upper()
 app.config["BLOG_IMAGE_UPLOAD_DIR"] = BASE_DIR / "static" / "images" / "blog"
 app.config["BLOG_VIDEO_UPLOAD_DIR"] = BASE_DIR / "static" / "videos" / "blog"
+app.config["PAYPAL_WEBHOOK_EVENT_LOG"] = Path(
+    os.getenv("PAYPAL_WEBHOOK_EVENT_LOG", BASE_DIR / "data" / "paypal_webhook_events.jsonl")
+)
+app.config["PAYPAL_VERIFIED_PURCHASE_LOG"] = Path(
+    os.getenv("PAYPAL_VERIFIED_PURCHASE_LOG", BASE_DIR / "data" / "paypal_verified_purchases.jsonl")
+)
 
 app.config["BLOG_IMAGE_URL_PREFIX"] = "images/blog"
 app.config["BLOG_VIDEO_URL_PREFIX"] = "videos/blog"
@@ -1219,6 +1231,115 @@ def free_book_preview():
 @app.route("/es/el-hombre-de-la-gorra")
 def spanish_ballcap():
     return render_landing_page("spanish_ballcap")
+
+
+def append_jsonl(path, record):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True) + "\n")
+
+
+def paypal_access_token():
+    client_id = app.config["PAYPAL_CLIENT_ID"]
+    client_secret = app.config["PAYPAL_CLIENT_SECRET"]
+    if not client_id or not client_secret:
+        raise RuntimeError("PayPal API credentials are not configured.")
+
+    credentials = base64.b64encode(f"{client_id}:{client_secret}".encode("utf-8")).decode("ascii")
+    request_body = urlencode({"grant_type": "client_credentials"}).encode("utf-8")
+    token_request = Request(
+        f"{app.config['PAYPAL_API_BASE_URL']}/v1/oauth2/token",
+        data=request_body,
+        headers={
+            "Authorization": f"Basic {credentials}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method="POST",
+    )
+
+    with urlopen(token_request, timeout=15) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+
+    token = payload.get("access_token")
+    if not token:
+        raise RuntimeError("PayPal did not return an access token.")
+    return token
+
+
+def verify_paypal_webhook_signature(event_payload):
+    webhook_id = app.config["PAYPAL_WEBHOOK_ID"]
+    if not webhook_id:
+        return False, "missing_webhook_id"
+
+    verification_payload = {
+        "auth_algo": request.headers.get("PAYPAL-AUTH-ALGO", ""),
+        "cert_url": request.headers.get("PAYPAL-CERT-URL", ""),
+        "transmission_id": request.headers.get("PAYPAL-TRANSMISSION-ID", ""),
+        "transmission_sig": request.headers.get("PAYPAL-TRANSMISSION-SIG", ""),
+        "transmission_time": request.headers.get("PAYPAL-TRANSMISSION-TIME", ""),
+        "webhook_id": webhook_id,
+        "webhook_event": event_payload,
+    }
+
+    token = paypal_access_token()
+    verify_request = Request(
+        f"{app.config['PAYPAL_API_BASE_URL']}/v1/notifications/verify-webhook-signature",
+        data=json.dumps(verification_payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    with urlopen(verify_request, timeout=15) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+
+    status = payload.get("verification_status", "")
+    return status == "SUCCESS", status or "unknown"
+
+
+def extract_paypal_payment_record(event_payload, verified):
+    resource = event_payload.get("resource") or {}
+    amount = resource.get("amount") or resource.get("seller_receivable_breakdown", {}).get("gross_amount") or {}
+
+    return {
+        "received_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "verified": verified,
+        "event_id": event_payload.get("id", ""),
+        "event_type": event_payload.get("event_type", ""),
+        "event_create_time": event_payload.get("create_time", ""),
+        "resource_id": resource.get("id", ""),
+        "resource_status": resource.get("status", ""),
+        "invoice_id": resource.get("invoice_id", ""),
+        "custom_id": resource.get("custom_id", ""),
+        "currency": amount.get("currency_code", app.config["BOOK_DIRECT_PRICE_CURRENCY"]),
+        "value": amount.get("value", app.config["BOOK_DIRECT_PRICE_AMOUNT"]),
+    }
+
+
+@app.route("/paypal/webhook", methods=["POST"])
+def paypal_webhook():
+    event_payload = request.get_json(silent=True)
+    if not isinstance(event_payload, dict):
+        return jsonify({"status": "ignored", "reason": "invalid_json"}), 400
+
+    verified = False
+    verification_status = "not_checked"
+    try:
+        verified, verification_status = verify_paypal_webhook_signature(event_payload)
+    except (RuntimeError, HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+        verification_status = f"verification_error:{type(error).__name__}"
+
+    record = extract_paypal_payment_record(event_payload, verified)
+    record["verification_status"] = verification_status
+    append_jsonl(app.config["PAYPAL_WEBHOOK_EVENT_LOG"], record)
+
+    if verified and event_payload.get("event_type") == "PAYMENT.CAPTURE.COMPLETED":
+        append_jsonl(app.config["PAYPAL_VERIFIED_PURCHASE_LOG"], record)
+
+    return jsonify({"status": "received", "verified": verified}), 200
 
 
 @app.route("/book/checkout/start")

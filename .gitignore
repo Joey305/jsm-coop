@@ -35,6 +35,7 @@ instance/
 data/*.db
 data/*.sqlite
 data/*.sqlite3
+data/*.jsonl
 *.db
 *.sqlite
 *.sqlite3

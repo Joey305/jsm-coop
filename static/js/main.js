@@ -1,6 +1,6 @@
 (function () {
   const ATTRIBUTION_KEY = "jsm_campaign_attribution";
-  const ATTRIBUTION_FIELDS = [
+  window.JSM_ATTRIBUTION_FIELDS = window.JSM_ATTRIBUTION_FIELDS || [
     "utm_source",
     "utm_medium",
     "utm_campaign",
@@ -36,7 +36,7 @@
     const current = readAttribution();
     let changed = false;
 
-    ATTRIBUTION_FIELDS.forEach((field) => {
+    window.JSM_ATTRIBUTION_FIELDS.forEach((field) => {
       const value = params.get(field);
       if (value) {
         current[field] = value;
@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (eventNames.includes("direct_checkout_started") && href && href.includes("/book/checkout/start")) {
           const url = new URL(href, window.location.origin);
           const campaign = window.JSMAnalytics.attribution();
-          ATTRIBUTION_FIELDS.forEach((field) => {
+          window.JSM_ATTRIBUTION_FIELDS.forEach((field) => {
             if (campaign[field]) url.searchParams.set(field, campaign[field]);
           });
           href = url.pathname + url.search + url.hash;

@@ -179,8 +179,14 @@ Signed-copy PayPal checkout:
 - `BOOK_DIRECT_PROVIDER`: Checkout provider label. Production value for this release: `PayPal`.
 - `BOOK_DIRECT_PRICE_AMOUNT`: Book price before shipping for analytics display. Production value for this release: `15.00`.
 - `BOOK_DIRECT_PRICE_CURRENCY`: Currency code for direct checkout analytics. Production value for this release: `USD`.
+- `PAYPAL_API_BASE_URL`: PayPal REST API base URL. Defaults to `https://api-m.paypal.com` for live mode.
+- `PAYPAL_CLIENT_ID`: Live PayPal REST app client ID for webhook verification.
+- `PAYPAL_CLIENT_SECRET`: Live PayPal REST app secret for webhook verification. Keep this private and rotate it if it is ever exposed.
+- `PAYPAL_WEBHOOK_ID`: PayPal webhook ID created after adding `https://jsmcoop.com/paypal/webhook` in the PayPal developer dashboard.
+- `PAYPAL_WEBHOOK_EVENT_LOG`: Optional path for sanitized PayPal webhook event records. Defaults to `data/paypal_webhook_events.jsonl`.
+- `PAYPAL_VERIFIED_PURCHASE_LOG`: Optional path for verified completed capture records. Defaults to `data/paypal_verified_purchases.jsonl`.
 
-The signed-copy website copy should describe price as `$15 + shipping` because shipping is configured inside PayPal. No PayPal API credentials are required for the Payment Link MVP. Configure PayPal return URLs to `/book/checkout/success` and `/book/checkout/cancel`.
+The signed-copy website copy should describe price as `$15 + shipping` because shipping is configured inside PayPal. Configure PayPal return URLs to `/book/checkout/success` and `/book/checkout/cancel`, and configure the live PayPal webhook listener URL as `https://jsmcoop.com/paypal/webhook`. Subscribe the webhook to `PAYMENT.CAPTURE.COMPLETED` for verified paid-purchase tracking.
 
 ---
 

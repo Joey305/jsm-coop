@@ -1,0 +1,327 @@
+{
+  "base_domain": "https://jsmcoop.com",
+  "default_status": "PAUSED",
+  "google_ads_account_assessment": "Standard paid Google Ads inferred from UI spend/budget patterns; no Ad Grants config found in repo. Re-check billing/account type before launch.",
+  "campaigns": [
+    {
+      "name": "JSM | Search | ACoruna Tower | EN",
+      "utm_campaign": "jsm_acoruna_tower",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "discovery",
+      "theme": "Tower of Hercules / A Coruña travel discovery",
+      "primary_landing_page": "/blogs/a-coruna-through-the-lens-tower-of-hercules",
+      "final_url": "https://jsmcoop.com/blogs/a-coruna-through-the-lens-tower-of-hercules?utm_source=google&utm_medium=cpc&utm_campaign=jsm_acoruna_tower&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_acoruna_tower&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "tower",
+        "hercules"
+      ],
+      "recommended_geo_for_review": "Review: United States, United Kingdom, Ireland, Canada, Australia, and English-speaking travelers researching Spain/Galicia; narrow after search-term data.",
+      "initial_bidding_recommendation": "Start with Maximize Clicks or manual CPC cap while learning; move to conversion-focused bidding only after reliable secondary/primary conversions accrue.",
+      "primary_conversion_goal": "Engaged article visit, second article/session, book-page visit",
+      "ad_groups": [
+        {
+          "name": "Tower of Hercules",
+          "status": "PAUSED",
+          "landing_page": "/blogs/a-coruna-through-the-lens-tower-of-hercules",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | ACoruna Old Town | EN",
+      "utm_campaign": "jsm_acoruna_old_town",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "discovery",
+      "theme": "Ciudad Vieja / historic A Coruña",
+      "primary_landing_page": "/blogs/a-coruna-through-the-lens-ciudad-vieja",
+      "final_url": "https://jsmcoop.com/blogs/a-coruna-through-the-lens-ciudad-vieja?utm_source=google&utm_medium=cpc&utm_campaign=jsm_acoruna_old_town&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_acoruna_old_town&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "old-town",
+        "coruna"
+      ],
+      "recommended_geo_for_review": "Review: English-speaking travelers researching Spain, Galicia, cruise/rail city trips, and cultural city breaks.",
+      "initial_bidding_recommendation": "Maximize Clicks or traffic-learning strategy initially; defer conversion bidding until engagement goals are imported and stable.",
+      "primary_conversion_goal": "Engaged article visit, internal article click, book-page visit",
+      "ad_groups": [
+        {
+          "name": "Ciudad Vieja",
+          "status": "PAUSED",
+          "landing_page": "/blogs/a-coruna-through-the-lens-ciudad-vieja",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | ACoruna Coast | EN",
+      "utm_campaign": "jsm_acoruna_coast",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "discovery",
+      "theme": "Paseo Marítimo / Atlantic coastline",
+      "primary_landing_page": "/blogs/a-coruna-through-the-lens-paseo-maritimo",
+      "final_url": "https://jsmcoop.com/blogs/a-coruna-through-the-lens-paseo-maritimo?utm_source=google&utm_medium=cpc&utm_campaign=jsm_acoruna_coast&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_acoruna_coast&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "coruna",
+        "coast"
+      ],
+      "recommended_geo_for_review": "Review: English-speaking travelers and Galicia/A Coruña researchers in US, UK, Ireland, Canada, Australia, and selected EU markets.",
+      "initial_bidding_recommendation": "Maximize Clicks with close search-term review; no broad match until conversion data supports it.",
+      "primary_conversion_goal": "Engaged article visit, A Coruña series click, book-page visit",
+      "ad_groups": [
+        {
+          "name": "Paseo Marítimo",
+          "status": "PAUSED",
+          "landing_page": "/blogs/a-coruna-through-the-lens-paseo-maritimo",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | Maria Pita | EN",
+      "utm_campaign": "jsm_maria_pita",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "discovery",
+      "theme": "Plaza de María Pita / central A Coruña",
+      "primary_landing_page": "/blogs/a-coruna-through-the-lens-maria-pita",
+      "final_url": "https://jsmcoop.com/blogs/a-coruna-through-the-lens-maria-pita?utm_source=google&utm_medium=cpc&utm_campaign=jsm_maria_pita&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_maria_pita&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "maria",
+        "pita"
+      ],
+      "recommended_geo_for_review": "Review: English-language destination researchers for A Coruña and Galicia; include Spain only if English-language settings are selected.",
+      "initial_bidding_recommendation": "Maximize Clicks initially; optimize to engaged visits once GA4/Ads secondary conversions are reliable.",
+      "primary_conversion_goal": "Engaged article visit, A Coruña article depth, book-page visit",
+      "ad_groups": [
+        {
+          "name": "María Pita",
+          "status": "PAUSED",
+          "landing_page": "/blogs/a-coruna-through-the-lens-maria-pita",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | Rainy Galicia | EN",
+      "utm_campaign": "jsm_rainy_galicia",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "discovery",
+      "theme": "Atmospheric Galicia and rainy A Coruña",
+      "primary_landing_page": "/blogs/a-rainy-day-in-a-coruna-through-the-lens",
+      "final_url": "https://jsmcoop.com/blogs/a-rainy-day-in-a-coruna-through-the-lens?utm_source=google&utm_medium=cpc&utm_campaign=jsm_rainy_galicia&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_rainy_galicia&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "rainy",
+        "galicia"
+      ],
+      "recommended_geo_for_review": "Review: English-speaking Galicia travelers, photography/culture researchers, and Spain city-break planners.",
+      "initial_bidding_recommendation": "Maximize Clicks with conservative CPC ceiling; do not optimize to weather-forecast traffic.",
+      "primary_conversion_goal": "Engaged article visit, article-to-book click, newsletter signup",
+      "ad_groups": [
+        {
+          "name": "Rainy Galicia",
+          "status": "PAUSED",
+          "landing_page": "/blogs/a-rainy-day-in-a-coruna-through-the-lens",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | Galicia Mystery | EN",
+      "utm_campaign": "jsm_galicia_mystery",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "mid-funnel",
+      "theme": "Mystery fiction + A Coruña/Galicia",
+      "primary_landing_page": "/blogs/mystery-memory-galicia-man-in-the-ball-cap",
+      "final_url": "https://jsmcoop.com/blogs/mystery-memory-galicia-man-in-the-ball-cap?utm_source=google&utm_medium=cpc&utm_campaign=jsm_galicia_mystery&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_galicia_mystery&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "galicia",
+        "mystery"
+      ],
+      "recommended_geo_for_review": "Review: English-speaking mystery readers in US, UK, Ireland, Canada, Australia, and Spain/Galicia interest markets.",
+      "initial_bidding_recommendation": "Start Maximize Clicks or Maximize Conversions only if secondary conversions are configured; avoid Target CPA until volume exists.",
+      "primary_conversion_goal": "Book-page visit, preview click, signed-copy CTA click",
+      "ad_groups": [
+        {
+          "name": "Galicia Mystery",
+          "status": "PAUSED",
+          "landing_page": "/blogs/mystery-memory-galicia-man-in-the-ball-cap",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | Mystery Book Preview | EN",
+      "utm_campaign": "jsm_mystery_preview",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "mid/high-funnel",
+      "theme": "High-intent mystery readers and free preview intent",
+      "primary_landing_page": "/book",
+      "final_url": "https://jsmcoop.com/book?utm_source=google&utm_medium=cpc&utm_campaign=jsm_mystery_preview&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_mystery_preview&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "free",
+        "preview"
+      ],
+      "recommended_geo_for_review": "Review: English-speaking book buyers/readers in US, UK, Ireland, Canada, Australia; expand based on conversion quality.",
+      "initial_bidding_recommendation": "Use Maximize Conversions if preview/outbound conversions are clean; otherwise Maximize Clicks with tight exact/phrase match.",
+      "primary_conversion_goal": "Free preview click, retailer outbound click, signed-copy CTA click",
+      "ad_groups": [
+        {
+          "name": "Mystery Preview",
+          "status": "PAUSED",
+          "landing_page": "/book",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | Signed Mystery Book | EN",
+      "utm_campaign": "jsm_signed_mystery",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "high-intent",
+      "theme": "Signed physical mystery edition",
+      "primary_landing_page": "/book/signed",
+      "final_url": "https://jsmcoop.com/book/signed?utm_source=google&utm_medium=cpc&utm_campaign=jsm_signed_mystery&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_signed_mystery&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "signed",
+        "mystery"
+      ],
+      "recommended_geo_for_review": "Review: countries JSM can fulfill signed-copy shipping to reliably; start where PayPal/shipping support is confirmed.",
+      "initial_bidding_recommendation": "Use conversion-focused bidding only after checkout-start and PayPal-return data are validated; never treat PayPal return as verified purchase.",
+      "primary_conversion_goal": "Direct checkout start, checkout return, signed-copy CTA click",
+      "ad_groups": [
+        {
+          "name": "Signed Mystery",
+          "status": "PAUSED",
+          "landing_page": "/book/signed",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | Misterio Coruna | ES",
+      "utm_campaign": "jsm_misterio_coruna_es",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "Spanish",
+      "funnel_stage": "mid-funnel",
+      "theme": "Spanish-language mystery novel set in A Coruña",
+      "primary_landing_page": "/blogs/el-hombre-con-la-gorra",
+      "final_url": "https://jsmcoop.com/blogs/el-hombre-con-la-gorra?utm_source=google&utm_medium=cpc&utm_campaign=jsm_misterio_coruna_es&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_misterio_coruna_es&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "misterio",
+        "coruna"
+      ],
+      "recommended_geo_for_review": "Review: Spain, Galicia, and Spanish-language markets; use Spanish language setting and avoid English ad copy.",
+      "initial_bidding_recommendation": "Start with exact/phrase and Maximize Clicks or conversion-focused bidding only when Spanish events are separated cleanly.",
+      "primary_conversion_goal": "Spanish article engagement, Spanish retailer click, preview click",
+      "ad_groups": [
+        {
+          "name": "Misterio A Coruña",
+          "status": "PAUSED",
+          "landing_page": "/blogs/el-hombre-con-la-gorra",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    },
+    {
+      "name": "JSM | Search | Stories With Impact | EN",
+      "utm_campaign": "jsm_stories_impact",
+      "status": "PAUSED",
+      "channel": "SEARCH",
+      "language": "English",
+      "funnel_stage": "discovery/mid-funnel",
+      "theme": "JSM Cooperative, The Camino, storytelling for social good",
+      "primary_landing_page": "/blogs/the-camino",
+      "final_url": "https://jsmcoop.com/blogs/the-camino?utm_source=google&utm_medium=cpc&utm_campaign=jsm_stories_impact&utm_term={keyword}&utm_content={creative}",
+      "final_url_suffix": "utm_source=google&utm_medium=cpc&utm_campaign=jsm_stories_impact&utm_term={keyword}&utm_content={creative}",
+      "display_path": [
+        "stories",
+        "impact"
+      ],
+      "recommended_geo_for_review": "Review: nonprofit publishing/social-impact readers in US and relevant English-speaking markets; do not target medical-condition audiences.",
+      "initial_bidding_recommendation": "If standard Ads: Maximize Clicks until newsletter/subscription conversions are stable; if converted to Ad Grants, use conversion-based Smart Bidding per policy.",
+      "primary_conversion_goal": "Newsletter signup, Camino subscription click/completed, book preview click",
+      "ad_groups": [
+        {
+          "name": "Stories With Impact",
+          "status": "PAUSED",
+          "landing_page": "/blogs/the-camino",
+          "rsa_count": 2,
+          "keyword_match_types": [
+            "EXACT",
+            "PHRASE"
+          ],
+          "broad_match": "Not recommended for launch"
+        }
+      ]
+    }
+  ]
+}
