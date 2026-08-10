@@ -338,7 +338,7 @@
   }
 
   .camino-price-card::after {
-    content: "$23";
+    content: "$20";
     position: absolute;
     right: -0.2rem;
     bottom: -0.6rem;
@@ -542,7 +542,7 @@
         <div class="camino-mini-proof">
           <div class="camino-proof-item">
             <span>🌄</span>
-            <div><strong>$23/month:</strong> a recurring Camino subscription through PayPal.</div>
+            <div><strong>$20/month:</strong> a recurring Camino subscription through PayPal.</div>
           </div>
 
           <div class="camino-proof-item">
@@ -636,7 +636,7 @@
           <h3>Start your Camino</h3>
 
           <div class="camino-price">
-            <strong>$23</strong>
+            <strong>$20</strong>
             <span>/ month</span>
           </div>
 
@@ -697,7 +697,7 @@
       <div class="paypal-panel reveal">
         <span class="camino-badge">Secure PayPal Subscription</span>
 
-        <h2>Start Your $23/Month Camino Subscription</h2>
+        <h2>Start Your $20/Month Camino Subscription</h2>
 
         <p>
           Click the button below to subscribe securely through PayPal. After joining, we will follow up
@@ -769,7 +769,7 @@
 
     gtag("event", "conversion", {
       "send_to": "AW-16512731660/KW18CNbn3KccEIyU8cE9",
-      "value": 23.00,
+      "value": 20.00,
       "currency": "USD",
       "transaction_id": subscriptionId || ""
     });
@@ -791,7 +791,7 @@
           reportSubscribeButtonClickConversion();
           window.JSMAnalytics && window.JSMAnalytics.track("camino_subscription_click", {
             cta_location: "paypal_button",
-            value: 23.00,
+            value: 20.00,
             currency: "USD"
           });
         },
@@ -806,7 +806,7 @@
           reportCaminoPayPalSubscriptionConversion(data.subscriptionID);
           window.JSMAnalytics && window.JSMAnalytics.track("camino_subscription_completed", {
             cta_location: "paypal_button",
-            value: 23.00,
+            value: 20.00,
             currency: "USD",
             transaction_id: data.subscriptionID || ""
           });
