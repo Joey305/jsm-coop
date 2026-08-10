@@ -171,6 +171,12 @@ Core site configuration:
 Analytics and advertising:
 
 - `GA_MEASUREMENT_ID`: Optional GA4 Measurement ID. Leave blank until GA4 is ready; the existing Google Ads tag remains active.
+- `GOOGLE_ADS_CUSTOMER_ID`: Google Ads customer ID without dashes, for example `6517122239`.
+- `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, `GOOGLE_ADS_REFRESH_TOKEN`: Google Ads API credentials used for server-side conversion uploads.
+- `GOOGLE_ADS_LOGIN_CUSTOMER_ID`: Optional manager account ID if using an MCC.
+- `GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_ID`: Google Ads conversion action ID for the primary `PayPal checkout started` import-from-clicks conversion.
+- `GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_ID`: Optional Google Ads conversion action ID for verified PayPal purchases after webhook matching.
+- `GOOGLE_ADS_OFFLINE_CONVERSION_LOG`: Optional path for Google Ads upload attempts. Defaults to `data/google_ads_offline_conversions.jsonl`.
 
 Signed-copy PayPal checkout:
 
@@ -188,11 +194,13 @@ Signed-copy PayPal checkout:
 
 The signed-copy website copy should describe price as `$15 + shipping` because shipping is configured inside PayPal. Configure PayPal return URLs to `/book/checkout/success` and `/book/checkout/cancel`, and configure the live PayPal webhook listener URL as `https://jsmcoop.com/paypal/webhook`. Subscribe the webhook to `PAYMENT.CAPTURE.COMPLETED` for verified paid-purchase tracking.
 
+When a visitor starts direct PayPal checkout, `/book/checkout/start` creates a local checkout ID, stores the Google Ads click attribution, passes that ID toward PayPal, and uploads a `PayPal checkout started` click conversion to Google Ads when the conversion action and Ads API credentials are configured. Create that Google Ads action as an import/offline conversion from clicks, then set its ID in `GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_ID`.
+
 ---
 
 ## Google Ads / Analytics Events
 
-The site centralizes conversion events in `static/js/main.js` and preserves visit-level attribution for `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, and `gclid`.
+The site centralizes conversion events in `static/js/main.js` and preserves visit-level attribution for `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `gclid`, `gbraid`, and `wbraid`.
 
 Implemented events:
 

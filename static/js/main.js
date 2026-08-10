@@ -7,6 +7,8 @@
     "utm_term",
     "utm_content",
     "gclid",
+    "gbraid",
+    "wbraid",
   ];
   const ADS_CONVERSION_EVENTS = new Set([
     "direct_checkout_returned",
@@ -64,6 +66,8 @@
     utm_term: attribution.utm_term || "",
     utm_content: attribution.utm_content || "",
     gclid: attribution.gclid || "",
+    gbraid: attribution.gbraid || "",
+    wbraid: attribution.wbraid || "",
     ...extra,
   });
 

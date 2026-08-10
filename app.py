@@ -2,6 +2,7 @@ import os
 import re
 import json
 import base64
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from functools import wraps
@@ -64,6 +65,25 @@ app.config["PAYPAL_WEBHOOK_EVENT_LOG"] = Path(
 app.config["PAYPAL_VERIFIED_PURCHASE_LOG"] = Path(
     os.getenv("PAYPAL_VERIFIED_PURCHASE_LOG", BASE_DIR / "data" / "paypal_verified_purchases.jsonl")
 )
+app.config["BOOK_DIRECT_CHECKOUT_ATTRIBUTION_LOG"] = Path(
+    os.getenv("BOOK_DIRECT_CHECKOUT_ATTRIBUTION_LOG", BASE_DIR / "data" / "book_checkout_attribution.jsonl")
+)
+app.config["GOOGLE_ADS_OFFLINE_CONVERSION_LOG"] = Path(
+    os.getenv("GOOGLE_ADS_OFFLINE_CONVERSION_LOG", BASE_DIR / "data" / "google_ads_offline_conversions.jsonl")
+)
+app.config["GOOGLE_ADS_CUSTOMER_ID"] = re.sub(r"\D", "", os.getenv("GOOGLE_ADS_CUSTOMER_ID", ""))
+app.config["GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_ID"] = os.getenv(
+    "GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_ID", ""
+).strip()
+app.config["GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_RESOURCE"] = os.getenv(
+    "GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_RESOURCE", ""
+).strip()
+app.config["GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_ID"] = os.getenv(
+    "GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_ID", ""
+).strip()
+app.config["GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_RESOURCE"] = os.getenv(
+    "GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_RESOURCE", ""
+).strip()
 
 app.config["BLOG_IMAGE_URL_PREFIX"] = "images/blog"
 app.config["BLOG_VIDEO_URL_PREFIX"] = "videos/blog"
@@ -1240,6 +1260,133 @@ def append_jsonl(path, record):
         handle.write(json.dumps(record, sort_keys=True) + "\n")
 
 
+def utc_now():
+    return datetime.now(timezone.utc)
+
+
+def google_ads_conversion_time(dt):
+    timestamp = dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S%z")
+    return f"{timestamp[:-2]}:{timestamp[-2:]}"
+
+
+def read_latest_checkout_attribution(checkout_id):
+    if not checkout_id:
+        return None
+
+    path = Path(app.config["BOOK_DIRECT_CHECKOUT_ATTRIBUTION_LOG"])
+    if not path.exists():
+        return None
+
+    found = None
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if record.get("checkout_id") == checkout_id:
+                found = record
+    return found
+
+
+def google_ads_conversion_action_resource(event_name):
+    customer_id = app.config["GOOGLE_ADS_CUSTOMER_ID"]
+    if event_name == "paypal_checkout_started":
+        resource = app.config["GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_RESOURCE"]
+        action_id = app.config["GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_ID"]
+    elif event_name == "paypal_payment_completed":
+        resource = app.config["GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_RESOURCE"]
+        action_id = app.config["GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_ID"]
+    else:
+        return ""
+
+    if resource:
+        return resource
+    if customer_id and action_id:
+        return f"customers/{customer_id}/conversionActions/{action_id}"
+    return ""
+
+
+def google_ads_click_id(record):
+    for field in ("gclid", "gbraid", "wbraid"):
+        value = (record.get(field) or "").strip()
+        if value:
+            return field, value
+    return "", ""
+
+
+def load_google_ads_client_from_env():
+    required = {
+        "developer_token": os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN", "").strip(),
+        "client_id": os.getenv("GOOGLE_ADS_CLIENT_ID", "").strip(),
+        "client_secret": os.getenv("GOOGLE_ADS_CLIENT_SECRET", "").strip(),
+        "refresh_token": os.getenv("GOOGLE_ADS_REFRESH_TOKEN", "").strip(),
+    }
+    missing = [key for key, value in required.items() if not value]
+    if missing:
+        raise RuntimeError(f"Missing Google Ads API config: {', '.join(missing)}")
+
+    config = {**required, "use_proto_plus": True}
+    login_customer_id = re.sub(r"\D", "", os.getenv("GOOGLE_ADS_LOGIN_CUSTOMER_ID", ""))
+    if login_customer_id:
+        config["login_customer_id"] = login_customer_id
+
+    from google.ads.googleads.client import GoogleAdsClient
+
+    return GoogleAdsClient.load_from_dict(config)
+
+
+def upload_google_ads_click_conversion(event_name, record):
+    click_field, click_value = google_ads_click_id(record)
+    customer_id = app.config["GOOGLE_ADS_CUSTOMER_ID"]
+    conversion_action = google_ads_conversion_action_resource(event_name)
+
+    upload_record = {
+        "attempted_at": utc_now().isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "event_name": event_name,
+        "checkout_id": record.get("checkout_id", ""),
+        "order_id": record.get("order_id", record.get("checkout_id", "")),
+        "click_id_type": click_field,
+        "conversion_action": conversion_action,
+        "status": "skipped",
+    }
+
+    if not customer_id or not conversion_action or not click_field:
+        upload_record["reason"] = "missing_google_ads_config_or_click_id"
+        append_jsonl(app.config["GOOGLE_ADS_OFFLINE_CONVERSION_LOG"], upload_record)
+        return upload_record
+
+    try:
+        client = load_google_ads_client_from_env()
+        conversion_upload_service = client.get_service("ConversionUploadService")
+        click_conversion = client.get_type("ClickConversion")
+        setattr(click_conversion, click_field, click_value)
+        click_conversion.conversion_action = conversion_action
+        click_conversion.conversion_date_time = record["conversion_date_time"]
+        click_conversion.conversion_value = float(record.get("value") or 0)
+        click_conversion.currency_code = record.get("currency") or app.config["BOOK_DIRECT_PRICE_CURRENCY"]
+        if upload_record["order_id"]:
+            click_conversion.order_id = upload_record["order_id"]
+
+        request_obj = client.get_type("UploadClickConversionsRequest")
+        request_obj.customer_id = customer_id
+        request_obj.conversions.append(click_conversion)
+        request_obj.partial_failure = True
+        response = conversion_upload_service.upload_click_conversions(request=request_obj)
+
+        upload_record["status"] = "uploaded"
+        upload_record["job_id"] = str(response.job_id)
+        if response.partial_failure_error and response.partial_failure_error.message:
+            upload_record["status"] = "partial_failure"
+            upload_record["reason"] = response.partial_failure_error.message
+    except Exception as error:
+        upload_record["status"] = "failed"
+        upload_record["reason"] = f"{type(error).__name__}: {error}"
+
+    append_jsonl(app.config["GOOGLE_ADS_OFFLINE_CONVERSION_LOG"], upload_record)
+    return upload_record
+
+
 def paypal_access_token():
     client_id = app.config["PAYPAL_CLIENT_ID"]
     client_secret = app.config["PAYPAL_CLIENT_SECRET"]
@@ -1305,7 +1452,7 @@ def extract_paypal_payment_record(event_payload, verified):
     amount = resource.get("amount") or resource.get("seller_receivable_breakdown", {}).get("gross_amount") or {}
 
     return {
-        "received_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "received_at": utc_now().isoformat(timespec="seconds").replace("+00:00", "Z"),
         "verified": verified,
         "event_id": event_payload.get("id", ""),
         "event_type": event_payload.get("event_type", ""),
@@ -1337,7 +1484,18 @@ def paypal_webhook():
     append_jsonl(app.config["PAYPAL_WEBHOOK_EVENT_LOG"], record)
 
     if verified and event_payload.get("event_type") == "PAYMENT.CAPTURE.COMPLETED":
-        append_jsonl(app.config["PAYPAL_VERIFIED_PURCHASE_LOG"], record)
+        checkout_id = record.get("custom_id") or record.get("invoice_id") or ""
+        checkout_record = read_latest_checkout_attribution(checkout_id)
+        purchase_record = {
+            **(checkout_record or {}),
+            **record,
+            "checkout_id": checkout_id,
+            "order_id": record.get("resource_id") or record.get("event_id") or checkout_id,
+            "event_name": "paypal_payment_completed",
+            "conversion_date_time": google_ads_conversion_time(utc_now()),
+        }
+        append_jsonl(app.config["PAYPAL_VERIFIED_PURCHASE_LOG"], purchase_record)
+        upload_google_ads_click_conversion("paypal_payment_completed", purchase_record)
 
     return jsonify({"status": "received", "verified": verified}), 200
 
@@ -1350,25 +1508,46 @@ def direct_book_checkout():
         flash("Direct book checkout is not configured yet. Please choose a retailer option.", "info")
         return redirect(url_for("book_signed"))
 
+    checkout_id = uuid.uuid4().hex
+    conversion_time = google_ads_conversion_time(utc_now())
     attribution = {
         key: request.args.get(key)
-        for key in ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"]
+        for key in ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid"]
         if request.args.get(key)
     }
+    checkout_record = {
+        "checkout_id": checkout_id,
+        "order_id": f"paypal-checkout-{checkout_id}",
+        "event_name": "paypal_checkout_started",
+        "conversion_date_time": conversion_time,
+        "value": app.config["BOOK_DIRECT_PRICE_AMOUNT"],
+        "currency": app.config["BOOK_DIRECT_PRICE_CURRENCY"],
+        "page_path": request.referrer or "",
+        **attribution,
+    }
+    append_jsonl(app.config["BOOK_DIRECT_CHECKOUT_ATTRIBUTION_LOG"], checkout_record)
+    upload_google_ads_click_conversion("paypal_checkout_started", checkout_record)
 
-    if attribution:
-        parsed = urlsplit(checkout_url)
-        query = dict(parse_qsl(parsed.query, keep_blank_values=True))
-        query.update(attribution)
-        checkout_url = urlunsplit(
-            (
-                parsed.scheme,
-                parsed.netloc,
-                parsed.path,
-                urlencode(query),
-                parsed.fragment,
-            )
+    parsed = urlsplit(checkout_url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query.update(attribution)
+    query.update(
+        {
+            "custom": checkout_id,
+            "custom_id": checkout_id,
+            "invoice": checkout_id,
+            "invoice_id": checkout_id,
+        }
+    )
+    checkout_url = urlunsplit(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            urlencode(query),
+            parsed.fragment,
         )
+    )
 
     return redirect(checkout_url, code=302)
 

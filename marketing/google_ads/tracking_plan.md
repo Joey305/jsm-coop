@@ -2,21 +2,24 @@
 
 ## Existing Architecture
 
-The site already loads the Google Ads tag `AW-16512731660` in `templates/base.html`. GA4 can be added through `GA_MEASUREMENT_ID`. `static/js/main.js` captures `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, and `gclid` into session storage and attaches attribution to tracked events.
+The site already loads the Google Ads tag `AW-16512731660` in `templates/base.html`. GA4 can be added through `GA_MEASUREMENT_ID`. `static/js/main.js` captures `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `gclid`, `gbraid`, and `wbraid` into session storage and attaches attribution to tracked events.
 
 A minimal tracking fix was made so PayPal checkout-start links can append stored UTM/GCLID fields without throwing a JavaScript reference error.
+
+`/book/checkout/start` now creates a local checkout ID, stores Google click attribution in `data/book_checkout_attribution.jsonl`, passes the checkout ID toward PayPal, and uploads a server-side Google Ads click conversion when the Google Ads API credentials and conversion action ID are configured.
 
 ## Conversion Hierarchy
 
 ### Primary
 
+- `paypal_checkout_started` - server-side Google Ads import conversion fired when a signed-copy visitor enters PayPal checkout.
 - `verified_direct_purchase_completed` - reserved for future server-side PayPal/API verification; do not fire until technically verified.
 - `camino_subscription_completed` - PayPal subscription approval in the Camino flow.
 - `newsletter_signup` - strategically primary for discovery/mission campaigns only after Mailchimp submission behavior is verified.
 
 ### Secondary
 
-- `direct_checkout_started` - PayPal checkout initiation for signed copy.
+- `direct_checkout_started` - client-side PayPal checkout initiation for signed copy; keep secondary/diagnostic if the server-side `paypal_checkout_started` import is primary.
 - `direct_checkout_returned` - return from PayPal; useful but not proof of payment.
 - `signed_copy_checkout_click` - signed direct CTA click.
 - `book_preview_click` / `signed_copy_preview_click` / `signed_page_preview_click` - preview engagement.
@@ -35,7 +38,8 @@ A minimal tracking fix was made so PayPal checkout-start links can append stored
 - Import or create only meaningful primary actions for bidding.
 - Keep preview clicks, retailer outbound clicks, signed-copy CTA clicks, and article engagement as secondary or observation-only until value is proven.
 - Treat `direct_checkout_returned` as purchase-intent or likely checkout completion, not as a verified completed purchase.
-- Add server-side PayPal verification later before using `verified_direct_purchase_completed` as the main purchase conversion.
+- Use the server-side `paypal_checkout_started` import conversion as the primary purchase-intent action while payment-link matching is being validated.
+- Use verified `PAYMENT.CAPTURE.COMPLETED` webhook uploads as the primary purchase action only after PayPal reliably returns the local checkout ID in webhook payloads.
 
 ## UTM / GCLID Standard
 
