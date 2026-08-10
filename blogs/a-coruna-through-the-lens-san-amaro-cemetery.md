@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Visit San Amaro Cemetery with care, where names, stone, Atlantic air, and public memory reveal how A Coruña physically records the lives that came before."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Storytelling, San Amaro
+series: A Coruña Through the Lens
 ---
 
 San Amaro asks you to lower your voice before you know you have done it. The Atlantic is close, but inside the cemetery the first impression is not drama. It is restraint: stone, paths, names, dates, inscriptions, weathered surfaces, and the quiet pressure of lives that once filled rooms, streets, families, arguments, workdays, meals, and letters.

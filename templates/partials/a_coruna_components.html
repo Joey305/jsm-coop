@@ -1,0 +1,131 @@
+{% macro evergreen_cards(location='site') %}
+  <div class="coruna-card-grid coruna-card-grid-three">
+    <article class="coruna-link-card reveal">
+      <p class="eyebrow">Explore the City</p>
+      <h3>Things to Do in A Coruña</h3>
+      <p>A practical, story-driven guide to the Atlantic city: coastline, historic streets, beaches, viewpoints, and everyday Galicia.</p>
+      <a
+        class="read-more"
+        href="{{ url_for('a_coruna_things_to_do') }}"
+        data-analytics-event="click_through_the_lens_to_guide"
+        data-cta-location="{{ location }}"
+      >
+        Explore the City
+      </a>
+    </article>
+
+    <article class="coruna-link-card reveal delay-1">
+      <p class="eyebrow">Walk the Story</p>
+      <h3>A Coruña Literary Walking Tour</h3>
+      <p>A route through streets, coastline, history, and atmosphere connected to JSM storytelling.</p>
+      <a
+        class="read-more"
+        href="{{ url_for('a_coruna_literary_walking_tour') }}"
+        data-analytics-event="click_coruna_to_literary_tour"
+        data-cta-location="{{ location }}"
+      >
+        Walk the Story
+      </a>
+    </article>
+
+    <article class="coruna-link-card reveal delay-2">
+      <p class="eyebrow">Through the Lens</p>
+      <h3>Stories from A Coruña</h3>
+      <p>Photography, places, neighborhoods, coastlines, and observations from across the city.</p>
+      <a
+        class="read-more"
+        href="{{ url_for('a_coruna_through_the_lens') }}"
+        data-analytics-event="click_through_the_lens_article"
+        data-cta-location="{{ location }}"
+      >
+        Browse the Series
+      </a>
+    </article>
+  </div>
+{% endmacro %}
+
+{% macro post_card(post, location='a_coruna_archive') %}
+  <article class="coruna-post-card reveal">
+    <a
+      class="coruna-post-image"
+      href="{{ url_for('blog_detail', slug=post.slug) }}"
+      aria-label="Read {{ post.title }}"
+      data-analytics-event="click_through_the_lens_article"
+      data-cta-location="{{ location }}"
+      data-article-slug="{{ post.slug }}"
+      data-series="{{ post.series or 'A Coruña Through the Lens' }}"
+    >
+      <picture>
+        {% if post.cover_webp %}
+          <source srcset="{{ post.cover_webp }}" type="image/webp">
+        {% endif %}
+        <img
+          src="{{ post.cover }}"
+          alt="{{ post.title }} cover image"
+          loading="lazy"
+          onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+        >
+      </picture>
+    </a>
+
+    <div class="coruna-post-body">
+      <p class="coruna-post-meta">
+        {{ post.date }} · {{ post.author }}{% if post.location %} · {{ post.location }}{% endif %}
+      </p>
+
+      <h3>
+        <a href="{{ url_for('blog_detail', slug=post.slug) }}">{{ post.title }}</a>
+      </h3>
+
+      <p>{{ post.excerpt }}</p>
+
+      <a
+        class="read-more"
+        href="{{ url_for('blog_detail', slug=post.slug) }}"
+        data-analytics-event="click_through_the_lens_article"
+        data-cta-location="{{ location }}"
+        data-article-slug="{{ post.slug }}"
+        data-series="{{ post.series or 'A Coruña Through the Lens' }}"
+      >
+        Read Story
+      </a>
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro more_from_coruna(location='article') %}
+  <aside class="coruna-related reveal" aria-labelledby="more-from-coruna">
+    <div>
+      <p class="eyebrow">More from A Coruña</p>
+      <h2 id="more-from-coruna">Keep exploring the city behind the stories.</h2>
+      <p>Move from place to photography to the wider literary world surrounding JSM Cooperative's A Coruña work.</p>
+    </div>
+
+    <div class="coruna-related-actions">
+      <a
+        class="btn btn-primary"
+        href="{{ url_for('a_coruna_things_to_do') }}"
+        data-analytics-event="click_through_the_lens_to_guide"
+        data-cta-location="{{ location }}"
+      >
+        Explore the Complete A Coruña Guide
+      </a>
+      <a
+        class="btn btn-ghost"
+        href="{{ url_for('a_coruna_literary_walking_tour') }}"
+        data-analytics-event="click_coruna_to_literary_tour"
+        data-cta-location="{{ location }}"
+      >
+        Take the Literary Walking Tour
+      </a>
+      <a
+        class="btn btn-ghost"
+        href="{{ url_for('a_coruna_through_the_lens') }}"
+        data-analytics-event="click_through_the_lens_article"
+        data-cta-location="{{ location }}"
+      >
+        Browse A Coruña Through the Lens
+      </a>
+    </div>
+  </aside>
+{% endmacro %}

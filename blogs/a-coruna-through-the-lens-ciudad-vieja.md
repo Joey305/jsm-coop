@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Walk slowly through Ciudad Vieja, A Coruña's old town, where stone streets, small plazas, doorways, and ordinary routines reveal the city's layered memory."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Neighborhoods, City Life, Ciudad Vieja
+series: A Coruña Through the Lens
 ---
 
 Ciudad Vieja changes the size of your attention. In other parts of A Coruña, the eye may travel outward to the Atlantic, up toward a lighthouse, or across a wide civic square. Here it narrows. A doorway matters. A worn stone edge matters. The way light slips across a short street matters. You begin to notice corners.

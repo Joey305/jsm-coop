@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Stand along A Coruña's Marina and watch glass, harbor light, façades, and reflections turn architecture into a changing way of seeing the city."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, Storytelling, Marina
+series: A Coruña Through the Lens
 ---
 
 The first thing you notice near the Marina is how much the buildings look back. Glass catches the sky, the harbor, the movement of people, the light off the water, and sometimes your own reflection before you have decided what you meant to see. The façades do not sit passively beside the waterfront. They keep changing with it.

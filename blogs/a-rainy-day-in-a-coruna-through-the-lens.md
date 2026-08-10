@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Follow A Coruña through rain, when stone darkens, glass changes mood, the promenade empties and fills again, and the city becomes a study in weather."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, City Life, Rain, Storytelling
+series: A Coruña Through the Lens
 ---
 
 Rain does not interrupt A Coruña. It rewrites it for a while. Stone darkens. Glass gathers streaks. Pavements become reflective. Umbrellas alter the geometry of sidewalks. The sea loses its decorative distance and becomes weather again.

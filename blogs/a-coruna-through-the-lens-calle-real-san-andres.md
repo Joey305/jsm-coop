@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Follow Calle Real and San Andrés through the evidence of ordinary commercial life: pedestrians, shopfronts, older façades, side streets, errands, and traces left by the day."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, City Life, Neighborhoods, Calle Real, San Andrés
+series: A Coruña Through the Lens
 ---
 
 Follow the people and the city becomes easier to read. On Calle Real and San Andrés, A Coruña is not asking you to stand still before a monument. It is asking you to notice movement at human height: doors opening, bags changing hands, a person pausing at a window, a delivery crossing a sidewalk, friends recognizing one another, shutters rising or coming down as the day shifts.

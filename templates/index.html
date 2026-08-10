@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "partials/book_components.html" as book_ui with context %}
+{% import "partials/a_coruna_components.html" as coruna with context %}
 
 {% block extra_head %}
 <style>
@@ -1412,6 +1413,21 @@
           <li><strong>3.</strong> Channel proceeds, attention, and energy toward nonprofit-aligned impact.</li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container section-heading reveal">
+      <p class="eyebrow">Explore A Coruña</p>
+      <h2>The streets, places, and stories behind our work.</h2>
+      <p>
+        A focused doorway into JSM Cooperative's growing A Coruña archive, from practical
+        city guide to literary route to the Through the Lens series.
+      </p>
+    </div>
+
+    <div class="container">
+      {{ coruna.evergreen_cards('homepage_coruna') }}
     </div>
   </section>
 

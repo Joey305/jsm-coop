@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Watch Méndez Núñez and the Cantones as a central meeting zone where gardens, commerce, the port, errands, waiting, and overlapping city lives cross paths."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, City Life, Méndez Núñez, Cantones
+series: A Coruña Through the Lens
 ---
 
 People do not enter Méndez Núñez and the Cantones with one shared purpose. That is what makes the area interesting. Someone crosses toward work. Someone slows under the trees. Someone waits near a bench. Someone moves toward the port. Someone is shopping, meeting, resting, checking a message, or passing through because this part of A Coruña sits between several kinds of day.

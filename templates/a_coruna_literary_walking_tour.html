@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% import "partials/a_coruna_components.html" as coruna with context %}
+
+{% set route_stops = [
+  {
+    "number": "01",
+    "name": "María Pita",
+    "slug": "a-coruna-through-the-lens-maria-pita",
+    "seeing": "A civic square where the City Hall, arcades, crossings, cafés, and daily movement gather around one of A Coruña's most recognizable public spaces.",
+    "writer": "Begin with scale. A square can look ceremonial from a distance and ordinary at street level, which is exactly why it works as a place to start noticing how public life carries private stories."
+  },
+  {
+    "number": "02",
+    "name": "Ciudad Vieja",
+    "slug": "a-coruna-through-the-lens-ciudad-vieja",
+    "seeing": "The old city narrows the route into stone streets, small plazas, churches, doorways, and older layers still folded into present use.",
+    "writer": "Here the city asks for smaller attention. A doorway, a worn edge, a short line of sky, and a quiet turn can hold more atmosphere than a panoramic view."
+  },
+  {
+    "number": "03",
+    "name": "The Marina and Glass Galleries",
+    "slug": "a-coruna-through-the-lens-marina-glass-galleries",
+    "seeing": "Along the Marina, glass galleries catch harbor light, sky, movement, and reflection, making architecture feel responsive rather than still.",
+    "writer": "Reflection is a useful literary device because it is never only duplication. It changes what it returns, and the Marina makes that visible in the city itself."
+  },
+  {
+    "number": "04",
+    "name": "Orzán",
+    "slug": "a-coruna-through-the-lens-orzan",
+    "seeing": "Orzán brings the city and ocean into immediate contact: beach, buildings, promenade, wind, and shifting Atlantic weather.",
+    "writer": "This is where mood becomes physical. Light, cloud, distance, and information can change the same place from open to unsettled without moving a single wall."
+  },
+  {
+    "number": "05",
+    "name": "Riazor",
+    "slug": "a-coruna-through-the-lens-riazor",
+    "seeing": "Riazor is a central urban beach where the Atlantic becomes part of errands, exercise, waiting, conversation, and daily routine.",
+    "writer": "A beach inside a city teaches a useful storytelling lesson: the extraordinary does not have to stand apart from ordinary life to matter."
+  },
+  {
+    "number": "06",
+    "name": "The Paseo Marítimo",
+    "slug": "a-coruna-through-the-lens-paseo-maritimo",
+    "seeing": "The promenade connects the Atlantic edge through beaches, landmarks, traffic, benches, neighborhoods, and changing weather.",
+    "writer": "A route creates meaning by sequence. Separate observations begin to speak to each other only after the body has carried them from one place to the next."
+  },
+  {
+    "number": "07",
+    "name": "Tower of Hercules",
+    "slug": "a-coruna-through-the-lens-tower-of-hercules",
+    "seeing": "At the headland, the ancient lighthouse opens the city toward wind, Atlantic distance, weather, and the long history of watching the sea.",
+    "writer": "End at a place built for orientation. A lighthouse offers clarity, but the surrounding distance reminds you that seeing and knowing are not always the same thing."
+  }
+] %}
+
+{% block content %}
+<div class="coruna-page coruna-walk-page">
+  <section class="page-hero coruna-hero coruna-hero-walk">
+    <div class="container coruna-hero-grid">
+      <div class="reveal">
+        <p class="eyebrow">Walk the Story</p>
+        <h1>A Coruña Literary Walking Tour</h1>
+        <p>
+          Some cities are understood through monuments. Others reveal themselves through
+          the spaces between them. This route explores A Coruña through streets, coastline,
+          history, atmosphere, and storytelling.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary large" href="#begin-the-walk">Begin the Walk</a>
+          <a
+            class="btn btn-ghost large"
+            href="{{ url_for('book') }}"
+            data-analytics-event="click_literary_tour_to_book"
+            data-cta-location="literary_hero"
+          >
+            Discover the Novel
+          </a>
+        </div>
+      </div>
+
+      <aside class="coruna-route-card reveal delay-1" aria-label="Walking route overview">
+        <p class="eyebrow">Route</p>
+        <ol>
+          {% for stop in route_stops %}
+            <li><span>{{ stop.number }}</span>{{ stop.name }}</li>
+          {% endfor %}
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" id="begin-the-walk">
+    <div class="container section-heading reveal">
+      <p class="eyebrow">Suggested Route</p>
+      <h2>Start in the civic center. Finish at the Atlantic edge.</h2>
+      <p>
+        This is a literary route, not a claim that each stop appears directly in
+        <em>The Man in the Ball Cap</em>. The stops reflect the atmosphere, geography,
+        and storytelling conditions around JSM Cooperative's A Coruña work.
+      </p>
+    </div>
+
+    <div class="container coruna-timeline">
+      {% for stop in route_stops %}
+        {% set post = posts_by_slug.get(stop.slug) %}
+        <article class="coruna-stop reveal">
+          <div class="coruna-stop-marker">
+            <span>{{ stop.number }}</span>
+          </div>
+
+          <div class="coruna-stop-card">
+            <div class="coruna-stop-copy">
+              <p class="eyebrow">{% if loop.first %}Start{% elif loop.last %}Atlantic Edge{% else %}Stop{% endif %}</p>
+              <h2>{{ stop.name }}</h2>
+
+              <h3>What You're Seeing</h3>
+              <p>{{ stop.seeing }}</p>
+
+              <h3>Through a Writer's Eyes</h3>
+              <p>{{ stop.writer }}</p>
+
+              {% if post %}
+                <a
+                  class="read-more"
+                  href="{{ url_for('blog_detail', slug=post.slug) }}"
+                  data-analytics-event="click_through_the_lens_article"
+                  data-cta-location="literary_route"
+                  data-article-slug="{{ post.slug }}"
+                  data-series="{{ post.series }}"
+                >
+                  Read {{ post.location or stop.name }} Through the Lens
+                </a>
+              {% endif %}
+            </div>
+
+            {% if post %}
+              <a class="coruna-stop-image" href="{{ url_for('blog_detail', slug=post.slug) }}" aria-label="Read {{ post.title }}">
+                <picture>
+                  {% if post.cover_webp %}
+                    <source srcset="{{ post.cover_webp }}" type="image/webp">
+                  {% endif %}
+                  <img
+                    src="{{ post.cover }}"
+                    alt="{{ post.title }} cover image"
+                    loading="lazy"
+                    onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/jsm-placeholder.svg') }}';"
+                  >
+                </picture>
+              </a>
+            {% endif %}
+          </div>
+        </article>
+
+        {% if loop.index == 4 %}
+          <aside class="coruna-story-card coruna-route-book reveal" aria-label="Book connection">
+            <div>
+              <p class="eyebrow">The World Behind the Story</p>
+              <h2>You're Walking Through the World Behind the Story</h2>
+              <p>
+                JSM's available material describes <em>The Man in the Ball Cap</em> as a
+                mystery set in A Coruña. This route does not invent plot canon; it follows
+                the real atmosphere of a city where place, memory, weather, and hidden
+                motives can naturally belong beside fiction.
+              </p>
+            </div>
+
+            <div class="coruna-related-actions">
+              <a
+                class="btn btn-primary"
+                href="{{ url_for('book') }}"
+                data-analytics-event="click_literary_tour_to_book"
+                data-cta-location="literary_mid_route"
+              >
+                Discover the Book
+              </a>
+              <a
+                class="btn btn-donate"
+                href="{{ url_for('book_signed') }}"
+                data-analytics-event="click_signed_copy_cta"
+                data-cta-location="literary_mid_route"
+              >
+                Get a Signed Copy
+              </a>
+            </div>
+          </aside>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section coruna-story-band">
+    <div class="container coruna-story-card reveal">
+      <div>
+        <p class="eyebrow">The Story Continues</p>
+        <h2>The Walk Ends. The Story Doesn't.</h2>
+        <p>
+          A walking route can end at a landmark, but a city keeps moving after the route is
+          over. Streets retain memory. Weather changes interpretation. Fiction begins where
+          observation leaves enough room for questions.
+        </p>
+      </div>
+
+      <div class="coruna-related-actions">
+        <a
+          class="btn btn-primary"
+          href="{{ url_for('book') }}"
+          data-analytics-event="click_literary_tour_to_book"
+          data-cta-location="literary_end"
+        >
+          Discover The Man in the Ball Cap
+        </a>
+        <a
+          class="btn btn-donate"
+          href="{{ url_for('book_signed') }}"
+          data-analytics-event="click_signed_copy_cta"
+          data-cta-location="literary_end"
+        >
+          Get a Signed Copy
+        </a>
+        <a class="btn btn-ghost" href="{{ url_for('a_coruna_things_to_do') }}">Explore the City Guide</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  window.JSMAnalytics && window.JSMAnalytics.track("view_coruna_literary_tour", {
+    cta_location: "a_coruna_literary_walking_tour"
+  });
+</script>
+{% endblock %}

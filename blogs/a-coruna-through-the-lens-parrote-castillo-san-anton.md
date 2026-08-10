@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Walk the harbor-facing edge of A Coruña at O Parrote and Castillo de San Antón, where water, defense, arrival, and departure shape the city's imagination."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, O Parrote, Castillo de San Antón
+series: A Coruña Through the Lens
 ---
 
 Walk toward O Parrote and the city begins to face outward. The streets give way to water, open space, harbor views, boats, stone, and the particular feeling of standing where A Coruña has long understood the sea not only as scenery, but as access. The city is behind you and beside you. The water is ahead. The direction you choose starts to matter.

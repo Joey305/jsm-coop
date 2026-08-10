@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% import "partials/a_coruna_components.html" as coruna with context %}
+
+{% block content %}
+<div class="coruna-page">
+  <section class="page-hero coruna-hero coruna-hero-things">
+    <div class="container coruna-hero-grid">
+      <div class="reveal">
+        <p class="eyebrow">Explore A Coruña</p>
+        <h1>Things to Do in A Coruña, Spain</h1>
+        <p>
+          A Coruña is an Atlantic city in Galicia shaped by coastline, history, neighborhoods,
+          beaches, architecture, weather, and the everyday life that moves between them.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary large" href="#explore-coruna">Explore A Coruña</a>
+          <a
+            class="btn btn-ghost large"
+            href="{{ url_for('a_coruna_through_the_lens') }}"
+            data-analytics-event="click_through_the_lens_article"
+            data-cta-location="things_hero"
+          >
+            See A Coruña Through the Lens
+          </a>
+        </div>
+      </div>
+
+      <aside class="coruna-hero-panel reveal delay-1" aria-label="A Coruña overview">
+        <p class="eyebrow">Atlantic City Guide</p>
+        <h2>Start with the edge, then follow the streets inward.</h2>
+        <p>
+          The best first impression often comes on foot: tower, promenade, beaches,
+          old streets, markets, viewpoints, and the changing light off the water.
+        </p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" id="explore-coruna">
+    <div class="container section-heading reveal">
+      <p class="eyebrow">What to See</p>
+      <h2>Places that make the city legible.</h2>
+      <p>
+        This guide follows places already represented in JSM Cooperative's A Coruña archive,
+        with deeper links into the Through the Lens series where available.
+      </p>
+    </div>
+
+    <div class="container coruna-feature-list">
+      <article class="coruna-place-block reveal">
+        <div>
+          <p class="eyebrow">Landmark</p>
+          <h2>Tower of Hercules</h2>
+          <p>
+            The Tower of Hercules sits at the exposed edge of A Coruña, where the city opens
+            into wind, Atlantic distance, ancient stone, and a long habit of looking outward.
+          </p>
+        </div>
+        <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-tower-of-hercules') }}">Read our Tower of Hercules story</a>
+      </article>
+
+      <article class="coruna-place-block reveal">
+        <div>
+          <p class="eyebrow">Coastline</p>
+          <h2>Walk the Atlantic Promenade</h2>
+          <p>
+            The Paseo Marítimo turns separate beaches, landmarks, neighborhoods, benches,
+            traffic, and weather into one continuous Atlantic sentence. It is one of the
+            clearest ways to understand A Coruña in motion.
+          </p>
+        </div>
+        <div class="coruna-inline-links">
+          <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-paseo-maritimo') }}">Follow the Paseo Marítimo</a>
+          <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-domus-matadero-coast') }}">Walk the Domus and Matadero coast</a>
+        </div>
+      </article>
+
+      <article class="coruna-place-block reveal">
+        <div>
+          <p class="eyebrow">Historic Center</p>
+          <h2>María Pita and the Old City</h2>
+          <p>
+            Praza de María Pita gives the city civic scale, while Ciudad Vieja narrows the
+            attention to stone, doorways, short streets, small plazas, and the feeling of
+            older layers still being used.
+          </p>
+        </div>
+        <div class="coruna-inline-links">
+          <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-maria-pita') }}">Explore María Pita Through the Lens</a>
+          <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-ciudad-vieja') }}">Walk through Ciudad Vieja</a>
+        </div>
+      </article>
+
+      <article class="coruna-place-block reveal">
+        <div>
+          <p class="eyebrow">Beaches</p>
+          <h2>Riazor and Orzán</h2>
+          <p>
+            Riazor and Orzán are central city beaches, but they are also public rooms:
+            places of errands, exercise, weather, routine, changing light, and Atlantic mood.
+          </p>
+        </div>
+        <div class="coruna-inline-links">
+          <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-riazor') }}">See Riazor at city speed</a>
+          <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-orzan') }}">Experience Orzán's changing edge</a>
+        </div>
+      </article>
+
+      <article class="coruna-place-block reveal">
+        <div>
+          <p class="eyebrow">Viewpoint</p>
+          <h2>Monte de San Pedro and City Viewpoints</h2>
+          <p>
+            Monte de San Pedro gives A Coruña distance without removing its detail. From above,
+            the beaches, streets, neighborhoods, Atlantic edge, and weather begin to arrange
+            themselves as one living geography.
+          </p>
+        </div>
+        <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-monte-de-san-pedro') }}">Explore Monte de San Pedro</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section coruna-highlight-band">
+    <div class="container coruna-split">
+      <article class="coruna-panel reveal">
+        <p class="eyebrow">After Dark</p>
+        <h2>A Coruña after dark.</h2>
+        <p>
+          Night does not erase the city. It edits it: lamps, silhouettes, reflections,
+          footsteps, lit rooms, dark water, and familiar streets made less complete.
+        </p>
+        <a class="btn btn-primary" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-after-dark') }}">See A Coruña After Dark</a>
+      </article>
+
+      <article class="coruna-panel reveal delay-1">
+        <p class="eyebrow">Morning</p>
+        <h2>Before the city wakes.</h2>
+        <p>
+          Early morning belongs to beginnings: shutters, markets, delivery routes,
+          streetlights fading, and streets becoming visible before they become busy.
+        </p>
+        <a class="btn btn-ghost" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-before-the-city-wakes') }}">See A Coruña Before the City Wakes</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container coruna-split">
+      <article class="coruna-panel reveal">
+        <p class="eyebrow">Everyday Galicia</p>
+        <h2>Food, cafés, markets, and local rhythm.</h2>
+        <p>
+          A Coruña is not only a sequence of monuments. Its everyday life appears at counter
+          height: market streets, cafés, errands, bags, weather decisions, and the quiet ways
+          people make the city usable.
+        </p>
+        <a class="read-more" href="{{ url_for('blog_detail', slug='a-coruna-through-the-lens-plaza-de-lugo-market-streets') }}">Visit Plaza de Lugo and the market streets</a>
+      </article>
+
+      <article class="coruna-panel reveal delay-1">
+        <p class="eyebrow">Weather</p>
+        <h2>Let the weather change the route.</h2>
+        <p>
+          Rain, cloud, wind, and light are not interruptions here. They are part of how the
+          city is read, especially along glass, stone, beaches, and the promenade.
+        </p>
+        <a class="read-more" href="{{ url_for('blog_detail', slug='a-rainy-day-in-a-coruna-through-the-lens') }}">Read A Rainy Day in A Coruña Through the Lens</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section coruna-story-band">
+    <div class="container coruna-story-card reveal">
+      <div>
+        <p class="eyebrow">Storytelling</p>
+        <h2>A Coruña Is Also a City of Stories</h2>
+        <p>
+          The streets, Atlantic weather, architecture, memory, and history of A Coruña also
+          shape JSM Cooperative's creative work and the world surrounding
+          <em>The Man in the Ball Cap</em>. The connection is not a checklist of scenes;
+          it is a sense of atmosphere, perspective, and place.
+        </p>
+      </div>
+
+      <div class="coruna-related-actions">
+        <a
+          class="btn btn-primary"
+          href="{{ url_for('a_coruna_literary_walking_tour') }}"
+          data-analytics-event="click_coruna_to_literary_tour"
+          data-cta-location="things_story"
+        >
+          Take the Literary Walking Tour
+        </a>
+        <a
+          class="btn btn-ghost"
+          href="{{ url_for('book') }}"
+          data-analytics-event="click_coruna_to_book"
+          data-cta-location="things_story"
+        >
+          Discover The Man in the Ball Cap
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container section-heading reveal">
+      <p class="eyebrow">Questions</p>
+      <h2>A Coruña travel FAQ</h2>
+    </div>
+
+    <div class="container coruna-faq">
+      <article class="coruna-faq-item reveal">
+        <h3>Is A Coruña worth visiting?</h3>
+        <p>Yes, especially if you like walkable coastal cities where landmarks, beaches, old streets, markets, and everyday life sit close together.</p>
+      </article>
+      <article class="coruna-faq-item reveal">
+        <h3>How many days do you need in A Coruña?</h3>
+        <p>Two or three days gives most visitors time for the Tower of Hercules, the promenade, beaches, the old city, markets, and a slower neighborhood walk.</p>
+      </article>
+      <article class="coruna-faq-item reveal">
+        <h3>Is A Coruña walkable?</h3>
+        <p>Much of the central city is rewarding on foot, especially the waterfront, old city, central streets, and beach areas. Some viewpoints require more effort or transport.</p>
+      </article>
+      <article class="coruna-faq-item reveal">
+        <h3>What is A Coruña famous for?</h3>
+        <p>The Tower of Hercules, its Atlantic coastline, glass gallery architecture, beaches, seafood culture, and Galician identity are among the city's strongest associations.</p>
+      </article>
+      <article class="coruna-faq-item reveal">
+        <h3>Are A Coruña and La Coruña the same place?</h3>
+        <p>Yes. A Coruña is the Galician name and common official form; La Coruña is the Spanish form many English speakers still encounter.</p>
+      </article>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  window.JSMAnalytics && window.JSMAnalytics.track("view_coruna_things_to_do", {
+    cta_location: "a_coruna_things_to_do"
+  });
+</script>
+{% endblock %}

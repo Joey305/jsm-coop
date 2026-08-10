@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Approach the Tower of Hercules on foot and feel A Coruña open into wind, Atlantic distance, ancient stone, and the strange permanence of a landmark at the edge of the city."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, Storytelling, Tower of Hercules
+series: A Coruña Through the Lens
 ---
 
 The sound of A Coruña changes as you walk toward the Tower of Hercules. Behind you, the city still has its usual human scale: traffic, footsteps, voices, doors opening and closing. Ahead, the Atlantic begins to take over. The air feels more exposed. The streets loosen. The sky seems to widen before the monument fully appears.

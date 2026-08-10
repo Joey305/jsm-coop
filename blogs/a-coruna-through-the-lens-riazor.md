@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Walk past Riazor at the speed of ordinary life, where one of A Coruña's most recognizable beaches becomes part of errands, exercise, weather, and daily routine."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, City Life, Riazor
+series: A Coruña Through the Lens
 ---
 
 Riazor can appear suddenly at the end of an ordinary thought. You may be walking down from the city, following traffic and shopfronts and apartment windows, when the street loosens and the Atlantic takes up more of the view than anything else. The curve of the beach arrives not as an escape from A Coruña, but as one of its daily rooms.

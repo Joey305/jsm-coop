@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "partials/a_coruna_components.html" as coruna with context %}
 
 {% block extra_head %}
 <style>
@@ -443,6 +444,10 @@
       <div class="article-body reveal" data-article-body>
         {{ post.html|safe }}
       </div>
+
+      {% if post.is_through_lens %}
+        {{ coruna.more_from_coruna('through_the_lens_article') }}
+      {% endif %}
 
       <div class="blog-detail-footer reveal">
         <a class="blog-back-link" href="{{ url_for('blogs') }}">← Back to all posts</a>

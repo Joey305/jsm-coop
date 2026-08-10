@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% import "partials/a_coruna_components.html" as coruna with context %}
+
+{% block content %}
+<div class="coruna-page">
+  <section class="page-hero coruna-hero coruna-hero-lens">
+    <div class="container narrow reveal">
+      <p class="eyebrow">A Coruña Through the Lens</p>
+      <h1>A Coruña Through the Lens</h1>
+      <p>
+        A collection of streets, landmarks, neighborhoods, coastlines, weather, and moments
+        from A Coruña, documented through photography, observation, and story.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary large" href="#through-the-lens-stories">Explore the Stories</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container section-heading reveal">
+      <p class="eyebrow">Explore More of A Coruña</p>
+      <h2>Move between guide, route, and archive.</h2>
+      <p>
+        The series gives the city depth; the evergreen guides give visitors a clearer way
+        to move through that body of work.
+      </p>
+    </div>
+
+    <div class="container">
+      {{ coruna.evergreen_cards('through_the_lens_featured') }}
+    </div>
+  </section>
+
+  <section class="section coruna-archive-section" id="through-the-lens-stories">
+    <div class="container coruna-archive-heading reveal">
+      <div>
+        <p class="eyebrow">Editorial Archive</p>
+        <h2>{{ posts|length }} A Coruña Through the Lens stories</h2>
+      </div>
+      <p>
+        This archive is dynamically filtered from the existing blog collection. Future posts
+        marked as part of the series will appear here automatically.
+      </p>
+    </div>
+
+    <div class="container coruna-post-grid">
+      {% for post in posts %}
+        {{ coruna.post_card(post, 'through_the_lens_archive') }}
+      {% else %}
+        <article class="coruna-panel reveal">
+          <h2>No Through the Lens posts found.</h2>
+          <p>Once posts are marked with the A Coruña Through the Lens series, they will appear here.</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  window.JSMAnalytics && window.JSMAnalytics.track("view_through_the_lens", {
+    cta_location: "a_coruna_through_the_lens"
+  });
+</script>
+{% endblock %}

@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Walk toward Monte de San Pedro for a higher view of A Coruña, where the Atlantic, city streets, weather, and memory shift into a single frame."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, Storytelling, Monte de San Pedro
+series: A Coruña Through the Lens
 ---
 
 Monte de San Pedro changes the way A Coruña arranges itself in the mind. From the streets below, the city can feel immediate and close: buses passing, apartment windows catching light, the sea appearing at the end of a road and then disappearing again behind buildings. The city is something you move through step by step.

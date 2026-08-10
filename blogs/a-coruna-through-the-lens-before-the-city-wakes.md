@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Walk A Coruña in the early morning, when shutters, markets, delivery routes, pale light, and quiet streets make the city feel newly possible."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, City Life, Morning in A Coruña
+series: A Coruña Through the Lens
 ---
 
 Before the city wakes, A Coruña belongs to beginnings. Not grand beginnings, not the ceremonial kind, but small ones: shutters preparing to rise, delivery routes completing their quiet work, market counters being readied, streetlights fading, coffee machines warming, footsteps sounding clearer because the day has not yet filled the streets.

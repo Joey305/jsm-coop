@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Step inland to Santa Margarita, where A Coruña becomes quieter, greener, and more interior without losing its civic imagination."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, City Life, Santa Margarita
+series: A Coruña Through the Lens
 ---
 
 Santa Margarita is where A Coruña changes its breathing. The ocean does not disappear from the city's identity, but it stops commanding every sentence. The park lifts you into an interior version of A Coruña: greener, quieter, more shaded, less exposed to the constant argument between street and Atlantic.

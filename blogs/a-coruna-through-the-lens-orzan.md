@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Experience Orzán as beach, neighborhood edge, promenade, and Atlantic weather system, where A Coruña changes by the hour."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, City Life, Orzán
+series: A Coruña Through the Lens
 ---
 
 Orzán is one of the places where A Coruña feels most exposed to itself. The beach, the promenade, the buildings, the wind, and the Atlantic all meet without much distance between them. You can be in the city and at the edge of the ocean at the same time, which is part of the charge of the place.

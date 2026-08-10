@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Look toward Os Castros and Oza for an A Coruña shaped by home, daily routes, neighborhood scale, and a quieter relationship with the water."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Neighborhoods, City Life, Os Castros, Oza
+series: A Coruña Through the Lens
 ---
 
 Os Castros and Oza ask for a different kind of attention. They do not announce themselves with the same postcard confidence as the Tower of Hercules, María Pita, the Marina, or Riazor. They belong more to routes than spectacle, more to living than display. That does not make them lesser. It makes them necessary.

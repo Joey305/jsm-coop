@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Walk the Atlantic edge around the Domus and the Matadero coast, where A Coruña measures the human body against wind, stone, surf, and scale."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, Storytelling, Domus, Matadero
+series: A Coruña Through the Lens
 ---
 
 The coast below the Domus is one of the places where A Coruña makes the body noticeable. You feel it in your shoulders before you think about it. The wind changes your posture. The pavement asks for balance. The sound of the Atlantic rises and falls against the rocks. Even on a calm day, the city seems to remind you that being human is partly a matter of scale.

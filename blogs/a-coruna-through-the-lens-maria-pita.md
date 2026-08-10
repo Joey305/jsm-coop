@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Spend time in Plaza de María Pita, where civic scale, cafés, pedestrians, architecture, and daily routines turn one of A Coruña's great landmarks into lived public space."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, City Life, María Pita
+series: A Coruña Through the Lens
 ---
 
 Plaza de María Pita is large enough to make people change their pace. You enter from a side street and the space opens around you: stone underfoot, arcades along the edges, the City Hall holding one side of the square, people crossing in different directions with different levels of attention.

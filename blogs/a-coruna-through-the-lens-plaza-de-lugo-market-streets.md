@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Walk through Plaza de Lugo and its surrounding market streets, where food, errands, shopfronts, and morning decisions show how A Coruña feeds itself."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, City Life, Markets, Plaza de Lugo
+series: A Coruña Through the Lens
 ---
 
 The morning around Plaza de Lugo begins with hands. Hands pointing toward fish, testing fruit, opening wallets, tying bags, carrying parcels close to the body before the day has fully widened. People arrive with lists, habits, cravings, obligations, and the quiet confidence of those who know which errand should be done first.

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "partials/book_components.html" as book_ui with context %}
+{% import "partials/a_coruna_components.html" as coruna with context %}
 
 {% block content %}
 <div class="book-page">
@@ -77,6 +78,21 @@
           <p>The mystery moves through symbols, identity, recollection, and the uneasy work of making sense.</p>
         </article>
       </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container section-heading reveal">
+      <p class="eyebrow">A Coruña, Galicia</p>
+      <h2>Explore the City Behind the Story</h2>
+      <p>
+        For readers who want more of the setting's atmosphere, these A Coruña pages connect
+        the novel's world to JSM's existing city archive.
+      </p>
+    </div>
+
+    <div class="container">
+      {{ coruna.evergreen_cards('book_coruna_feature') }}
     </div>
   </section>
 

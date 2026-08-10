@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Step inside Monte Alto, where A Coruña feels lived in through streets, shops, elevation, sea-glimpses, and everyday memory."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Neighborhoods, City Life, Monte Alto
+series: A Coruña Through the Lens
 ---
 
 Monte Alto asks for a different kind of attention than the postcard version of A Coruña. It is not the high, panoramic city of Monte de San Pedro, where the coastline can be taken in almost at once. It is the city from the inside: streets with daily errands, apartment windows, small businesses, steps, corners, and brief openings toward the Atlantic.

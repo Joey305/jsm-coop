@@ -1325,6 +1325,422 @@ body.purchase-modal-open {
 
 
 /* ================================
+   A Coruña Editorial Layer
+================================ */
+
+.coruna-page {
+  overflow: hidden;
+}
+
+.coruna-page * {
+  min-width: 0;
+}
+
+.coruna-page h1,
+.coruna-page h2,
+.coruna-page h3,
+.coruna-page p,
+.coruna-page a {
+  overflow-wrap: break-word;
+}
+
+.coruna-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.coruna-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(0, 234, 255, 0.15), transparent 32%),
+    radial-gradient(circle at 82% 22%, rgba(250, 204, 21, 0.11), transparent 28%),
+    radial-gradient(circle at 62% 86%, rgba(34, 197, 94, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(6, 16, 31, 0.72), rgba(2, 6, 23, 0.96));
+}
+
+.coruna-hero::after {
+  content: "A CORUÑA";
+  position: absolute;
+  right: -0.7rem;
+  bottom: -1rem;
+  z-index: -1;
+  color: rgba(255, 255, 255, 0.035);
+  font-size: clamp(4rem, 13vw, 12rem);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 0.9;
+  pointer-events: none;
+}
+
+.coruna-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+}
+
+.coruna-hero-panel,
+.coruna-route-card,
+.coruna-panel,
+.coruna-link-card,
+.coruna-post-card,
+.coruna-faq-item,
+.coruna-story-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(0, 234, 255, 0.1), transparent 36%),
+    rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.2);
+}
+
+.coruna-hero-panel,
+.coruna-panel,
+.coruna-link-card,
+.coruna-faq-item,
+.coruna-story-card {
+  padding: clamp(1.15rem, 3vw, 1.65rem);
+}
+
+.coruna-hero-panel h2,
+.coruna-panel h2,
+.coruna-story-card h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+
+.coruna-card-grid {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.coruna-card-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.coruna-link-card {
+  min-height: 100%;
+}
+
+.coruna-link-card h3,
+.coruna-post-card h3,
+.coruna-stop-card h3,
+.coruna-faq-item h3 {
+  color: #ffffff;
+}
+
+.coruna-feature-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.coruna-place-block {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.34fr);
+  gap: 1.1rem;
+  align-items: center;
+  padding: clamp(1rem, 2.4vw, 1.35rem);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035)),
+    rgba(2, 6, 23, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.coruna-place-block p {
+  margin-bottom: 0;
+}
+
+.coruna-inline-links,
+.coruna-related-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.coruna-inline-links {
+  justify-content: flex-start;
+}
+
+.coruna-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.coruna-highlight-band,
+.coruna-story-band,
+.coruna-archive-section {
+  position: relative;
+  background: rgba(2, 6, 23, 0.28);
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.coruna-story-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.coruna-faq {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.coruna-faq-item h3 {
+  margin-bottom: 0.55rem;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+}
+
+.coruna-faq-item p {
+  margin: 0;
+}
+
+.coruna-route-card {
+  padding: clamp(1rem, 3vw, 1.35rem);
+}
+
+.coruna-route-card ol {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coruna-route-card li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: rgba(229, 231, 235, 0.88);
+  font-weight: 850;
+}
+
+.coruna-route-card li span,
+.coruna-stop-marker span {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  color: #031016;
+  background: linear-gradient(135deg, #00eaff, #4efedc);
+  font-size: 0.8rem;
+  font-weight: 950;
+}
+
+.coruna-timeline {
+  position: relative;
+  display: grid;
+  gap: 1.3rem;
+}
+
+.coruna-timeline::before {
+  content: "";
+  position: absolute;
+  top: 1rem;
+  bottom: 1rem;
+  left: 1.12rem;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(0, 234, 255, 0.7), rgba(250, 204, 21, 0.35), rgba(78, 254, 220, 0.7));
+  box-shadow: 0 0 22px rgba(0, 234, 255, 0.18);
+}
+
+.coruna-stop {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.coruna-stop-marker {
+  position: relative;
+  z-index: 2;
+}
+
+.coruna-stop-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(240px, 0.5fr);
+  gap: 1rem;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.coruna-stop-copy h3 {
+  margin: 1.2rem 0 0.45rem;
+  font-size: 1.08rem;
+}
+
+.coruna-stop-image,
+.coruna-post-image {
+  display: block;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.coruna-stop-image {
+  align-self: stretch;
+  min-height: 100%;
+}
+
+.coruna-stop-image img,
+.coruna-post-image img {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  object-fit: cover;
+}
+
+.coruna-route-book {
+  margin-left: 3.25rem;
+}
+
+.coruna-archive-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+  gap: 1.25rem;
+  align-items: end;
+  margin-bottom: 1.6rem;
+}
+
+.coruna-archive-heading p {
+  margin: 0;
+}
+
+.coruna-post-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.coruna-post-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.coruna-post-image {
+  aspect-ratio: 16 / 9;
+  border-radius: 18px 18px 0 0;
+  border-width: 0 0 1px;
+}
+
+.coruna-post-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 1.1rem;
+}
+
+.coruna-post-body h3 {
+  font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+}
+
+.coruna-post-body p {
+  margin-top: 0;
+}
+
+.coruna-post-body .read-more {
+  margin-top: auto;
+}
+
+.coruna-post-meta {
+  color: rgba(203, 213, 225, 0.72);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.coruna-related {
+  max-width: 940px;
+  margin: 2.8rem auto 0;
+  padding: clamp(1.15rem, 3vw, 1.55rem);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top left, rgba(250, 204, 21, 0.1), transparent 35%),
+    rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 980px) {
+  .coruna-hero-grid,
+  .coruna-card-grid-three,
+  .coruna-split,
+  .coruna-story-card,
+  .coruna-archive-heading,
+  .coruna-post-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .coruna-place-block,
+  .coruna-stop-card {
+    grid-template-columns: 1fr;
+  }
+
+  .coruna-route-book {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .coruna-hero h1 {
+    font-size: clamp(2.25rem, 10vw, 2.85rem);
+    line-height: 1.02;
+  }
+
+  .coruna-hero p {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .coruna-hero::after {
+    font-size: 4rem;
+    right: -0.3rem;
+  }
+
+  .coruna-timeline::before {
+    left: 1rem;
+  }
+
+  .coruna-stop {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .coruna-route-card li span,
+  .coruna-stop-marker span {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.72rem;
+  }
+
+  .coruna-stop-card {
+    padding: 1rem;
+  }
+
+  .coruna-stop-image img,
+  .coruna-post-image img {
+    min-height: 180px;
+  }
+
+  .coruna-related-actions .btn {
+    width: 100%;
+  }
+}
+
+
+/* ================================
    Book Sales / Campaign Components
 ================================ */
 

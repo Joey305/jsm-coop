@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "Follow the Paseo Marítimo as it carries A Coruña along its Atlantic edge, connecting beaches, landmarks, neighborhoods, benches, traffic, weather, and walkers."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, Travel, City Life, Paseo Marítimo
+series: A Coruña Through the Lens
 ---
 
 Start walking beside the water and A Coruña begins to explain itself differently. The city does not arrive as one fixed scene. It appears in sections: a beach opening to one side, buildings tightening on the other, traffic keeping pace, a bench facing the Atlantic, a runner passing, a cyclist moving through, the horizon changing by a few degrees with every turn.

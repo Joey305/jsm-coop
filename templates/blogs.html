@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "partials/a_coruna_components.html" as coruna with context %}
 
 {% block extra_head %}
 <style>
@@ -455,6 +456,21 @@
           <button type="button" class="blog-filter-btn is-active" data-filter="all">All</button>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container section-heading reveal">
+      <p class="eyebrow">Explore A Coruña</p>
+      <h2>Discover the streets, stories, and places behind our growing A Coruña archive.</h2>
+      <p>
+        These featured paths organize the A Coruña material without changing the main blog
+        archive below.
+      </p>
+    </div>
+
+    <div class="container">
+      {{ coruna.evergreen_cards('blogs_coruna_feature') }}
     </div>
   </section>
 

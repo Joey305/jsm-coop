@@ -36,6 +36,7 @@ load_dotenv(BASE_DIR / ".env")
 
 BLOG_DIR = BASE_DIR / "blogs"
 DEFAULT_SIGNED_BOOK_PAYMENT_LINK = "https://www.paypal.com/ncp/payment/SLQDNTABMS9JS"
+THROUGH_THE_LENS_SERIES = "A Coruña Through the Lens"
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -247,6 +248,21 @@ PAGE_META = {
     "blogs": {
         "title": "JSM Cooperative Blog",
         "description": "Read updates from JSM Cooperative about books, nonprofit impact, publishing, and the Camino campaign.",
+    },
+    "a_coruna_things_to_do": {
+        "title": "Things to Do in A Coruña, Spain | JSM Cooperative Corporation",
+        "description": "Discover things to do in A Coruña, Galicia, from the Tower of Hercules and Atlantic promenade to beaches, viewpoints, historic streets and stories from the city.",
+        "image": "images/Landscape_1.png",
+    },
+    "a_coruna_literary_walking_tour": {
+        "title": "A Coruña Literary Walking Tour | JSM Cooperative Corporation",
+        "description": "Explore A Coruña through its streets, coastline, history and stories on a literary walking route inspired by the city and the world behind The Man in the Ball Cap.",
+        "image": "images/Landscape_1.png",
+    },
+    "a_coruna_through_the_lens": {
+        "title": "A Coruña Through the Lens | JSM Cooperative Corporation",
+        "description": "Explore A Coruña Through the Lens, a collection of photography, places, neighborhoods, coastlines and stories from JSM Cooperative's A Coruña archive.",
+        "image": "images/Landscape_1.png",
     },
     "projects": {
         "title": "Community Projects",
@@ -563,6 +579,21 @@ def get_breadcrumb_schema(items):
     }
 
 
+def get_webpage_schema(title, description, path):
+    return {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": title,
+        "description": description,
+        "url": absolute_url(path),
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": app.config["SITE_NAME"],
+            "url": app.config["SITE_DOMAIN"].rstrip("/"),
+        },
+    }
+
+
 def build_page_meta(endpoint, path=None, overrides=None):
     base = PAGE_META.get(endpoint, {}).copy()
     overrides = overrides or {}
@@ -657,6 +688,9 @@ def public_sitemap_routes():
         ("about", {}),
         ("book", {}),
         ("blogs", {}),
+        ("a_coruna_things_to_do", {}),
+        ("a_coruna_literary_walking_tour", {}),
+        ("a_coruna_through_the_lens", {}),
         ("projects", {}),
         ("donate", {}),
         ("team", {}),
@@ -754,6 +788,21 @@ def parse_front_matter(raw):
     return metadata, body
 
 
+def parse_tag_list(tags):
+    if isinstance(tags, str):
+        return [t.strip() for t in tags.split(",") if t.strip()]
+
+    return [str(t).strip() for t in tags if str(t).strip()]
+
+
+def infer_blog_series(tags, existing_series=""):
+    parsed_tags = parse_tag_list(tags)
+    if existing_series == THROUGH_THE_LENS_SERIES or THROUGH_THE_LENS_SERIES in parsed_tags:
+        return THROUGH_THE_LENS_SERIES
+
+    return existing_series.strip()
+
+
 
 
 def read_blog_file(path):
@@ -777,6 +826,23 @@ def read_blog_file(path):
         )
     )
 
+    tags = parse_tag_list(metadata.get("tags", ""))
+    series = infer_blog_series(tags, metadata.get("series", "").strip())
+    is_through_lens = series == THROUGH_THE_LENS_SERIES or THROUGH_THE_LENS_SERIES in tags
+
+    generic_tags = {
+        "A Coruña",
+        "Galicia",
+        THROUGH_THE_LENS_SERIES,
+        "Travel",
+        "City Life",
+        "Storytelling",
+        "Neighborhoods",
+    }
+    location = metadata.get("location", "").strip()
+    if not location:
+        location = next((tag for tag in tags if tag not in generic_tags), "")
+
     return {
         "slug": slug,
         "title": metadata.get("title", slug.replace("-", " ").title()),
@@ -785,7 +851,10 @@ def read_blog_file(path):
         "excerpt": metadata.get("excerpt", body[:180].replace("\n", " ") + "..."),
         "cover": cover,
         "cover_webp": cover_webp,
-        "tags": [t.strip() for t in metadata.get("tags", "").split(",") if t.strip()],
+        "tags": tags,
+        "series": series,
+        "is_through_lens": is_through_lens,
+        "location": location,
         "body": body,
         "html": html,
         "path": path,
@@ -801,6 +870,15 @@ def get_posts():
 
     posts.sort(key=lambda p: p["date"], reverse=True)
     return posts
+
+
+def get_through_the_lens_posts():
+    return [post for post in get_posts() if post["is_through_lens"]]
+
+
+def get_posts_by_slug(slugs):
+    wanted = set(slugs)
+    return {post["slug"]: post for post in get_posts() if post["slug"] in wanted}
 
 
 def get_post(slug):
@@ -1020,6 +1098,120 @@ def book():
 def blogs():
     posts = get_posts()
     return render_public_template("blogs.html", "blogs", title="Blogs", posts=posts)
+
+
+@app.route("/a-coruna/things-to-do")
+def a_coruna_things_to_do():
+    featured_posts = get_posts_by_slug(
+        [
+            "a-coruna-through-the-lens-tower-of-hercules",
+            "a-coruna-through-the-lens-paseo-maritimo",
+            "a-coruna-through-the-lens-maria-pita",
+            "a-coruna-through-the-lens-ciudad-vieja",
+            "a-coruna-through-the-lens-riazor",
+            "a-coruna-through-the-lens-orzan",
+            "a-coruna-through-the-lens-monte-de-san-pedro",
+            "a-coruna-through-the-lens-after-dark",
+            "a-coruna-through-the-lens-before-the-city-wakes",
+            "a-coruna-through-the-lens-plaza-de-lugo-market-streets",
+            "a-rainy-day-in-a-coruna-through-the-lens",
+        ]
+    )
+    meta = {
+        "canonical_url": absolute_url("/a-coruna/things-to-do"),
+        "og_type": "website",
+    }
+    schemas = [
+        get_webpage_schema(
+            PAGE_META["a_coruna_things_to_do"]["title"],
+            PAGE_META["a_coruna_things_to_do"]["description"],
+            "/a-coruna/things-to-do",
+        ),
+        get_breadcrumb_schema(
+            [
+                {"name": "Home", "url": "/"},
+                {"name": "Things to Do in A Coruña", "url": "/a-coruna/things-to-do"},
+            ]
+        ),
+    ]
+    return render_public_template(
+        "a_coruna_things_to_do.html",
+        "a_coruna_things_to_do",
+        title="Things to Do in A Coruña",
+        posts_by_slug=featured_posts,
+        meta=meta,
+        structured_data=schemas,
+    )
+
+
+@app.route("/a-coruna/literary-walking-tour")
+def a_coruna_literary_walking_tour():
+    route_posts = get_posts_by_slug(
+        [
+            "a-coruna-through-the-lens-maria-pita",
+            "a-coruna-through-the-lens-ciudad-vieja",
+            "a-coruna-through-the-lens-marina-glass-galleries",
+            "a-coruna-through-the-lens-orzan",
+            "a-coruna-through-the-lens-riazor",
+            "a-coruna-through-the-lens-paseo-maritimo",
+            "a-coruna-through-the-lens-tower-of-hercules",
+        ]
+    )
+    meta = {
+        "canonical_url": absolute_url("/a-coruna/literary-walking-tour"),
+        "og_type": "website",
+    }
+    schemas = [
+        get_webpage_schema(
+            PAGE_META["a_coruna_literary_walking_tour"]["title"],
+            PAGE_META["a_coruna_literary_walking_tour"]["description"],
+            "/a-coruna/literary-walking-tour",
+        ),
+        get_breadcrumb_schema(
+            [
+                {"name": "Home", "url": "/"},
+                {"name": "A Coruña Literary Walking Tour", "url": "/a-coruna/literary-walking-tour"},
+            ]
+        ),
+    ]
+    return render_public_template(
+        "a_coruna_literary_walking_tour.html",
+        "a_coruna_literary_walking_tour",
+        title="A Coruña Literary Walking Tour",
+        posts_by_slug=route_posts,
+        meta=meta,
+        structured_data=schemas,
+    )
+
+
+@app.route("/a-coruna/through-the-lens")
+def a_coruna_through_the_lens():
+    posts = get_through_the_lens_posts()
+    meta = {
+        "canonical_url": absolute_url("/a-coruna/through-the-lens"),
+        "og_type": "website",
+    }
+    schemas = [
+        get_webpage_schema(
+            PAGE_META["a_coruna_through_the_lens"]["title"],
+            PAGE_META["a_coruna_through_the_lens"]["description"],
+            "/a-coruna/through-the-lens",
+        ),
+        get_breadcrumb_schema(
+            [
+                {"name": "Home", "url": "/"},
+                {"name": THROUGH_THE_LENS_SERIES, "url": "/a-coruna/through-the-lens"},
+            ]
+        ),
+    ]
+    return render_public_template(
+        "a_coruna_through_the_lens.html",
+        "a_coruna_through_the_lens",
+        title=THROUGH_THE_LENS_SERIES,
+        posts=posts,
+        meta=meta,
+        structured_data=schemas,
+    )
 
 
 @app.route("/blogs/<slug>")
@@ -1787,6 +1979,8 @@ def admin_blog_new():
         tags = request.form.get("tags", "").strip()
         body = request.form.get("body", "").strip()
         author = request.form.get("author", "JSM Cooperative").strip()
+        series = infer_blog_series(tags)
+        series_line = f"series: {series}\n" if series else ""
 
         if not title or not slug or not body:
             flash("Title, slug, and body are required.", "error")
@@ -1805,7 +1999,7 @@ author: {author}
 excerpt: {excerpt}
 cover: /static/images/jsm-placeholder.svg
 tags: {tags}
----
+{series_line}---
 
 {body}
 """
@@ -1832,6 +2026,8 @@ def admin_blog_edit(slug):
         tags = request.form.get("tags", "").strip()
         body = request.form.get("body", "").strip()
         author = request.form.get("author", "JSM Cooperative").strip()
+        series = infer_blog_series(tags, post.get("series", ""))
+        series_line = f"series: {series}\n" if series else ""
 
         content = f"""---
 title: {title}
@@ -1840,7 +2036,7 @@ author: {author}
 excerpt: {excerpt}
 cover: {post['cover']}
 tags: {tags}
----
+{series_line}---
 
 {body}
 """

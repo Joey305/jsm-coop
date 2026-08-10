@@ -5,6 +5,7 @@ author: JSM Cooperative
 excerpt: "See A Coruña after dark as a city of partial information, softened edges, reflected light, and questions that daylight does not fully answer."
 cover: /static/images/jsm-placeholder.svg
 tags: A Coruña, Galicia, A Coruña Through the Lens, City Life, A Coruña After Dark, Storytelling
+series: A Coruña Through the Lens
 ---
 
 After dark, A Coruña becomes less certain. The city does not disappear. It edits itself. Edges soften, reflections lengthen, shopfronts become brighter, windows become small theaters, and the sea begins to sound larger than it looks.
