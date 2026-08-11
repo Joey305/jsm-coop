@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from datetime import timedelta
 from pathlib import Path
 from collections import Counter
+from contextlib import contextmanager
 from functools import wraps
 from urllib.parse import urlencode, quote, urlsplit, urlunsplit, parse_qsl
 from urllib.request import Request, urlopen
@@ -99,6 +100,10 @@ app.config["ANALYTICS_REMOTE_BASE_URL"] = os.getenv("ANALYTICS_REMOTE_BASE_URL",
 app.config["ANALYTICS_REMOTE_API_TOKEN"] = os.getenv("ANALYTICS_REMOTE_API_TOKEN", "")
 app.config["ANALYTICS_REMOTE_TIMEOUT_SECONDS"] = os.getenv("ANALYTICS_REMOTE_TIMEOUT_SECONDS", "10")
 app.config["ADMIN_VISITS_DB_PATH"] = Path(os.getenv("ADMIN_VISITS_DB_PATH", BASE_DIR / "data" / "admin_dashboard_visits.sqlite3"))
+app.config["GOOGLE_ADS_REPORT_CACHE_SECONDS"] = int(os.getenv("GOOGLE_ADS_REPORT_CACHE_SECONDS", "900") or 900)
+app.config["SEARCH_CONSOLE_REPORT_CACHE_SECONDS"] = int(os.getenv("SEARCH_CONSOLE_REPORT_CACHE_SECONDS", "900") or 900)
+app.config["GOOGLE_SEARCH_CONSOLE_SITE_URL"] = os.getenv("GOOGLE_SEARCH_CONSOLE_SITE_URL", "").strip()
+app.config["GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON"] = os.getenv("GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON", "").strip()
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.getenv("SESSION_COOKIE_SECURE", "0").lower() in {"1", "true", "yes"}
@@ -1051,12 +1056,63 @@ def admin_visits_connection(config):
         """
     )
     connection.execute("CREATE INDEX IF NOT EXISTS idx_admin_dashboard_visits_user_time ON admin_dashboard_visits (admin_username, visited_at)")
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS analytics_annotations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            category TEXT NOT NULL DEFAULT 'Other',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            admin_username TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_analytics_annotations_date ON analytics_annotations (date)")
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS site_audit_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ran_at TEXT NOT NULL,
+            status TEXT NOT NULL,
+            summary_json TEXT NOT NULL DEFAULT '{}',
+            results_json TEXT NOT NULL DEFAULT '{}',
+            admin_username TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_site_audit_runs_time ON site_audit_runs (ran_at)")
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS external_report_cache (
+            cache_key TEXT PRIMARY KEY,
+            provider TEXT NOT NULL,
+            status TEXT NOT NULL,
+            last_attempted_at TEXT NOT NULL,
+            last_successful_at TEXT,
+            error_message TEXT NOT NULL DEFAULT '',
+            payload_json TEXT NOT NULL DEFAULT '{}'
+        )
+        """
+    )
     return connection
+
+
+@contextmanager
+def admin_db(config):
+    connection = admin_visits_connection(config)
+    try:
+        yield connection
+        connection.commit()
+    finally:
+        connection.close()
 
 
 def previous_admin_dashboard_visit(config, admin_username):
     try:
-        with admin_visits_connection(config) as connection:
+        with admin_db(config) as connection:
             row = connection.execute(
                 "SELECT visited_at FROM admin_dashboard_visits WHERE admin_username = ? ORDER BY visited_at DESC LIMIT 1",
                 (admin_username,),
@@ -1068,7 +1124,7 @@ def previous_admin_dashboard_visit(config, admin_username):
 
 def record_admin_dashboard_visit(config, admin_username):
     try:
-        with admin_visits_connection(config) as connection:
+        with admin_db(config) as connection:
             connection.execute(
                 "INSERT INTO admin_dashboard_visits (admin_username, visited_at) VALUES (?, ?)",
                 (admin_username, analytics.utc_now_iso()),
@@ -1076,6 +1132,566 @@ def record_admin_dashboard_visit(config, admin_username):
     except sqlite3.Error:
         return False
     return True
+
+
+ANNOTATION_CATEGORIES = {"Content", "Google Ads", "SEO", "Website", "Book", "Campaign", "Other"}
+
+
+def safe_annotation_category(value):
+    value = (value or "Other").strip()
+    return value if value in ANNOTATION_CATEGORIES else "Other"
+
+
+def list_annotations(config, start=None, end=None, limit=25):
+    clauses = []
+    params = []
+    if start:
+        clauses.append("date >= ?")
+        params.append(start.date().isoformat() if isinstance(start, datetime) else str(start))
+    if end:
+        clauses.append("date < ?")
+        params.append(end.date().isoformat() if isinstance(end, datetime) else str(end))
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    try:
+        with admin_db(config) as connection:
+            rows = connection.execute(
+                f"SELECT * FROM analytics_annotations {where} ORDER BY date DESC, id DESC LIMIT ?",
+                [*params, int(limit or 25)],
+            ).fetchall()
+        return [dict(row) for row in rows]
+    except sqlite3.Error:
+        return []
+
+
+def create_annotation(config, form, admin_username):
+    title = (form.get("title") or "").strip()[:120]
+    date_value = analytics.parse_date(form.get("date"), datetime.now(timezone.utc).date()).isoformat()
+    description = (form.get("description") or "").strip()[:1000]
+    category = safe_annotation_category(form.get("category"))
+    if not title:
+        raise ValueError("Annotation title is required.")
+    now = analytics.utc_now_iso()
+    with admin_db(config) as connection:
+        connection.execute(
+            """
+            INSERT INTO analytics_annotations (date, title, description, category, created_at, updated_at, admin_username)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (date_value, title, description, category, now, now, admin_username),
+        )
+
+
+def update_annotation(config, annotation_id, form):
+    title = (form.get("title") or "").strip()[:120]
+    date_value = analytics.parse_date(form.get("date"), datetime.now(timezone.utc).date()).isoformat()
+    description = (form.get("description") or "").strip()[:1000]
+    category = safe_annotation_category(form.get("category"))
+    if not title:
+        raise ValueError("Annotation title is required.")
+    with admin_db(config) as connection:
+        connection.execute(
+            """
+            UPDATE analytics_annotations
+            SET date = ?, title = ?, description = ?, category = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (date_value, title, description, category, analytics.utc_now_iso(), int(annotation_id)),
+        )
+
+
+def delete_annotation(config, annotation_id):
+    with admin_db(config) as connection:
+        connection.execute("DELETE FROM analytics_annotations WHERE id = ?", (int(annotation_id),))
+
+
+def cache_age_label(iso_value):
+    parsed = analytics.parse_datetime(iso_value)
+    if not parsed:
+        return ""
+    seconds = max(0, int((datetime.now(timezone.utc) - parsed).total_seconds()))
+    if seconds < 90:
+        return "less than 2 minutes ago"
+    if seconds < 3600:
+        return f"{seconds // 60} minutes ago"
+    if seconds < 86400:
+        return f"{seconds // 3600} hours ago"
+    return f"{seconds // 86400} days ago"
+
+
+def read_external_cache(config, cache_key):
+    try:
+        with admin_db(config) as connection:
+            row = connection.execute("SELECT * FROM external_report_cache WHERE cache_key = ?", (cache_key,)).fetchone()
+        if not row:
+            return None
+        payload = json.loads(row["payload_json"] or "{}")
+        return {**dict(row), "payload": payload}
+    except (sqlite3.Error, json.JSONDecodeError):
+        return None
+
+
+def write_external_cache(config, cache_key, provider, status, payload=None, error_message="", successful=False):
+    existing = read_external_cache(config, cache_key) or {}
+    now = analytics.utc_now_iso()
+    last_successful = now if successful else existing.get("last_successful_at")
+    with admin_db(config) as connection:
+        connection.execute(
+            """
+            INSERT INTO external_report_cache (
+                cache_key, provider, status, last_attempted_at, last_successful_at, error_message, payload_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(cache_key) DO UPDATE SET
+                provider = excluded.provider,
+                status = excluded.status,
+                last_attempted_at = excluded.last_attempted_at,
+                last_successful_at = excluded.last_successful_at,
+                error_message = excluded.error_message,
+                payload_json = excluded.payload_json
+            """,
+            (
+                cache_key,
+                provider,
+                status,
+                now,
+                last_successful,
+                (error_message or "")[:500],
+                json.dumps(payload or {}, sort_keys=True),
+            ),
+        )
+
+
+def cache_is_fresh(cache_row, seconds):
+    attempted = analytics.parse_datetime((cache_row or {}).get("last_attempted_at"))
+    if not attempted:
+        return False
+    return (datetime.now(timezone.utc) - attempted).total_seconds() < int(seconds or 0)
+
+
+def google_ads_connection_status(config):
+    required = {
+        "developer_token": os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN", "").strip(),
+        "client_id": os.getenv("GOOGLE_ADS_CLIENT_ID", "").strip(),
+        "client_secret": os.getenv("GOOGLE_ADS_CLIENT_SECRET", "").strip(),
+        "refresh_token": os.getenv("GOOGLE_ADS_REFRESH_TOKEN", "").strip(),
+        "customer_id": config.get("GOOGLE_ADS_CUSTOMER_ID", ""),
+    }
+    missing = [key for key, value in required.items() if not value]
+    if not missing:
+        return "Connected"
+    if missing == ["developer_token"]:
+        return "Developer Token Pending"
+    return "Configuration Missing"
+
+
+def error_status_from_exception(error):
+    text = str(error).lower()
+    if "permission" in text or "access" in text or "authorization" in text:
+        return "Insufficient Permissions"
+    if "auth" in text or "credential" in text or "token" in text:
+        return "Authentication Error"
+    return "API Unavailable"
+
+
+def fetch_google_ads_report(config, start, end):
+    cache_key = f"google_ads:{start.date().isoformat()}:{(end - timedelta(days=1)).date().isoformat()}"
+    cached = read_external_cache(config, cache_key)
+    if cached and cache_is_fresh(cached, config.get("GOOGLE_ADS_REPORT_CACHE_SECONDS", 900)):
+        return cached["payload"]
+    base = {
+        "status": google_ads_connection_status(config),
+        "rows": [],
+        "topline": {},
+        "last_attempted_at": analytics.utc_now_iso(),
+        "last_successful_at": (cached or {}).get("last_successful_at", ""),
+        "cache_note": "",
+    }
+    if base["status"] != "Connected":
+        write_external_cache(config, cache_key, "google_ads", base["status"], base, successful=False)
+        return base
+    try:
+        client = load_google_ads_client_from_env()
+        service = client.get_service("GoogleAdsService")
+        query = f"""
+            SELECT
+              campaign.id,
+              campaign.name,
+              campaign.status,
+              metrics.impressions,
+              metrics.clicks,
+              metrics.ctr,
+              metrics.average_cpc,
+              metrics.cost_micros,
+              metrics.conversions,
+              metrics.conversions_value
+            FROM campaign
+            WHERE segments.date BETWEEN '{start.date().isoformat()}' AND '{(end - timedelta(days=1)).date().isoformat()}'
+            ORDER BY metrics.cost_micros DESC
+            LIMIT 50
+        """
+        rows = []
+        totals = Counter()
+        for batch in service.search_stream(customer_id=config["GOOGLE_ADS_CUSTOMER_ID"], query=query):
+            for item in batch.results:
+                metrics = item.metrics
+                cost = float(metrics.cost_micros or 0) / 1_000_000
+                clicks = int(metrics.clicks or 0)
+                impressions = int(metrics.impressions or 0)
+                rows.append(
+                    {
+                        "campaign": item.campaign.name,
+                        "status": str(item.campaign.status).replace("CampaignStatus.", "").title(),
+                        "impressions": impressions,
+                        "clicks": clicks,
+                        "ctr": analytics.percent_label(analytics.numeric_rate(clicks, impressions)),
+                        "spend": cost,
+                        "spend_label": analytics.money(cost),
+                        "average_cpc": analytics.money(cost / clicks) if clicks else "-",
+                        "google_ads_conversions": float(metrics.conversions or 0),
+                        "google_ads_conversion_value": analytics.money(float(metrics.conversions_value or 0)),
+                    }
+                )
+                totals["impressions"] += impressions
+                totals["clicks"] += clicks
+                totals["spend"] += cost
+                totals["conversions"] += float(metrics.conversions or 0)
+        payload = {
+            **base,
+            "status": "Connected",
+            "rows": rows,
+            "topline": {
+                "impressions": totals["impressions"],
+                "clicks": totals["clicks"],
+                "spend": analytics.money(totals["spend"]),
+                "conversions": totals["conversions"],
+            },
+            "last_successful_at": analytics.utc_now_iso(),
+        }
+        write_external_cache(config, cache_key, "google_ads", "Connected", payload, successful=True)
+        return payload
+    except Exception as error:
+        fallback = (cached or {}).get("payload") or base
+        fallback = {**fallback, "status": error_status_from_exception(error), "error": str(error)[:240], "last_attempted_at": analytics.utc_now_iso()}
+        if cached and cached.get("last_successful_at"):
+            fallback["cache_note"] = f"Using cached data from {cache_age_label(cached['last_successful_at'])}."
+        write_external_cache(config, cache_key, "google_ads", fallback["status"], fallback, error_message=str(error), successful=False)
+        return fallback
+
+
+def fetch_search_console_report(config, start, end):
+    cache_key = f"search_console:{start.date().isoformat()}:{(end - timedelta(days=1)).date().isoformat()}"
+    cached = read_external_cache(config, cache_key)
+    if cached and cache_is_fresh(cached, config.get("SEARCH_CONSOLE_REPORT_CACHE_SECONDS", 900)):
+        return cached["payload"]
+    base = {
+        "status": "Connected" if config.get("GOOGLE_SEARCH_CONSOLE_SITE_URL") and config.get("GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON") else "Configuration Missing",
+        "site_url": config.get("GOOGLE_SEARCH_CONSOLE_SITE_URL", ""),
+        "topline": {},
+        "queries": [],
+        "pages": [],
+        "opportunities": [],
+        "last_attempted_at": analytics.utc_now_iso(),
+        "last_successful_at": (cached or {}).get("last_successful_at", ""),
+        "cache_note": "",
+    }
+    if base["status"] != "Connected":
+        write_external_cache(config, cache_key, "search_console", base["status"], base, successful=False)
+        return base
+    try:
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+
+        raw_credentials = config["GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON"]
+        credentials_payload = json.loads(raw_credentials) if raw_credentials.startswith("{") else json.loads(Path(raw_credentials).read_text(encoding="utf-8"))
+        credentials = service_account.Credentials.from_service_account_info(
+            credentials_payload,
+            scopes=["https://www.googleapis.com/auth/webmasters.readonly"],
+        )
+        service = build("searchconsole", "v1", credentials=credentials, cache_discovery=False)
+
+        def query(dimensions):
+            body = {
+                "startDate": start.date().isoformat(),
+                "endDate": (end - timedelta(days=1)).date().isoformat(),
+                "dimensions": dimensions,
+                "rowLimit": 50,
+            }
+            return service.searchanalytics().query(siteUrl=config["GOOGLE_SEARCH_CONSOLE_SITE_URL"], body=body).execute().get("rows", [])
+
+        query_rows = query(["query"])
+        page_rows = query(["page"])
+        topline = Counter()
+        queries = []
+        for row in query_rows:
+            clicks = int(row.get("clicks") or 0)
+            impressions = int(row.get("impressions") or 0)
+            topline["clicks"] += clicks
+            topline["impressions"] += impressions
+            queries.append(
+                {
+                    "query": (row.get("keys") or [""])[0],
+                    "clicks": clicks,
+                    "impressions": impressions,
+                    "ctr": analytics.percent_label(row.get("ctr")),
+                    "position": f"{float(row.get('position') or 0):.1f}",
+                    "segment": classify_search_topic((row.get("keys") or [""])[0]),
+                }
+            )
+        pages = [
+            {
+                "page": (row.get("keys") or [""])[0].replace(config["SITE_DOMAIN"].rstrip("/"), "") or "/",
+                "clicks": int(row.get("clicks") or 0),
+                "impressions": int(row.get("impressions") or 0),
+                "ctr": analytics.percent_label(row.get("ctr")),
+                "position": f"{float(row.get('position') or 0):.1f}",
+            }
+            for row in page_rows
+        ]
+        payload = {
+            **base,
+            "status": "Connected",
+            "topline": {
+                "clicks": topline["clicks"],
+                "impressions": topline["impressions"],
+                "ctr": analytics.percent_label(analytics.numeric_rate(topline["clicks"], topline["impressions"])),
+            },
+            "queries": queries,
+            "pages": pages,
+            "last_successful_at": analytics.utc_now_iso(),
+        }
+        payload["opportunities"] = search_console_opportunities(payload)
+        write_external_cache(config, cache_key, "search_console", "Connected", payload, successful=True)
+        return payload
+    except Exception as error:
+        fallback = (cached or {}).get("payload") or base
+        fallback = {**fallback, "status": error_status_from_exception(error), "error": str(error)[:240], "last_attempted_at": analytics.utc_now_iso()}
+        if cached and cached.get("last_successful_at"):
+            fallback["cache_note"] = f"Using cached data from {cache_age_label(cached['last_successful_at'])}."
+        write_external_cache(config, cache_key, "search_console", fallback["status"], fallback, error_message=str(error), successful=False)
+        return fallback
+
+
+def classify_search_topic(text):
+    text = (text or "").lower()
+    if "coruña" in text or "coruna" in text or "galicia" in text:
+        return "A Coruña"
+    if "book" in text or "novel" in text or "ball cap" in text or "ballcap" in text:
+        return "Book"
+    if "through the lens" in text or "lens" in text:
+        return "Through the Lens"
+    return "Other"
+
+
+def search_console_opportunities(report):
+    opportunities = []
+    for row in report.get("queries", []):
+        impressions = int(row.get("impressions") or 0)
+        try:
+            position = float(row.get("position") or 0)
+        except ValueError:
+            position = 0
+        ctr_text = str(row.get("ctr") or "0").replace("%", "")
+        try:
+            ctr = float(ctr_text) / 100
+        except ValueError:
+            ctr = 0
+        if impressions >= 100 and position <= 15 and ctr < 0.02:
+            opportunities.append({"type": "High impressions / low CTR", "item": row["query"], "metric": f"{impressions} impressions · {row['ctr']} CTR · position {row['position']}", "recommendation": "Review title and search-result messaging."})
+        elif impressions >= 50 and 8 <= position <= 20:
+            opportunities.append({"type": "Near-page-one opportunity", "item": row["query"], "metric": f"Position {row['position']} · {impressions} impressions", "recommendation": "Strengthen internal linking and content depth."})
+    return opportunities[:10]
+
+
+def editorial_health_for_post(post, page_metrics=None):
+    body = post.get("body") or ""
+    checks = []
+
+    def add(label, ok, weight=8, recommendation=""):
+        checks.append({"label": label, "ok": bool(ok), "weight": weight, "recommendation": recommendation})
+
+    add("Title", post.get("title") and post["title"] != post["slug"].replace("-", " ").title(), 10, "Add a specific editorial title.")
+    add("Meta description / excerpt", len(post.get("excerpt") or "") >= 80, 10, "Write an excerpt of at least 80 characters.")
+    add("Author", bool(post.get("author")), 6, "Add an author.")
+    add("Publication date", bool(post.get("date") and post.get("date") != "Undated"), 8, "Add a publication date.")
+    add("Tags", bool(post.get("tags")), 8, "Add useful tags.")
+    add("Featured image", bool(post.get("cover") and "placeholder" not in post.get("cover", "")), 8, "Choose a primary visual.")
+    add("Useful image alt text", not re.search(r"!\[\s*\]\(", body), 6, "Add alt text to inline Markdown images.")
+    add("Internal links", bool(re.search(r"\]\(/(?!static/)", body) or re.search(r'href="/(?!static/)', body)), 10, "Add at least one internal journey link.")
+    add("Book CTA", any(token in body for token in ("campaign_cta:signed", "campaign_cta:preview", "/book", "/book/signed")), 8, "Add a contextual book bridge where appropriate.")
+    add("Newsletter CTA", "/newsletter" in body or "newsletter" in body.lower(), 6, "Consider a newsletter bridge for editorial readers.")
+    add("Word count", len(re.findall(r"\w+", body)) >= 450, 8, "Expand thin articles when the topic warrants it.")
+    add("Heading hierarchy", bool(re.search(r"^##\s+", body, re.MULTILINE)), 6, "Use section headings for scanability.")
+    if post.get("is_through_lens"):
+        add("A Coruña series metadata", post.get("series") == THROUGH_THE_LENS_SERIES, 8, "Keep A Coruña series metadata explicit.")
+        add("Evergreen guide link", "/a-coruna/" in body, 8, "Link the article into the A Coruña guide or tour ecosystem.")
+
+    earned = sum(check["weight"] for check in checks if check["ok"])
+    possible = sum(check["weight"] for check in checks)
+    score = round((earned / possible) * 100) if possible else 0
+    status = "Strong" if score >= 85 else "Watch" if score >= 65 else "Needs Work"
+    warnings = [check for check in checks if not check["ok"]]
+    metrics = page_metrics or {}
+    return {
+        "score": score,
+        "status": status,
+        "checks": checks,
+        "warnings": warnings,
+        "traffic": metrics.get("views", 0),
+        "engagement": metrics.get("engagement_rate_label", "No baseline"),
+        "book_impact": metrics.get("book_actions", 0),
+        "recommendations": [item["recommendation"] for item in warnings if item.get("recommendation")][:4],
+    }
+
+
+def editorial_health_summary(posts, summary):
+    page_metrics = {row["page"]: row for row in summary.get("top_content", [])}
+    rows = []
+    for post in posts:
+        health = editorial_health_for_post(post, page_metrics.get(f"/blogs/{post['slug']}", {}))
+        rows.append({"post": post, **health})
+    strong = sum(1 for row in rows if row["status"] == "Strong")
+    warnings = sum(1 for row in rows if row["status"] == "Watch")
+    needs_work = sum(1 for row in rows if row["status"] == "Needs Work")
+    return {"rows": rows, "strong": strong, "warnings": warnings, "needs_work": needs_work}
+
+
+def content_opportunity_matrix(summary):
+    rows = []
+    content = [row for row in summary.get("top_content", []) if row.get("views")]
+    if not content:
+        return rows
+    views_midpoint = max(5, sorted([row["views"] for row in content])[len(content) // 2])
+    action_midpoint = max(1, sorted([row["meaningful_actions"] for row in content])[len(content) // 2])
+    for row in content:
+        high_traffic = row["views"] >= views_midpoint
+        high_action = row["meaningful_actions"] >= action_midpoint and row["sessions"] >= 3
+        if high_traffic and high_action:
+            label = "Winner"
+        elif high_traffic:
+            label = "Conversion Opportunity"
+        elif high_action:
+            label = "Distribution Opportunity"
+        else:
+            label = "Needs Review"
+        rows.append({**row, "matrix_label": label})
+    return rows[:20]
+
+
+def a_coruna_editorial_intelligence(summary, search_console):
+    lens = summary.get("through_lens_content", [])
+    searches = [row for row in search_console.get("queries", []) if row.get("segment") == "A Coruña"]
+    return {
+        "most_searched_article": max(searches, key=lambda row: row.get("clicks", 0), default={}),
+        "most_visited_article": max(lens, key=lambda row: row.get("views", 0), default={}),
+        "most_engaged_article": max(lens, key=lambda row: row.get("engaged_sessions", 0), default={}),
+        "best_book_driver": max(lens, key=lambda row: row.get("book_actions", 0), default={}),
+        "content_gap_queries": [row for row in searches if int(row.get("impressions") or 0) >= 50 and int(row.get("clicks") or 0) == 0][:5],
+    }
+
+
+def internal_links_from_text(text):
+    links = set(re.findall(r'href=["\'](/[^"\']+)["\']', text or ""))
+    links.update(re.findall(r"\]\((/[^)]+)\)", text or ""))
+    return {link.split("#", 1)[0].split("?", 1)[0] for link in links if not link.startswith("//")}
+
+
+def static_refs_from_text(text):
+    refs = set(re.findall(r'(?:src|href)=["\'](/static/[^"\']+)["\']', text or ""))
+    refs.update(re.findall(r"!\[[^\]]*\]\((/static/[^)]+)\)", text or ""))
+    return {ref.split("#", 1)[0].split("?", 1)[0] for ref in refs}
+
+
+def route_status(client, path):
+    try:
+        response = client.get(path)
+        return response.status_code
+    except Exception:
+        return 0
+
+
+def run_site_audit(config, admin_username="admin"):
+    known_routes = [
+        "/", "/book", "/book/signed", "/blogs", "/a-coruna/things-to-do",
+        "/a-coruna/literary-walking-tour", "/a-coruna/through-the-lens", "/newsletter",
+        "/novel-subscription", "/donate", "/sitemap.xml", "/robots.txt", "/api/health",
+    ]
+    posts = get_posts()
+    known_routes.extend(f"/blogs/{post['slug']}" for post in posts)
+    route_rows = []
+    broken_routes = []
+    broken_links = []
+    missing_media = []
+    metadata_warnings = []
+    publishing_warnings = []
+    with app.test_client() as client:
+        for path in known_routes:
+            status = route_status(client, path)
+            route_rows.append({"path": path, "status": status, "ok": 200 <= status < 400})
+            if status >= 400 or status == 0:
+                broken_routes.append({"path": path, "status": status})
+        for post in posts:
+            source = post.get("body") or ""
+            for link in internal_links_from_text(source):
+                if link.startswith("/static/"):
+                    continue
+                status = route_status(client, link)
+                if status >= 400 or status == 0:
+                    broken_links.append({"source": f"/blogs/{post['slug']}", "target": link, "status": status})
+            for ref in static_refs_from_text(source) | {post.get("cover", "")}:
+                if not ref or ref.startswith("http"):
+                    continue
+                local = BASE_DIR / "static" / ref.removeprefix("/static/")
+                if ref.startswith("/static/") and not local.exists():
+                    missing_media.append({"source": f"/blogs/{post['slug']}", "target": ref})
+            health = editorial_health_for_post(post)
+            if health["status"] != "Strong":
+                metadata_warnings.append({"page": f"/blogs/{post['slug']}", "status": health["status"], "score": health["score"]})
+            parsed_date = analytics.parse_datetime(post.get("date"))
+            if not post.get("date") or post.get("date") == "Undated":
+                publishing_warnings.append({"page": f"/blogs/{post['slug']}", "warning": "Missing publication date"})
+            elif parsed_date and parsed_date.date() > datetime.now(timezone.utc).date():
+                publishing_warnings.append({"page": f"/blogs/{post['slug']}", "warning": "Future-dated post"})
+    summary = {
+        "routes": "Healthy" if not broken_routes else f"{len(broken_routes)} warnings",
+        "links": "Healthy" if not broken_links else f"{len(broken_links)} broken",
+        "media": "Healthy" if not missing_media else f"{len(missing_media)} missing",
+        "publishing": "Healthy" if not publishing_warnings else f"{len(publishing_warnings)} warnings",
+        "content": "Healthy" if not metadata_warnings else f"{len(metadata_warnings)} warnings",
+    }
+    results = {
+        "routes": route_rows,
+        "broken_routes": broken_routes,
+        "broken_links": broken_links[:50],
+        "missing_media": missing_media[:50],
+        "metadata_warnings": metadata_warnings[:50],
+        "publishing_warnings": publishing_warnings[:50],
+    }
+    status = "Healthy" if not any([broken_routes, broken_links, missing_media, publishing_warnings]) else "Warnings"
+    ran_at = analytics.utc_now_iso()
+    with admin_db(config) as connection:
+        connection.execute(
+            "INSERT INTO site_audit_runs (ran_at, status, summary_json, results_json, admin_username) VALUES (?, ?, ?, ?, ?)",
+            (ran_at, status, json.dumps(summary, sort_keys=True), json.dumps(results, sort_keys=True), admin_username),
+        )
+    return {"ran_at": ran_at, "status": status, "summary": summary, "results": results}
+
+
+def latest_site_audit(config):
+    try:
+        with admin_db(config) as connection:
+            row = connection.execute("SELECT * FROM site_audit_runs ORDER BY ran_at DESC, id DESC LIMIT 1").fetchone()
+        if not row:
+            return {"ran": False, "ran_at": "", "status": "Not Run", "summary": {}, "results": {}}
+        return {
+            "ran": True,
+            "ran_at": row["ran_at"],
+            "status": row["status"],
+            "summary": json.loads(row["summary_json"] or "{}"),
+            "results": json.loads(row["results_json"] or "{}"),
+            "age_label": cache_age_label(row["ran_at"]),
+        }
+    except (sqlite3.Error, json.JSONDecodeError):
+        return {"ran": False, "ran_at": "", "status": "Unavailable", "summary": {}, "results": {}}
 
 
 def short_date_label(value):
@@ -1581,21 +2197,185 @@ def live_activity_feed(events):
 
 
 def external_reporting_status(config):
-    google_ads_configured = bool(os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN") and config.get("GOOGLE_ADS_CUSTOMER_ID"))
-    search_console_configured = bool(os.getenv("GOOGLE_SEARCH_CONSOLE_SITE_URL") and os.getenv("GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON"))
+    google_ads_configured = google_ads_connection_status(config) == "Connected"
+    search_console_configured = bool(config.get("GOOGLE_SEARCH_CONSOLE_SITE_URL") and config.get("GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON"))
     return {
         "google_ads": {
             "live": False,
-            "status": "Google Ads campaign reporting not connected",
-            "detail": "Offline upload health is active. Read-only campaign reporting needs a cached reporting integration before it should run on admin page loads.",
+            "status": "Connected" if google_ads_configured else google_ads_connection_status(config),
+            "detail": "Read-only campaign reporting uses a short cache and will not block /admin. Offline upload health remains separate.",
             "configured": google_ads_configured,
         },
         "search_console": {
             "live": False,
-            "status": "Search Console reporting not connected",
-            "detail": "No Search Console-specific property and credential configuration was found in the repo environment.",
+            "status": "Connected" if search_console_configured else "Configuration Missing",
+            "detail": "Connect Search Console with GOOGLE_SEARCH_CONSOLE_SITE_URL and GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON to unlock query and impression data.",
             "configured": search_console_configured,
         },
+    }
+
+
+def safe_cost_label(cost, denominator):
+    if not denominator:
+        return "-"
+    return analytics.money(float(cost or 0) / max(float(denominator or 0), 1))
+
+
+def roas_label(revenue, spend):
+    spend = float(spend or 0)
+    if spend <= 0:
+        return "-"
+    return f"{float(revenue or 0) / spend:.2f}x"
+
+
+def google_ads_campaign_rows(report, summary, verified):
+    first_party = {row.get("label"): row for row in summary.get("campaign_performance", [])}
+    rows = []
+    for row in report.get("rows", []):
+        campaign = row.get("campaign")
+        jsm = first_party.get(campaign, {})
+        spend = float(row.get("spend") or 0)
+        purchases = int(jsm.get("verified_purchases") or 0)
+        revenue = verified.get("revenue", 0) if purchases else 0
+        rows.append(
+            {
+                **row,
+                "jsm_sessions": jsm.get("sessions", 0),
+                "engaged_sessions": "-",
+                "book_actions": jsm.get("book_actions", 0),
+                "checkout_starts": jsm.get("checkout_starts", 0),
+                "verified_purchases": purchases,
+                "verified_revenue": analytics.money(revenue) if revenue else "$0.00",
+                "newsletter_signups": jsm.get("newsletter_signups", 0),
+                "cost_per_jsm_session": safe_cost_label(spend, jsm.get("sessions", 0)),
+                "cost_per_book_action": safe_cost_label(spend, jsm.get("book_actions", 0)),
+                "cost_per_checkout": safe_cost_label(spend, jsm.get("checkout_starts", 0)),
+                "cost_per_verified_purchase": safe_cost_label(spend, purchases),
+                "roas": roas_label(revenue, spend),
+                "attribution_confidence": "UTM / click-id match" if jsm else "Google Ads only",
+            }
+        )
+    return rows
+
+
+def google_ads_discrepancy(report, verified):
+    conversions = sum(float(row.get("google_ads_conversions") or 0) for row in report.get("rows", []))
+    return {
+        "google_ads_conversions": f"{conversions:g}",
+        "jsm_verified_purchases": verified.get("count", 0),
+        "explanation": "These are separate systems and may differ due to attribution windows, cross-device behavior, upload timing, and conversion definitions.",
+    }
+
+
+def today_pulse(config, store, coverage):
+    today = datetime.now(timezone.utc).date()
+    start = datetime.combine(today, datetime.min.time(), timezone.utc)
+    end = start + timedelta(days=1)
+    yesterday_start = start - timedelta(days=1)
+    try:
+        today_summary = store.query_summary(start, end, {"environment": analytics.analytics_environment(config)})
+        yesterday_summary = store.query_summary(yesterday_start, start, {"environment": analytics.analytics_environment(config)})
+        recent = store.query_events(start - timedelta(hours=24), end, {"environment": analytics.analytics_environment(config)}, page=1, page_size=30)
+    except Exception:
+        today_summary = analytics.build_empty_summary()
+        yesterday_summary = analytics.build_empty_summary()
+        recent = {"events": []}
+    verified = verified_purchase_summary(config, start, end)
+    totals = today_summary["totals"]
+    yesterday_totals = yesterday_summary["totals"]
+    metrics = [
+        {"label": "Visitors Today", "value": totals.get("anonymous_sessions", 0)},
+        {"label": "Page Views Today", "value": totals.get("page_views", 0)},
+        {"label": "Engaged Readers Today", "value": totals.get("engaged_sessions", 0)},
+        {"label": "Meaningful Actions Today", "value": totals.get("meaningful_actions", 0)},
+        {"label": "Book Actions Today", "value": totals.get("book_actions", 0)},
+        {"label": "Checkout Starts Today", "value": totals.get("direct_checkout_starts", 0)},
+        {"label": "Verified Purchases Today", "value": verified["count"]},
+        {"label": "Verified Revenue Today", "value": verified["revenue_label"]},
+        {"label": "Newsletter Signups Today", "value": totals.get("newsletter_signups", 0)},
+    ]
+    if coverage.get("tracking_days", 0) < 2:
+        comparison = {"available": False, "label": "Yesterday comparison unavailable", "items": []}
+    else:
+        keys = [
+            ("Sessions", "anonymous_sessions"),
+            ("Engaged Sessions", "engaged_sessions"),
+            ("Book Actions", "book_actions"),
+            ("Checkout Starts", "direct_checkout_starts"),
+        ]
+        comparison = {
+            "available": True,
+            "label": "Today vs Yesterday",
+            "items": [
+                {"label": label, "today": totals.get(key, 0), "yesterday": yesterday_totals.get(key, 0), "change": analytics.compare_counts(totals.get(key, 0), yesterday_totals.get(key, 0))["label"]}
+                for label, key in keys
+            ],
+        }
+    return {"metrics": metrics, "comparison": comparison, "live_activity": live_activity_feed(recent.get("events", []))}
+
+
+def verified_purchase_breakdown(records):
+    buckets = {
+        "Google CPC": {"count": 0, "revenue": 0.0},
+        "Google Organic": {"count": 0, "revenue": 0.0},
+        "Direct": {"count": 0, "revenue": 0.0},
+        "Social": {"count": 0, "revenue": 0.0},
+        "Email": {"count": 0, "revenue": 0.0},
+        "Referral": {"count": 0, "revenue": 0.0},
+        "Unattributed": {"count": 0, "revenue": 0.0},
+    }
+    for record in records:
+        event = {
+            "source": record.get("utm_source", ""),
+            "medium": record.get("utm_medium", ""),
+            "referrer_domain": record.get("referrer_domain", ""),
+            "gclid": record.get("gclid", ""),
+            "gbraid": record.get("gbraid", ""),
+            "wbraid": record.get("wbraid", ""),
+        }
+        source = analytics.classify_source(event)
+        if source in {"Instagram", "Facebook", "TikTok"}:
+            source = "Social"
+        elif source == "Newsletter / Email":
+            source = "Email"
+        elif source not in buckets:
+            source = "Referral" if source == "Referral" else "Unattributed"
+        try:
+            revenue = float(record.get("value") or 0)
+        except (TypeError, ValueError):
+            revenue = 0
+        buckets[source]["count"] += 1
+        buckets[source]["revenue"] += revenue
+    total = sum(row["count"] for row in buckets.values())
+    return [
+        {"source": source, "count": row["count"], "revenue": analytics.money(row["revenue"]), "share": analytics.percent_label(analytics.numeric_rate(row["count"], total))}
+        for source, row in buckets.items()
+        if row["count"] or source == "Unattributed"
+    ]
+
+
+def newsletter_quality(summary):
+    source_rows = {row.get("label"): row.get("count", 0) for row in summary.get("newsletter_sources", [])}
+    totals = summary["totals"]
+    a_coruna_signups = sum(row.get("newsletter_signups", 0) for row in summary.get("top_content", []) if row.get("purpose") == "A Coruña")
+    return {
+        "top_signup_pages": summary.get("newsletter_pages", []),
+        "top_signup_sources": summary.get("newsletter_sources", []),
+        "organic_signup_rate": analytics.percent_label(analytics.numeric_rate(source_rows.get("Google Organic", 0), totals.get("newsletter_signups", 0))),
+        "paid_signup_rate": analytics.percent_label(analytics.numeric_rate(source_rows.get("Google CPC", 0), totals.get("newsletter_signups", 0))),
+        "a_coruna_signup_contribution": analytics.percent_label(analytics.numeric_rate(a_coruna_signups, totals.get("newsletter_signups", 0))),
+    }
+
+
+def camino_quality(summary):
+    source = (summary.get("camino_sources") or [{}])[0]
+    top_page = max([row for row in summary.get("top_content", []) if row.get("page") == "/novel-subscription" or row.get("purpose") == "A Coruña"], key=lambda row: row.get("camino_actions", row.get("views", 0)), default={})
+    return {
+        "top_acquisition_source": source.get("label", "No data"),
+        "top_source_page": top_page.get("title", "No data"),
+        "mobile_vs_desktop_completion": "Device-specific Camino completion data needs more events.",
+        "a_coruna_transitions": summary["totals"].get("book_clicks_from_coruna", 0),
+        "book_transitions": summary["totals"].get("camino_clicks", 0),
     }
 
 
@@ -1633,7 +2413,7 @@ def dashboard_since_last_visit(config, store, previous_visit):
     return {"has_previous": True, "previous_visit": previous_visit, "items": items, "observations": observations[:2]}
 
 
-def dashboard_health_scores(config, storage, verified, google_uploads):
+def dashboard_health_scores(config, storage, verified, google_uploads, google_ads_report=None, search_console_report=None, site_audit=None):
     paypal = paypal_webhook_health(config)
     tracking_status = "Configured"
     tracking_tone = "good"
@@ -1651,12 +2431,13 @@ def dashboard_health_scores(config, storage, verified, google_uploads):
         {"label": "First-Party Event Tracking", "status": tracking_status, "value": f"{storage.get('event_count', 0)} events", "tone": tracking_tone, "help": "Browser events post to the local analytics endpoint."},
         {"label": "PayPal Webhook", "status": "Configured" if paypal["configured"] else "Needs Attention", "value": paypal["last_event"] or "No recent events", "tone": "good" if paypal["configured"] else "watch", "help": "Webhook verifies signed-copy purchases."},
         {"label": "Verified Purchase Tracking", "status": "Active" if verified["count"] else "No Recent Data", "value": f"{verified['count']} purchases", "tone": "good" if verified["count"] else "low", "help": "Only completed PayPal webhook records."},
-        {"label": "Google Ads API", "status": "Configured" if os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN") and config.get("GOOGLE_ADS_CUSTOMER_ID") else "Not Configured", "value": "Read panel optional", "tone": "good" if os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN") and config.get("GOOGLE_ADS_CUSTOMER_ID") else "low", "help": "Credential presence only; no secrets shown."},
+        {"label": "Google Ads API", "status": (google_ads_report or {}).get("status") or google_ads_connection_status(config), "value": (google_ads_report or {}).get("cache_note") or "Cached read reporting", "tone": "good" if (google_ads_report or {}).get("status") == "Connected" else "watch", "help": "Read-only reporting status; no secrets shown."},
         {"label": "Google Ads Uploads", "status": "Needs Attention" if google_uploads["has_failures"] else "Operational", "value": f"{sum(row['count'] for row in google_uploads['rows'][1:])} recent records", "tone": "watch" if google_uploads["has_failures"] else "good", "help": "Offline conversion upload attempts."},
+        {"label": "Search Console", "status": (search_console_report or {}).get("status") or "Configuration Missing", "value": (search_console_report or {}).get("cache_note") or "SEO read reporting", "tone": "good" if (search_console_report or {}).get("status") == "Connected" else "watch", "help": "Query and page visibility reporting."},
         {"label": "Mailchimp", "status": "Configured" if config.get("MAILCHIMP_ACTION_URL") else "Not Configured", "value": "Forward form only", "tone": "good" if config.get("MAILCHIMP_ACTION_URL") else "low", "help": "No subscriber list is shown without API access."},
         {"label": "GA Measurement", "status": "Configured" if config.get("GA_MEASUREMENT_ID") else "Ads tag only", "value": "No secrets exposed", "tone": "good" if config.get("GA_MEASUREMENT_ID") else "watch", "help": "Public Google tag remains separate from first-party analytics."},
         {"label": "Blog Storage", "status": "Healthy" if BLOG_DIR.exists() else "Needs Attention", "value": f"{len(get_posts())} Markdown posts", "tone": "good" if BLOG_DIR.exists() else "watch", "help": "Markdown files remain the source of truth."},
-        {"label": "Public Site Health", "status": "Healthy", "value": "Routes render via Flask", "tone": "good", "help": "Basic app health is available at /api/health."},
+        {"label": "Public Site Health", "status": (site_audit or {}).get("status") or "Not Run", "value": f"Last audit {(site_audit or {}).get('age_label', 'not run')}", "tone": "good" if (site_audit or {}).get("status") == "Healthy" else "watch", "help": "Bounded route, link, media, metadata, and publishing checks."},
     ]
 
 
@@ -1673,6 +2454,12 @@ def dashboard_report_links(args):
         "acquisition": url_for("admin_analytics_named_export", kind="acquisition", **clean),
         "engagement_content": url_for("admin_analytics_named_export", kind="engagement_content", **clean),
         "google_ads_uploads": url_for("admin_analytics_named_export", kind="google_ads_uploads", **clean),
+        "google_ads_campaigns": url_for("admin_analytics_named_export", kind="google_ads_campaigns", **clean),
+        "search_console_queries": url_for("admin_analytics_named_export", kind="search_console_queries", **clean),
+        "search_console_pages": url_for("admin_analytics_named_export", kind="search_console_pages", **clean),
+        "editorial_health": url_for("admin_analytics_named_export", kind="editorial_health", **clean),
+        "site_audit": url_for("admin_analytics_named_export", kind="site_audit", **clean),
+        "annotations": url_for("admin_analytics_named_export", kind="annotations", **clean),
         "purchases": url_for("admin_analytics_named_export", kind="purchases", **clean),
         "opportunities": url_for("admin_analytics_named_export", kind="opportunities", **clean),
         "events": url_for("admin_analytics_export", **clean),
@@ -1762,6 +2549,31 @@ def dashboard_csv_export(kind, dashboard):
         writer.writerow(["Time", "Conversion Type", "Status", "Click ID Type", "Order / Checkout", "Value", "Reason"])
         for row in dashboard.get("google_upload_detail_rows", []):
             writer.writerow([row.get("time"), row.get("conversion_type"), row.get("status"), row.get("click_id_type"), row.get("order"), row.get("value"), row.get("reason")])
+    elif kind == "google_ads_campaigns":
+        writer.writerow(["Campaign", "Status", "Impressions", "Clicks", "CTR", "Spend", "Average CPC", "Google Ads Conversions", "JSM Sessions", "Book Actions", "Checkout Starts", "Verified Purchases", "Verified Revenue", "Cost / JSM Session", "Cost / Book Action", "Cost / Checkout", "Cost / Verified Purchase", "ROAS", "Attribution Confidence"])
+        for row in dashboard.get("google_ads_campaign_rows", []):
+            writer.writerow([row.get("campaign"), row.get("status"), row.get("impressions"), row.get("clicks"), row.get("ctr"), row.get("spend_label"), row.get("average_cpc"), row.get("google_ads_conversions"), row.get("jsm_sessions"), row.get("book_actions"), row.get("checkout_starts"), row.get("verified_purchases"), row.get("verified_revenue"), row.get("cost_per_jsm_session"), row.get("cost_per_book_action"), row.get("cost_per_checkout"), row.get("cost_per_verified_purchase"), row.get("roas"), row.get("attribution_confidence")])
+    elif kind == "search_console_queries":
+        writer.writerow(["Query", "Segment", "Clicks", "Impressions", "CTR", "Average Position"])
+        for row in dashboard.get("search_console", {}).get("queries", []):
+            writer.writerow([row.get("query"), row.get("segment"), row.get("clicks"), row.get("impressions"), row.get("ctr"), row.get("position")])
+    elif kind == "search_console_pages":
+        writer.writerow(["Page", "Clicks", "Impressions", "CTR", "Average Position"])
+        for row in dashboard.get("search_console_pages", []):
+            writer.writerow([row.get("page"), row.get("clicks"), row.get("impressions"), row.get("ctr"), row.get("position")])
+    elif kind == "editorial_health":
+        writer.writerow(["Slug", "Title", "Score", "Status", "Traffic", "Engagement", "Book Impact", "Recommendations"])
+        for row in dashboard.get("editorial_health", {}).get("rows", []):
+            post = row.get("post", {})
+            writer.writerow([post.get("slug"), post.get("title"), row.get("score"), row.get("status"), row.get("traffic"), row.get("engagement"), row.get("book_impact"), "; ".join(row.get("recommendations", []))])
+    elif kind == "site_audit":
+        writer.writerow(["Section", "Status"])
+        for key, value in dashboard.get("site_audit", {}).get("summary", {}).items():
+            writer.writerow([key, value])
+    elif kind == "annotations":
+        writer.writerow(["Date", "Category", "Title", "Description", "Created By"])
+        for row in dashboard.get("annotations", []):
+            writer.writerow([row.get("date"), row.get("category"), row.get("title"), row.get("description"), row.get("admin_username")])
     elif kind == "purchases":
         writer.writerow(["Order ID", "Checkout ID", "Event ID", "Value", "Currency", "Attributed", "Click ID type"])
         for row in dashboard["verified_purchases"].get("records", []):
@@ -1790,12 +2602,49 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
         storage = {**storage, "ok": False, "error": str(error)}
     verified = verified_purchase_summary(config, start, end)
     google_uploads = google_ads_upload_summary(config, start, end)
+    google_ads_report = fetch_google_ads_report(config, start, end)
+    search_console = fetch_search_console_report(config, start, end)
+    google_campaign_rows = google_ads_campaign_rows(google_ads_report, summary, verified)
+    site_audit = latest_site_audit(config)
+    posts = get_posts()
+    editorial_health = editorial_health_summary(posts, summary)
+    annotations = list_annotations(config, start, end, limit=30)
+    recent_annotations = list_annotations(config, limit=6)
     totals = summary["totals"]
     coverage = dashboard_analytics_coverage(storage, start, end)
     opportunities = dashboard_opportunities(summary, verified, google_uploads)
     what_matters = dashboard_what_matters(summary, verified, opportunities, google_uploads, coverage)
     growth_goals = dashboard_growth_goals(config, summary, verified)
-    health_scores = dashboard_health_scores(config, storage, verified, google_uploads)
+    health_scores = dashboard_health_scores(config, storage, verified, google_uploads, google_ads_report, search_console, site_audit)
+    today = today_pulse(config, store, coverage)
+    search_page_metrics = {row["page"]: row for row in summary.get("top_content", [])}
+    search_console_pages = []
+    for row in search_console.get("pages", []):
+        page = row.get("page") or "/"
+        metrics = search_page_metrics.get(page) or search_page_metrics.get(page.replace(config["SITE_DOMAIN"].rstrip("/"), ""))
+        search_console_pages.append(
+            {
+                **row,
+                "jsm_sessions": (metrics or {}).get("sessions", 0),
+                "engagement_rate": (metrics or {}).get("engagement_rate_label", "No baseline"),
+                "book_actions": (metrics or {}).get("book_actions", 0),
+            }
+        )
+    content_matrix = content_opportunity_matrix(summary)
+    coruna_editorial = a_coruna_editorial_intelligence(summary, search_console)
+    purchase_breakdown = verified_purchase_breakdown(verified.get("records", []))
+    newsletter = newsletter_quality(summary)
+    camino = camino_quality(summary)
+    total_google_spend = sum(float(row.get("spend") or 0) for row in google_ads_report.get("rows", []))
+    book_economics = {
+        "available": total_google_spend > 0,
+        "verified_revenue": verified["revenue_label"],
+        "ad_spend": analytics.money(total_google_spend),
+        "verified_direct_roas": roas_label(verified.get("revenue", 0), total_google_spend),
+        "cost_per_checkout": safe_cost_label(total_google_spend, totals.get("direct_checkout_starts", 0)),
+        "cost_per_verified_purchase": safe_cost_label(total_google_spend, verified.get("count", 0)),
+    }
+    google_cpc_sessions = next((row.get("count", 0) for row in summary.get("traffic_sources", []) if row.get("label") == "Google CPC"), 0)
     insights = [
         f"This period reached {totals.get('anonymous_sessions', 0)} anonymous sessions and {totals.get('page_views', 0)} public page views.",
         f"Book interest produced {totals.get('book_actions', 0)} book actions and {totals.get('direct_checkout_starts', 0)} signed-copy checkout starts.",
@@ -1830,15 +2679,33 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
         "filters": filters,
         "summary": summary,
         "verified_purchases": verified,
+        "verified_purchase_breakdown": purchase_breakdown,
         "google_uploads": google_uploads,
+        "google_ads_report": google_ads_report,
+        "google_ads_campaign_rows": google_campaign_rows,
+        "google_ads_discrepancy": google_ads_discrepancy(google_ads_report, verified),
+        "google_cpc_sessions": google_cpc_sessions,
         "stats": stats,
         "insights": insights,
+        "today": today,
         "jsm_pulse": dashboard_pulse(summary, verified),
         "what_matters": what_matters,
         "conversion_rates": dashboard_conversion_rates(summary, verified),
         "book_pulse": dashboard_book_pulse(summary, verified),
+        "book_economics": book_economics,
         "data_quality": dashboard_data_quality(summary, storage, verified, coverage),
         "external_reporting": external_reporting_status(config),
+        "search_console": search_console,
+        "search_console_pages": search_console_pages,
+        "editorial_health": editorial_health,
+        "content_matrix": content_matrix,
+        "a_coruna_editorial": coruna_editorial,
+        "site_audit": site_audit,
+        "annotations": annotations,
+        "recent_annotations": recent_annotations,
+        "annotation_categories": sorted(ANNOTATION_CATEGORIES),
+        "newsletter_quality": newsletter,
+        "camino_quality": camino,
         "google_upload_detail_rows": google_ads_upload_detail_rows(google_uploads),
         "growth_scorecards": [
             growth_scorecard("Audience Growth", totals.get("anonymous_sessions", 0), summary["previous"].get("anonymous_sessions", 0), "Anonymous sessions in this period.", "Share the strongest page through the best current source.", coverage["comparison_available"], coverage["comparison_label"]),
@@ -3303,6 +4170,19 @@ def admin_content_index():
             post["updated"] = datetime.fromtimestamp(post["path"].stat().st_mtime).date().isoformat()
         except OSError:
             post["updated"] = ""
+    try:
+        start, end, _range_name = analytics.date_range_from_args(request.args)
+        content_summary = analytics.analytics_store(app.config).query_summary(
+            start,
+            end,
+            {"environment": analytics.analytics_environment(app.config)},
+        )
+    except Exception:
+        content_summary = analytics.build_empty_summary()
+    metrics_by_page = {row["page"]: row for row in content_summary.get("top_content", [])}
+    for post in posts:
+        health = editorial_health_for_post(post, metrics_by_page.get(f"/blogs/{post['slug']}", {}))
+        post["health"] = health
     all_posts = get_posts()
     return render_template(
         "admin/content.html",
@@ -3323,6 +4203,77 @@ def admin_content_revisions(slug):
     return render_template("admin/revisions.html", title="Revisions", post=post, revisions=blog_revisions(slug))
 
 
+@app.route("/admin/content/<slug>/seo-health")
+@login_required
+def admin_content_seo_health(slug):
+    post = get_post(slug)
+    if not post:
+        abort(404)
+    start, end, range_name = analytics.date_range_from_args(request.args)
+    filters = {"page_path": f"/blogs/{slug}", "environment": analytics.analytics_environment(app.config)}
+    try:
+        summary = analytics.analytics_store(app.config).query_summary(start, end, filters)
+        page_metrics = (summary.get("top_content") or [{}])[0]
+    except Exception:
+        summary = analytics.build_empty_summary()
+        page_metrics = {}
+    health = editorial_health_for_post(post, page_metrics)
+    return render_template(
+        "admin/content_health.html",
+        title="SEO Health",
+        post=post,
+        health=health,
+        summary=summary,
+        range_name=range_name,
+        start=start.date().isoformat(),
+        end=(end - timedelta(days=1)).date().isoformat(),
+    )
+
+
+@app.route("/admin/annotations", methods=["POST"])
+@login_required
+def admin_annotation_create():
+    validate_admin_csrf()
+    admin_user = os.getenv("ADMIN_USERNAME", "admin")
+    try:
+        create_annotation(app.config, request.form, admin_user)
+        flash("Annotation added.", "success")
+    except ValueError as error:
+        flash(str(error), "error")
+    return redirect(request.referrer or url_for("admin_analytics"))
+
+
+@app.route("/admin/annotations/<int:annotation_id>/edit", methods=["POST"])
+@login_required
+def admin_annotation_edit(annotation_id):
+    validate_admin_csrf()
+    try:
+        update_annotation(app.config, annotation_id, request.form)
+        flash("Annotation updated.", "success")
+    except ValueError as error:
+        flash(str(error), "error")
+    return redirect(request.referrer or url_for("admin_analytics"))
+
+
+@app.route("/admin/annotations/<int:annotation_id>/delete", methods=["POST"])
+@login_required
+def admin_annotation_delete(annotation_id):
+    validate_admin_csrf()
+    delete_annotation(app.config, annotation_id)
+    flash("Annotation deleted.", "info")
+    return redirect(request.referrer or url_for("admin_analytics"))
+
+
+@app.route("/admin/site-audit/run", methods=["POST"])
+@login_required
+def admin_site_audit_run():
+    validate_admin_csrf()
+    admin_user = os.getenv("ADMIN_USERNAME", "admin")
+    run_site_audit(app.config, admin_user)
+    flash("Site audit completed.", "success")
+    return redirect(url_for("admin_analytics") + "#sitehealth")
+
+
 @app.route("/admin/campaign-note", methods=["POST"])
 @login_required
 def admin_campaign_note():
@@ -3333,6 +4284,47 @@ def admin_campaign_note():
 
 @app.errorhandler(404)
 def not_found(error):
+    if not request.path.startswith("/admin") and not request.path.startswith("/api"):
+        try:
+            analytics.analytics_store(app.config).store_event(
+                {
+                    "event_id": f"404:{uuid.uuid4().hex}",
+                    "schema_version": 1,
+                    "event_name": "page_not_found",
+                    "event_category": "diagnostic",
+                    "occurred_at": analytics.utc_now_iso(),
+                    "client_occurred_at": "",
+                    "page_path": analytics.normalize_path(request.path),
+                    "page_title": "Page Not Found",
+                    "landing_page": analytics.normalize_path(request.path),
+                    "content_id": "",
+                    "content_type": "",
+                    "article_slug": "",
+                    "series": "",
+                    "element_id": "",
+                    "element_label": "404",
+                    "element_type": "server",
+                    "element_position": "error_handler",
+                    "destination_url": "",
+                    "destination_domain": "",
+                    "referrer_url": request.referrer or "",
+                    "referrer_domain": analytics.domain_for(request.referrer),
+                    "source": "",
+                    "medium": "",
+                    "campaign": "",
+                    "term": "",
+                    "campaign_content": "",
+                    "gclid": "",
+                    "gbraid": "",
+                    "wbraid": "",
+                    "anonymous_session_id": "",
+                    "device_category": "",
+                    "environment": analytics.analytics_environment(app.config),
+                    "metadata": {"status": "404"},
+                }
+            )
+        except Exception:
+            pass
     return render_template("404.html", title="Page Not Found"), 404
 
 

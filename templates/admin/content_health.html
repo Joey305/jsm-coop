@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}SEO Health · {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard" aria-labelledby="content-health-heading">
+  <div class="admin-dashboard__header">
+    <div>
+      <p class="eyebrow">Editorial Health</p>
+      <h1 id="content-health-heading">{{ post.title }}</h1>
+      <p class="admin-muted">Internal completeness and optimization check. This is not a Google ranking score.</p>
+    </div>
+    <div class="admin-action-row">
+      <a href="{{ url_for('admin_content_index') }}">Content Studio</a>
+      <a href="{{ url_for('admin_blog_edit', slug=post.slug) }}">Edit</a>
+      <a href="{{ url_for('blog_detail', slug=post.slug) }}" target="_blank" rel="noopener">View</a>
+      <a href="{{ url_for('admin_analytics_page_report', page_path='/blogs/' ~ post.slug, range=range_name, start=start, end=end) }}">Analytics</a>
+    </div>
+  </div>
+
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header">
+      <h2>Editorial Health</h2>
+      <span>{{ health.score }}/100 · {{ health.status }}</span>
+    </div>
+    <div class="admin-mini-grid">
+      <article><span>Traffic</span><strong>{{ health.traffic }}</strong></article>
+      <article><span>Engagement</span><strong>{{ health.engagement }}</strong></article>
+      <article><span>Book Impact</span><strong>{{ health.book_impact }}</strong></article>
+      <article><span>Warnings</span><strong>{{ health.warnings|length }}</strong></article>
+    </div>
+  </section>
+
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header"><h2>Checks</h2><span>Actionable editorial checklist</span></div>
+    <div class="admin-health-check-list">
+      {% for check in health.checks %}
+        <article class="admin-health-check admin-health-check--{{ 'good' if check.ok else 'watch' }}">
+          <strong>{{ "Pass" if check.ok else "Review" }} · {{ check.label }}</strong>
+          {% if not check.ok and check.recommendation %}<p>{{ check.recommendation }}</p>{% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

@@ -260,7 +260,31 @@ Conversion rates are session-aware where possible:
 
 Acquisition -> Outcome attributes each session from its first usable landing UTM, Google click identifier, referrer, or page-view source context, then attributes downstream actions in that session to the same source. Unknown event names are stored as `unknown_event` diagnostics with the original event name in metadata.
 
-`Since Your Last Visit` uses a small admin SQLite visit table containing only admin username and timestamps. It calculates recent activity before recording the current visit. Google Ads offline upload health is shown from the local upload log. Read-only Google Ads campaign reporting and Search Console reporting are not called on every admin page render; they require a cached reporting integration before going live.
+`Since Your Last Visit` uses a small admin SQLite visit table containing only admin username and timestamps. It calculates recent activity before recording the current visit. Google Ads offline upload health is shown from the local upload log.
+
+Command Center V3 adds operating-focused sections without replacing the existing analytics system:
+
+- `Today at JSM` is calculated from the current UTC day and remains independent from the selected 30/90-day reporting range.
+- `Live Activity` shows recent meaningful actions only; routine page views remain in Event Explorer.
+- Timeline annotations are stored in the admin SQLite database and can be added, edited, or deleted by authenticated admins with CSRF protection.
+- `Site Audit` is an authenticated, on-demand check. It inspects bounded public routes, local Markdown/internal links, local static media references, editorial metadata, and publication warnings. It does not crawl external websites on normal admin page loads.
+- `Editorial Health` is an internal completeness score for Markdown content. It is not a Google ranking score and does not automatically edit or publish content.
+- Public 404s can be recorded as sanitized first-party `page_not_found` events with path and referrer domain context only.
+
+Google Ads read reporting is separate from offline conversion upload:
+
+- `GOOGLE_ADS_REPORT_CACHE_SECONDS`: optional cache TTL for read-only campaign reports. Defaults to `900`.
+- Google Ads reporting uses `GOOGLE_ADS_CUSTOMER_ID`, optional `GOOGLE_ADS_LOGIN_CUSTOMER_ID`, `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, and `GOOGLE_ADS_REFRESH_TOKEN`.
+- Connection states are shown as Connected, Authentication Error, Developer Token Pending, Insufficient Permissions, Configuration Missing, or API Unavailable.
+- Campaign economics use Google Ads spend and JSM first-party outcomes where campaign attribution is defensible. ROAS uses verified direct book revenue only.
+- Google Ads reported conversions and JSM verified purchases are shown as separate systems because attribution windows, conversion definitions, upload timing, and cross-device behavior can differ.
+
+Search Console reporting is optional and cached:
+
+- `GOOGLE_SEARCH_CONSOLE_SITE_URL`: Search Console property URL.
+- `GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON`: either a service-account JSON string or a path to a JSON file with Search Console read access.
+- `SEARCH_CONSOLE_REPORT_CACHE_SECONDS`: optional cache TTL. Defaults to `900`.
+- When Search Console is not connected, the Search & SEO tab still shows editorial health, metadata health, internal-link health, and setup status.
 
 ---
 

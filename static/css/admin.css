@@ -117,6 +117,7 @@ body:has(.admin-shell) {
 .admin-report-actions a,
 .admin-report-actions button,
 .admin-filter-form button,
+.admin-change-list button,
 .admin-table-actions a,
 .admin-table-actions button,
 .admin-form button,
@@ -250,6 +251,11 @@ body:has(.admin-shell) {
   grid-template-columns: repeat(5, minmax(9rem, 1fr));
 }
 
+.admin-filter-form--annotation {
+  grid-template-columns: minmax(9rem, 0.7fr) minmax(9rem, 0.75fr) minmax(14rem, 1fr) minmax(16rem, 1.2fr) auto;
+  margin-top: 1rem;
+}
+
 .admin-form {
   padding: 1.25rem;
 }
@@ -318,6 +324,10 @@ body:has(.admin-shell) {
 .admin-mini-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 1rem;
+}
+
+.admin-mini-grid--compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .admin-scorecard-grid,
@@ -652,14 +662,20 @@ body:has(.admin-shell) {
 }
 
 .admin-winner-list,
-.admin-live-feed {
+.admin-live-feed,
+.admin-change-list,
+.admin-comparison-list,
+.admin-health-check-list {
   display: grid;
   gap: 0.7rem;
   margin-top: 1rem;
 }
 
 .admin-winner-list article,
-.admin-live-feed article {
+.admin-live-feed article,
+.admin-change-list article,
+.admin-comparison-list article,
+.admin-health-check {
   display: grid;
   gap: 0.35rem;
   padding: 0.82rem;
@@ -668,17 +684,77 @@ body:has(.admin-shell) {
   border-radius: 8px;
 }
 
+.admin-change-list article {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.admin-change-list form {
+  margin: 0;
+}
+
+.admin-change-list button {
+  min-height: 2.2rem;
+  padding: 0.45rem 0.7rem;
+}
+
+.admin-change-actions,
+.admin-inline-form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-inline-form {
+  min-width: min(22rem, 80vw);
+  margin-top: 0.5rem;
+}
+
+.admin-inline-form input,
+.admin-inline-form select,
+.admin-inline-form textarea {
+  width: 100%;
+  min-height: 2.3rem;
+  padding: 0.55rem 0.65rem;
+  color: var(--admin-text);
+  background: rgba(2, 6, 23, 0.62);
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.admin-inline-form textarea {
+  min-height: 5rem;
+}
+
+.admin-comparison-list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-health-check--good {
+  border-color: rgba(34, 197, 94, 0.24);
+}
+
+.admin-health-check--watch {
+  border-color: rgba(250, 204, 21, 0.25);
+}
+
 .admin-winner-list a {
   color: var(--admin-mint);
   font-weight: 900;
 }
 
 .admin-winner-list strong,
-.admin-live-feed strong {
+.admin-live-feed strong,
+.admin-change-list strong,
+.admin-comparison-list strong,
+.admin-health-check strong {
   color: #ffffff;
 }
 
-.admin-live-feed p {
+.admin-live-feed p,
+.admin-change-list p,
+.admin-comparison-list small,
+.admin-health-check p {
   margin: 0;
   color: var(--admin-muted);
 }
@@ -909,7 +985,9 @@ body:has(.admin-shell) {
   .admin-filter-form,
   .admin-filter-form--dense,
   .admin-filter-form--campaign,
-  .admin-filter-form--content {
+  .admin-filter-form--content,
+  .admin-filter-form--annotation,
+  .admin-comparison-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -950,8 +1028,14 @@ body:has(.admin-shell) {
   .admin-filter-form--dense,
   .admin-filter-form--campaign,
   .admin-filter-form--content,
+  .admin-filter-form--annotation,
+  .admin-comparison-list,
   .admin-bar-row,
   .admin-donut-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-change-list article {
     grid-template-columns: 1fr;
   }
 

@@ -43,25 +43,27 @@
     <div class="admin-panel__header"><h2>Blog posts</h2><span>{{ posts|length }} shown</span></div>
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>Title</th><th>Series</th><th>Tags</th><th>Date</th><th>Author</th><th>Updated</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Title</th><th>Health</th><th>Traffic</th><th>Engagement</th><th>Book Impact</th><th>Series</th><th>Updated</th><th>Actions</th></tr></thead>
         <tbody>
           {% for post in posts %}
             <tr>
               <td><strong>{{ post.title }}</strong><br><small>{{ post.slug }}</small></td>
+              <td><strong>{{ post.health.score }}/100</strong><br><small>{{ post.health.status }}</small></td>
+              <td>{{ post.health.traffic }} views</td>
+              <td>{{ post.health.engagement }}</td>
+              <td>{{ post.health.book_impact }} book actions</td>
               <td>{{ post.series or "-" }}</td>
-              <td>{{ post.tags|join(", ") }}</td>
-              <td>{{ post.date }}</td>
-              <td>{{ post.author }}</td>
               <td>{{ post.updated or "-" }}</td>
               <td class="admin-table-actions">
                 <a href="{{ url_for('admin_blog_edit', slug=post.slug) }}">Edit</a>
                 <a href="{{ url_for('blog_detail', slug=post.slug) }}" target="_blank" rel="noopener">View</a>
                 <a href="{{ url_for('admin_analytics_page_report', page_path='/blogs/' ~ post.slug) }}">Analytics</a>
+                <a href="{{ url_for('admin_content_seo_health', slug=post.slug) }}">SEO Health</a>
                 <a href="{{ url_for('admin_content_revisions', slug=post.slug) }}">Revisions</a>
               </td>
             </tr>
           {% else %}
-            <tr><td colspan="7">No posts match these filters.</td></tr>
+            <tr><td colspan="8">No posts match these filters.</td></tr>
           {% endfor %}
         </tbody>
       </table>

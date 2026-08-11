@@ -5,6 +5,7 @@ import re
 import sqlite3
 import uuid
 from collections import Counter, defaultdict
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
@@ -44,6 +45,7 @@ VALID_EVENT_NAMES = {
     "newsletter_signup_attempt",
     "newsletter_signup",
     "newsletter_signup_error",
+    "page_not_found",
     "pillar_article_view",
     "pillar_to_book_click",
     "pillar_preview_click",
@@ -120,6 +122,7 @@ EVENT_CATEGORIES = {
     "scroll_75": "engagement",
     "scroll_90": "engagement",
     "unknown_event": "diagnostic",
+    "page_not_found": "diagnostic",
 }
 
 for _event in BOOK_ACTION_EVENTS:
@@ -197,8 +200,17 @@ class LocalAnalyticsStore:
         connection.execute("PRAGMA busy_timeout=3000")
         return connection
 
+    @contextmanager
+    def db(self):
+        connection = self.connect()
+        try:
+            yield connection
+            connection.commit()
+        finally:
+            connection.close()
+
     def _ensure_schema(self):
-        with self.connect() as connection:
+        with self.db() as connection:
             connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS analytics_events (
@@ -247,7 +259,7 @@ class LocalAnalyticsStore:
         row = {column: event.get(column, "") for column in EVENT_COLUMNS}
         row["metadata_json"] = json.dumps(event.get("metadata") or {}, sort_keys=True)
         row["created_at"] = event["occurred_at"]
-        with self.connect() as connection:
+        with self.db() as connection:
             try:
                 connection.execute(
                     """
@@ -303,7 +315,7 @@ class LocalAnalyticsStore:
         page_size = max(1, min(200, int(page_size or 50)))
         where, params = self._where(start, end, filters)
         offset = (page - 1) * page_size
-        with self.connect() as connection:
+        with self.db() as connection:
             total = connection.execute(f"SELECT COUNT(*) FROM analytics_events {where}", params).fetchone()[0]
             rows = connection.execute(
                 f"SELECT * FROM analytics_events {where} ORDER BY occurred_at DESC, id DESC LIMIT ? OFFSET ?",
@@ -340,7 +352,7 @@ class LocalAnalyticsStore:
 
     def health_check(self):
         try:
-            with self.connect() as connection:
+            with self.db() as connection:
                 row = connection.execute(
                     """
                     SELECT
@@ -469,6 +481,7 @@ class LocalAnalyticsStore:
             "newsletter_sources": group_counts(events, "source", event_name="newsletter_signup"),
             "camino_sources": group_counts([event for event in events if event["event_name"].startswith("camino_") or event.get("page_path") == "/novel-subscription"], "source"),
             "donation_sources": group_counts(events, "page_path", event_name="donation_click"),
+            "top_404s": group_counts(events, "page_path", event_name="page_not_found"),
             "a_coruna_pages": group_counts([event for event in events if event["event_name"] == "page_view" and is_a_coruna_path(event.get("page_path", ""))], "page_path"),
             "daily_trend": daily_trend(events, start, end),
             "events": events,
@@ -476,7 +489,7 @@ class LocalAnalyticsStore:
 
     def _events(self, start, end, filters=None, limit=25000):
         where, params = self._where(start, end, filters)
-        with self.connect() as connection:
+        with self.db() as connection:
             rows = connection.execute(
                 f"SELECT * FROM analytics_events {where} ORDER BY occurred_at ASC, id ASC LIMIT ?",
                 [*params, limit],
@@ -783,6 +796,12 @@ def build_empty_summary():
         "campaign_performance": [],
         "acquisition_outcomes": [],
         "content_winners": [],
+        "newsletter_pages": [],
+        "newsletter_sources": [],
+        "camino_sources": [],
+        "donation_sources": [],
+        "top_404s": [],
+        "a_coruna_pages": [],
         "data_quality": {
             "source_attribution_rate": "No baseline",
             "device_metadata_rate": "No baseline",

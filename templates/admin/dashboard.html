@@ -82,12 +82,99 @@
   </div>
 
   <nav class="admin-analytics-tabs" aria-label="Dashboard sections" data-admin-tabs>
-    {% for key, label in [("overview", "Overview"), ("traffic", "Traffic"), ("books", "Books & Sales"), ("acoruna", "A Coruña"), ("content", "Content"), ("newsletter", "Newsletter"), ("camino", "Camino"), ("donations", "Donations"), ("campaigns", "Campaigns"), ("opportunities", "Opportunities"), ("reports", "Reports")] %}
+    {% for key, label in [("overview", "Overview"), ("traffic", "Traffic"), ("searchseo", "Search & SEO"), ("books", "Books & Sales"), ("acoruna", "A Coruña"), ("content", "Content"), ("newsletter", "Newsletter"), ("camino", "Camino"), ("donations", "Donations"), ("campaigns", "Campaigns"), ("opportunities", "Opportunities"), ("sitehealth", "Site Health"), ("reports", "Reports")] %}
       <button class="admin-tab-button" type="button" data-admin-tab="{{ key }}" aria-controls="admin-tab-{{ key }}">{{ label }}</button>
     {% endfor %}
   </nav>
 
   <div class="admin-tab-panel" id="admin-tab-overview" data-admin-tab-panel="overview">
+    <div class="admin-dashboard__grid">
+      <section class="admin-panel">
+        <div class="admin-panel__header">
+          <h2>Today at JSM</h2>
+          <span>{{ dashboard.today.comparison.label }}</span>
+        </div>
+        <div class="admin-mini-grid admin-mini-grid--compact">
+          {% for item in dashboard.today.metrics %}
+            <article><span>{{ item.label }}</span><strong>{{ item.value }}</strong></article>
+          {% endfor %}
+        </div>
+        {% if dashboard.today.comparison.available %}
+          <div class="admin-comparison-list">
+            {% for item in dashboard.today.comparison["items"] %}
+              <article><span>{{ item.label }}</span><strong>{{ item.today }}</strong><small>Yesterday {{ item.yesterday }} · {{ item.change }}</small></article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="admin-empty">{{ dashboard.today.comparison.label }}</p>
+        {% endif %}
+      </section>
+
+      <section class="admin-panel">
+        <div class="admin-panel__header"><h2>Live Activity</h2><span>Meaningful actions only</span></div>
+        {% if dashboard.today.live_activity %}
+          <div class="admin-live-feed">
+            {% for item in dashboard.today.live_activity[:6] %}
+              <article><span>{{ item.time }}</span><strong>{{ item.label }}</strong><p>{{ item.detail }}</p></article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="admin-empty">Meaningful live activity will appear here. Routine page views stay in Event Explorer.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header">
+        <h2>Recent Changes</h2>
+        <span>Timeline annotations for future analytics changes</span>
+      </div>
+      <form class="admin-filter-form admin-filter-form--annotation" action="{{ url_for('admin_annotation_create') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ admin_csrf_token() }}">
+        <label>Date <input type="date" name="date" value="{{ dashboard.end }}"></label>
+        <label>Category
+          <select name="category">
+            {% for category in dashboard.annotation_categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Title <input name="title" maxlength="120" placeholder="What changed?"></label>
+        <label>Notes <input name="description" maxlength="1000" placeholder="Short operational context"></label>
+        <button type="submit">Add Annotation</button>
+      </form>
+      {% if dashboard.recent_annotations %}
+        <div class="admin-change-list">
+          {% for note in dashboard.recent_annotations %}
+            <article>
+              <div><span>{{ note.date }} · {{ note.category }}</span><strong>{{ note.title }}</strong>{% if note.description %}<p>{{ note.description }}</p>{% endif %}</div>
+              <div class="admin-change-actions">
+                <details>
+                  <summary>Edit</summary>
+                  <form class="admin-inline-form" action="{{ url_for('admin_annotation_edit', annotation_id=note.id) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ admin_csrf_token() }}">
+                    <label>Date <input type="date" name="date" value="{{ note.date }}"></label>
+                    <label>Category
+                      <select name="category">
+                        {% for category in dashboard.annotation_categories %}<option value="{{ category }}" {% if category == note.category %}selected{% endif %}>{{ category }}</option>{% endfor %}
+                      </select>
+                    </label>
+                    <label>Title <input name="title" value="{{ note.title }}"></label>
+                    <label>Notes <textarea name="description">{{ note.description }}</textarea></label>
+                    <button type="submit">Save</button>
+                  </form>
+                </details>
+                <form action="{{ url_for('admin_annotation_delete', annotation_id=note.id) }}" method="post">
+                  <input type="hidden" name="csrf_token" value="{{ admin_csrf_token() }}">
+                  <button type="submit">Delete</button>
+                </form>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="admin-empty">Add launches, content changes, SEO work, and campaign adjustments here.</p>
+      {% endif %}
+    </section>
+
     <section class="admin-panel admin-panel--wide">
       <div class="admin-panel__header">
         <h2>JSM Pulse</h2>
@@ -284,6 +371,32 @@
     {{ table_panel("CTA performance", ["CTA", "Page", "Position", "Impressions", "Clicks", "Click rate"], dashboard.summary.cta_performance, ["label", "page", "position", "impressions", "clicks", "click_rate_label"], "CTA performance will appear after tracked CTAs are visible or clicked.") }}
   </div>
 
+  <div class="admin-tab-panel" id="admin-tab-searchseo" data-admin-tab-panel="searchseo">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Search & SEO</h2><span>{{ dashboard.search_console.status }}</span></div>
+      <p class="admin-muted">{{ dashboard.external_reporting.search_console.detail }} {% if dashboard.search_console.cache_note %}{{ dashboard.search_console.cache_note }}{% endif %}</p>
+      <div class="admin-mini-grid">
+        <article><span>Organic Clicks</span><strong>{{ dashboard.search_console.topline.clicks or 0 }}</strong></article>
+        <article><span>Organic Impressions</span><strong>{{ dashboard.search_console.topline.impressions or 0 }}</strong></article>
+        <article><span>CTR</span><strong>{{ dashboard.search_console.topline.ctr or "No baseline" }}</strong></article>
+        <article><span>Average Position</span><strong>{{ dashboard.search_console.topline.position or "-" }}</strong></article>
+      </div>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>SEO setup status</h2><span>Useful even before API connection</span></div>
+      <div class="admin-health-score-grid">
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.search_console.status == 'Connected' else 'watch' }}"><span>Search Console</span><strong>{{ dashboard.search_console.status }}</strong><small>GOOGLE_SEARCH_CONSOLE_SITE_URL required</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.editorial_health.needs_work == 0 else 'watch' }}"><span>Editorial Health</span><strong>{{ dashboard.editorial_health.strong }} strong</strong><small>{{ dashboard.editorial_health.needs_work }} need work</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.site_audit.summary.links == 'Healthy' else 'watch' }}"><span>Internal Links</span><strong>{{ dashboard.site_audit.summary.links or 'Not Run' }}</strong><small>Use Site Health audit</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.site_audit.summary.content == 'Healthy' else 'watch' }}"><span>Metadata Health</span><strong>{{ dashboard.site_audit.summary.content or 'Not Run' }}</strong><small>Titles, excerpts, media</small></article>
+        <article class="admin-health-score admin-health-score--watch"><span>API Unlock</span><strong>Optional</strong><small>Connect Search Console to unlock query and impression data.</small></article>
+      </div>
+    </section>
+    {{ table_panel("Top Google queries", ["Query", "Segment", "Clicks", "Impressions", "CTR", "Average Position"], dashboard.search_console.queries, ["query", "segment", "clicks", "impressions", "ctr", "position"], "Search Console is not connected or has no query rows for this period.") }}
+    {{ table_panel("Top organic pages", ["Page", "Search Clicks", "Search Impressions", "CTR", "Average Position", "JSM Sessions", "Engagement Rate", "Book Actions"], dashboard.search_console_pages, ["page", "clicks", "impressions", "ctr", "position", "jsm_sessions", "engagement_rate", "book_actions"], "Search Console page data appears after the API is connected.") }}
+    {{ table_panel("SEO opportunities", ["Type", "Item", "Metric", "Recommendation"], dashboard.search_console.opportunities, ["type", "item", "metric", "recommendation"], "SEO opportunities need Search Console query data with sufficient sample sizes.") }}
+  </div>
+
   <div class="admin-tab-panel" id="admin-tab-books" data-admin-tab-panel="books">
     <section class="admin-panel admin-panel--wide">
       <div class="admin-panel__header"><h2>Book performance</h2><a href="{{ dashboard.report_links.book }}">Export book CSV</a></div>
@@ -319,6 +432,19 @@
         <article><span>Unattributed verified purchases</span><strong>{{ dashboard.verified_purchases.unattributed }}</strong></article>
       </div>
     </section>
+    {% if dashboard.book_economics.available %}
+      <section class="admin-panel admin-panel--wide">
+        <div class="admin-panel__header"><h2>Book economics</h2><span>Verified direct revenue only</span></div>
+        <div class="admin-mini-grid">
+          <article><span>Verified Revenue</span><strong>{{ dashboard.book_economics.verified_revenue }}</strong></article>
+          <article><span>Ad Spend</span><strong>{{ dashboard.book_economics.ad_spend }}</strong></article>
+          <article><span>Verified Direct ROAS</span><strong>{{ dashboard.book_economics.verified_direct_roas }}</strong></article>
+          <article><span>Cost / Checkout</span><strong>{{ dashboard.book_economics.cost_per_checkout }}</strong></article>
+          <article><span>Cost / Verified Purchase</span><strong>{{ dashboard.book_economics.cost_per_verified_purchase }}</strong></article>
+        </div>
+      </section>
+    {% endif %}
+    {{ table_panel("Attributed verified purchase breakdown", ["Source", "Purchases", "Verified Revenue", "Share"], dashboard.verified_purchase_breakdown, ["source", "count", "revenue", "share"], "Verified purchases will appear here after PayPal webhook records are available.") }}
   </div>
 
   <div class="admin-tab-panel" id="admin-tab-acoruna" data-admin-tab-panel="acoruna">
@@ -342,6 +468,16 @@
       </div>
     </section>
     <section class="admin-panel admin-panel--wide"><div class="admin-panel__header"><h2>Common A Coruña Journey</h2><span>{{ dashboard.funnels.a_coruna.finding }}</span></div>{{ funnel_chart(dashboard.funnels.a_coruna) }}</section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>A Coruña editorial intelligence</h2><span>Real-data winners only</span></div>
+      <div class="admin-mini-grid">
+        <article><span>Most Searched</span><strong>{{ dashboard.a_coruna_editorial.most_searched_article.query or "No data" }}</strong></article>
+        <article><span>Most Visited</span><strong>{{ dashboard.a_coruna_editorial.most_visited_article.title or "No data" }}</strong></article>
+        <article><span>Most Engaged</span><strong>{{ dashboard.a_coruna_editorial.most_engaged_article.title or "No data" }}</strong></article>
+        <article><span>Best Book Driver</span><strong>{{ dashboard.a_coruna_editorial.best_book_driver.title or "No data" }}</strong></article>
+      </div>
+    </section>
+    {{ table_panel("Content gap opportunities", ["Query", "Clicks", "Impressions", "CTR", "Average Position"], dashboard.a_coruna_editorial.content_gap_queries, ["query", "clicks", "impressions", "ctr", "position"], "Connect Search Console to identify A Coruña content gaps from real query data.") }}
     {{ table_panel("Through the Lens performance", ["Article", "Views", "Sessions", "Engagement Rate", "75% Readers", "Book Actions", "Meaningful Actions"], dashboard.summary.through_lens_content, ["title", "views", "sessions", "engagement_rate_label", "scroll_75", "book_actions", "meaningful_actions"], "Through the Lens performance appears after series articles receive tracked page views.") }}
   </div>
 
@@ -359,6 +495,32 @@
       </div>
     </section>
     {{ table_panel("Content performance", ["Page", "Title", "Purpose", "Views", "Sessions", "30s Engaged", "50% Scroll", "75% Scroll", "90% Scroll", "Engagement Rate", "Book Actions", "Newsletter", "Meaningful Actions"], dashboard.summary.top_content, ["page", "title", "purpose", "views", "sessions", "engaged_30s", "scroll_50", "scroll_75", "scroll_90", "engagement_rate_label", "book_actions", "newsletter_signups", "meaningful_actions"], "Content analytics appears after public page views are recorded.") }}
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Editorial health</h2><a href="{{ dashboard.report_links.editorial_health }}">Export editorial health CSV</a></div>
+      <div class="admin-mini-grid">
+        <article><span>Strong</span><strong>{{ dashboard.editorial_health.strong }}</strong></article>
+        <article><span>Watch</span><strong>{{ dashboard.editorial_health.warnings }}</strong></article>
+        <article><span>Needs Work</span><strong>{{ dashboard.editorial_health.needs_work }}</strong></article>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Article</th><th>Health</th><th>Traffic</th><th>Engagement</th><th>Book Impact</th><th>Recommendation</th></tr></thead>
+          <tbody>
+            {% for row in dashboard.editorial_health.rows[:12] %}
+              <tr>
+                <td><a href="{{ url_for('admin_content_seo_health', slug=row.post.slug) }}">{{ row.post.title }}</a></td>
+                <td>{{ row.score }}/100 · {{ row.status }}</td>
+                <td>{{ row.traffic }}</td>
+                <td>{{ row.engagement }}</td>
+                <td>{{ row.book_impact }}</td>
+                <td>{{ row.recommendations[0] if row.recommendations else "Keep current structure." }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {{ table_panel("Content opportunity matrix", ["Page", "Title", "Classification", "Views", "Sessions", "Book Actions", "Newsletter", "Meaningful Actions"], dashboard.content_matrix, ["page", "title", "matrix_label", "views", "sessions", "book_actions", "newsletter_signups", "meaningful_actions"], "Content opportunity matrix needs page activity before classifying pages.") }}
     <section class="admin-panel admin-panel--wide">
       <div class="admin-panel__header"><h2>Top pages by purpose</h2><span>Different pages have different jobs</span></div>
       <div class="admin-purpose-grid">
@@ -390,6 +552,9 @@
         <article><span>Signup Attempts</span><strong>{{ dashboard.summary.totals.newsletter_signup_attempts }}</strong></article>
         <article><span>Successful Signup Events</span><strong>{{ dashboard.summary.totals.newsletter_signups }}</strong></article>
         <article><span>Signup Errors</span><strong>{{ dashboard.summary.totals.newsletter_errors }}</strong></article>
+        <article><span>Organic Signup Share</span><strong>{{ dashboard.newsletter_quality.organic_signup_rate }}</strong></article>
+        <article><span>Paid Signup Share</span><strong>{{ dashboard.newsletter_quality.paid_signup_rate }}</strong></article>
+        <article><span>A Coruña Contribution</span><strong>{{ dashboard.newsletter_quality.a_coruna_signup_contribution }}</strong></article>
       </div>
     </section>
     <section class="admin-panel admin-panel--wide">{{ funnel_chart(dashboard.funnels.newsletter) }}</section>
@@ -408,6 +573,10 @@
         <article><span>Subscription CTA Clicks</span><strong>{{ dashboard.summary.totals.camino_clicks }}</strong></article>
         <article><span>Completed Approval Callbacks</span><strong>{{ dashboard.summary.totals.camino_completions }}</strong></article>
         <article><span>Conversion Rate</span><strong>{{ dashboard.rates.camino }}</strong></article>
+        <article><span>Top Acquisition Source</span><strong>{{ dashboard.camino_quality.top_acquisition_source }}</strong></article>
+        <article><span>Top Source Page</span><strong>{{ dashboard.camino_quality.top_source_page }}</strong></article>
+        <article><span>A Coruña -> Camino</span><strong>{{ dashboard.camino_quality.a_coruna_transitions }}</strong></article>
+        <article><span>Book -> Camino</span><strong>{{ dashboard.camino_quality.book_transitions }}</strong></article>
       </div>
     </section>
     <section class="admin-panel admin-panel--wide">{{ funnel_chart(dashboard.funnels.camino) }}</section>
@@ -458,7 +627,36 @@
     {{ table_panel("Recent Google Ads upload attempts", ["Time", "Conversion Type", "Status", "Click ID Type", "Order / Checkout", "Value", "Reason"], dashboard.google_upload_detail_rows, ["time", "conversion_type", "status", "click_id_type", "order", "value", "reason"], "Upload attempts will appear after checkout or purchase conversion uploads run.") }}
     <section class="admin-panel admin-panel--wide">
       <div class="admin-panel__header"><h2>Google Ads campaign reporting</h2><span>{{ dashboard.external_reporting.google_ads.status }}</span></div>
-      <p class="admin-muted">{{ dashboard.external_reporting.google_ads.detail }}</p>
+      <p class="admin-muted">{{ dashboard.external_reporting.google_ads.detail }} {% if dashboard.google_ads_report.cache_note %}{{ dashboard.google_ads_report.cache_note }}{% endif %}</p>
+      <div class="admin-mini-grid">
+        <article><span>Impressions</span><strong>{{ dashboard.google_ads_report.topline.impressions or 0 }}</strong></article>
+        <article><span>Clicks</span><strong>{{ dashboard.google_ads_report.topline.clicks or 0 }}</strong></article>
+        <article><span>Spend</span><strong>{{ dashboard.google_ads_report.topline.spend or "$0.00" }}</strong></article>
+        <article><span>Ads Conversions</span><strong>{{ dashboard.google_ads_report.topline.conversions or 0 }}</strong></article>
+      </div>
+    </section>
+    {{ table_panel("Google Ads campaign performance", ["Campaign", "Status", "Impressions", "Clicks", "CTR", "Spend", "Avg CPC", "Ads Conv.", "Ads Conv. Value", "JSM Sessions", "Book Actions", "Checkout Starts", "Verified Purchases", "Verified Revenue", "Cost / Session", "Cost / Book Action", "Cost / Checkout", "Cost / Verified Purchase", "ROAS", "Confidence"], dashboard.google_ads_campaign_rows, ["campaign", "status", "impressions", "clicks", "ctr", "spend_label", "average_cpc", "google_ads_conversions", "google_ads_conversion_value", "jsm_sessions", "book_actions", "checkout_starts", "verified_purchases", "verified_revenue", "cost_per_jsm_session", "cost_per_book_action", "cost_per_checkout", "cost_per_verified_purchase", "roas", "attribution_confidence"], "Google Ads campaign rows will appear when read reporting is connected and cached.") }}
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Ads -> verified purchase discrepancy</h2><span>Definitions differ</span></div>
+      <div class="admin-mini-grid">
+        <article><span>Google Ads conversions</span><strong>{{ dashboard.google_ads_discrepancy.google_ads_conversions }}</strong></article>
+        <article><span>JSM verified purchases</span><strong>{{ dashboard.google_ads_discrepancy.jsm_verified_purchases }}</strong></article>
+      </div>
+      <p class="admin-muted">{{ dashboard.google_ads_discrepancy.explanation }}</p>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Google Ads -> verified purchase funnel</h2><span>API clicks and JSM sessions are separate</span></div>
+      <div class="admin-funnel">
+        {% for step in [
+          {"label": "Google Ads API clicks", "count": dashboard.google_ads_report.topline.clicks or 0, "note": "Reported by Google Ads"},
+          {"label": "JSM sessions attributed to Google CPC", "count": dashboard.google_cpc_sessions, "note": "First-party sessions"},
+          {"label": "Book actions", "count": dashboard.summary.totals.book_actions, "note": "JSM events"},
+          {"label": "Checkout starts", "count": dashboard.summary.totals.direct_checkout_starts, "note": "Entered PayPal flow"},
+          {"label": "Verified purchases", "count": dashboard.verified_purchases.count, "note": "PayPal webhook verified"}
+        ] %}
+          <div class="admin-funnel-step"><div><strong>{{ step.label }}</strong><span>{{ step.count }}</span></div><small>{{ step.note }}</small></div>
+        {% endfor %}
+      </div>
     </section>
   </div>
 
@@ -490,6 +688,34 @@
     </section>
   </div>
 
+  <div class="admin-tab-panel" id="admin-tab-sitehealth" data-admin-tab-panel="sitehealth">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header">
+        <h2>Technical Site Health</h2>
+        <span>{% if dashboard.site_audit.ran %}Last audit {{ dashboard.site_audit.age_label }}{% else %}Audit not run{% endif %}</span>
+      </div>
+      <form class="admin-action-row" action="{{ url_for('admin_site_audit_run') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ admin_csrf_token() }}">
+        <button type="submit">Run Site Audit</button>
+      </form>
+      <div class="admin-health-score-grid">
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.storage.ok else 'watch' }}"><span>Analytics</span><strong>{{ "Healthy" if dashboard.storage.ok else "Needs Attention" }}</strong><small>{{ dashboard.storage.event_count }} events</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.verified_purchases.count or dashboard.google_uploads else 'watch' }}"><span>Commerce</span><strong>{{ "Healthy" if dashboard.google_uploads else "Watch" }}</strong><small>PayPal webhook and logs</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.google_ads_report.status == 'Connected' else 'watch' }}"><span>Google Ads</span><strong>{{ dashboard.google_ads_report.status }}</strong><small>Read and upload health</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.search_console.status == 'Connected' else 'watch' }}"><span>SEO</span><strong>{{ dashboard.search_console.status }}</strong><small>Search Console status</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.site_audit.summary.links == 'Healthy' else 'watch' }}"><span>Links</span><strong>{{ dashboard.site_audit.summary.links or "Not Run" }}</strong><small>Internal link audit</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.site_audit.summary.media == 'Healthy' else 'watch' }}"><span>Media</span><strong>{{ dashboard.site_audit.summary.media or "Not Run" }}</strong><small>Local static media</small></article>
+        <article class="admin-health-score admin-health-score--{{ 'good' if dashboard.site_audit.summary.publishing == 'Healthy' else 'watch' }}"><span>Publishing</span><strong>{{ dashboard.site_audit.summary.publishing or "Not Run" }}</strong><small>Dates and integrity</small></article>
+      </div>
+    </section>
+    {{ table_panel("Public route health", ["Path", "Status", "OK"], dashboard.site_audit.results.routes, ["path", "status", "ok"], "Run Site Audit to check public routes.") }}
+    {{ table_panel("Internal link warnings", ["Source", "Target", "Status"], dashboard.site_audit.results.broken_links, ["source", "target", "status"], "No broken internal links in the latest audit.") }}
+    {{ table_panel("Missing media", ["Source", "Target"], dashboard.site_audit.results.missing_media, ["source", "target"], "No missing local media in the latest audit.") }}
+    {{ table_panel("Metadata warnings", ["Page", "Status", "Score"], dashboard.site_audit.results.metadata_warnings, ["page", "status", "score"], "No metadata/content warnings in the latest audit.") }}
+    {{ table_panel("Publishing warnings", ["Page", "Warning"], dashboard.site_audit.results.publishing_warnings, ["page", "warning"], "No publishing warnings in the latest audit.") }}
+    {{ table_panel("Top 404s", ["Path", "Count", "Sessions"], dashboard.summary.top_404s, ["label", "count", "sessions"], "No first-party 404 events have been recorded in this period.") }}
+  </div>
+
   <div class="admin-tab-panel" id="admin-tab-reports" data-admin-tab-panel="reports">
     <section class="admin-panel admin-panel--wide">
       <div class="admin-panel__header"><h2>Reports and exports</h2><span>Safe exports for this date range</span></div>
@@ -502,6 +728,12 @@
         <a href="{{ dashboard.report_links.engagement_content }}">Engagement Content CSV</a>
         <a href="{{ dashboard.report_links.coruna }}">A Coruña CSV</a>
         <a href="{{ dashboard.report_links.campaigns }}">Campaign CSV</a>
+        <a href="{{ dashboard.report_links.google_ads_campaigns }}">Google Ads Campaign CSV</a>
+        <a href="{{ dashboard.report_links.search_console_queries }}">Search Query CSV</a>
+        <a href="{{ dashboard.report_links.search_console_pages }}">Search Page CSV</a>
+        <a href="{{ dashboard.report_links.editorial_health }}">Editorial Health CSV</a>
+        <a href="{{ dashboard.report_links.site_audit }}">Site Audit CSV</a>
+        <a href="{{ dashboard.report_links.annotations }}">Annotations CSV</a>
         <a href="{{ dashboard.report_links.acquisition }}">Acquisition Outcome CSV</a>
         <a href="{{ dashboard.report_links.google_ads_uploads }}">Google Ads Upload Attempts CSV</a>
         <a href="{{ dashboard.report_links.purchases }}">Verified Purchase CSV</a>
