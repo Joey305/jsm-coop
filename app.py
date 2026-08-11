@@ -93,6 +93,10 @@ app.config["GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_RESOURCE"] = os.getenv(
 app.config["ANALYTICS_DB_PATH"] = Path(os.getenv("ANALYTICS_DB_PATH", BASE_DIR / "data" / "jsm_analytics.sqlite3"))
 app.config["ANALYTICS_ENABLED"] = os.getenv("ANALYTICS_ENABLED", "1")
 app.config["ANALYTICS_ENVIRONMENT"] = os.getenv("ANALYTICS_ENVIRONMENT", os.getenv("FLASK_ENV", "production"))
+app.config["ANALYTICS_STORAGE_BACKEND"] = os.getenv("ANALYTICS_STORAGE_BACKEND", "local")
+app.config["ANALYTICS_REMOTE_BASE_URL"] = os.getenv("ANALYTICS_REMOTE_BASE_URL", "")
+app.config["ANALYTICS_REMOTE_API_TOKEN"] = os.getenv("ANALYTICS_REMOTE_API_TOKEN", "")
+app.config["ANALYTICS_REMOTE_TIMEOUT_SECONDS"] = os.getenv("ANALYTICS_REMOTE_TIMEOUT_SECONDS", "10")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.getenv("SESSION_COOKIE_SECURE", "0").lower() in {"1", "true", "yes"}
@@ -1330,9 +1334,14 @@ def build_admin_dashboard(config, args=None):
     filters = analytics.filters_from_args(args)
     filters.setdefault("environment", analytics.analytics_environment(config))
     store = analytics.analytics_store(config)
-    summary = store.query_summary(start, end, filters)
-    recent = store.query_events(start, end, filters, page=1, page_size=20)
     storage = analytics.storage_health(config)
+    try:
+        summary = store.query_summary(start, end, filters)
+        recent = store.query_events(start, end, filters, page=1, page_size=20)
+    except Exception as error:
+        summary = analytics.build_empty_summary()
+        recent = {"events": [], "total": 0, "page": 1, "pages": 1}
+        storage = {**storage, "ok": False, "error": str(error)}
     verified = verified_purchase_summary(config, start, end)
     google_uploads = google_ads_upload_summary(config, start, end)
     totals = summary["totals"]

@@ -8,6 +8,8 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 
 SCHEMA_VERSION = 1
@@ -419,8 +421,17 @@ class LocalAnalyticsStore:
 
 
 def analytics_store(config):
-    if not config.get("_JSM_ANALYTICS_STORE"):
+    backend = (config.get("ANALYTICS_STORAGE_BACKEND") or "local").lower()
+    if backend == "remote":
+        return RemoteAnalyticsStore(
+            config.get("ANALYTICS_REMOTE_BASE_URL"),
+            config.get("ANALYTICS_REMOTE_API_TOKEN"),
+            config.get("ANALYTICS_REMOTE_TIMEOUT_SECONDS", 5),
+        )
+    cache_key = f"local:{config['ANALYTICS_DB_PATH']}"
+    if config.get("_JSM_ANALYTICS_STORE_KEY") != cache_key:
         config["_JSM_ANALYTICS_STORE"] = LocalAnalyticsStore(config["ANALYTICS_DB_PATH"])
+        config["_JSM_ANALYTICS_STORE_KEY"] = cache_key
     return config["_JSM_ANALYTICS_STORE"]
 
 
@@ -433,7 +444,85 @@ def analytics_environment(config):
 
 
 def storage_health(config):
-    return analytics_store(config).health_check()
+    try:
+        return analytics_store(config).health_check()
+    except Exception as error:
+        return {
+            "ok": False,
+            "backend": config.get("ANALYTICS_STORAGE_BACKEND", "local"),
+            "error": str(error),
+            "event_count": 0,
+            "last_recorded_at": "",
+        }
+
+
+class RemoteAnalyticsStore:
+    def __init__(self, base_url, api_token, timeout_seconds=5):
+        self.base_url = (base_url or "").rstrip("/")
+        self.api_token = api_token or ""
+        self.timeout_seconds = float(timeout_seconds or 5)
+        if not self.base_url:
+            raise ValueError("ANALYTICS_REMOTE_BASE_URL is required for remote analytics storage.")
+        if not self.api_token:
+            raise ValueError("ANALYTICS_REMOTE_API_TOKEN is required for remote analytics storage.")
+
+    def store_event(self, event):
+        result = self._request("POST", "/events", payload=event)
+        return bool(result.get("inserted"))
+
+    def store_events(self, events):
+        return self._request("POST", "/events/batch", payload=events)
+
+    def query_summary(self, start, end, filters=None):
+        return self._request("GET", "/summary", params=remote_params(start, end, filters))
+
+    def query_events(self, start, end, filters=None, page=1, page_size=50):
+        params = remote_params(start, end, filters)
+        params.update({"page": str(page), "page_size": str(page_size)})
+        return self._request("GET", "/events", params=params)
+
+    def export_events(self, start, end, filters=None):
+        return self._request("GET", "/events/export", params=remote_params(start, end, filters), raw_text=True)
+
+    def health_check(self):
+        return self._request("GET", "/health")
+
+    def _request(self, method, path, payload=None, params=None, raw_text=False):
+        query = f"?{urlencode(params or {})}" if params else ""
+        body = json.dumps(payload).encode("utf-8") if payload is not None else None
+        request_obj = Request(
+            f"{self.base_url}{path}{query}",
+            data=body,
+            method=method,
+            headers={
+                "Authorization": f"Bearer {self.api_token}",
+                "Accept": "text/csv" if raw_text else "application/json",
+                "Content-Type": "application/json",
+            },
+        )
+        try:
+            with urlopen(request_obj, timeout=self.timeout_seconds) as response:
+                raw_body = response.read().decode("utf-8")
+                if raw_text:
+                    return raw_body
+                return json.loads(raw_body or "{}")
+        except HTTPError as error:
+            try:
+                body_json = json.loads(error.read().decode("utf-8"))
+                message = body_json.get("message") or body_json.get("error")
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                message = None
+            raise RuntimeError(message or f"Remote analytics request failed with HTTP {error.code}.") from error
+        except URLError as error:
+            raise RuntimeError("Remote analytics storage could not be reached.") from error
+
+
+def remote_params(start, end, filters=None):
+    params = {"start": to_utc_iso(start), "end": to_utc_iso(end)}
+    for key, value in (filters or {}).items():
+        if value:
+            params[key] = value
+    return params
 
 
 def date_range_from_args(args):
