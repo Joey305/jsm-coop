@@ -19,8 +19,31 @@
   </div>
 
   <section class="admin-panel admin-panel--wide"><h2>Executive summary</h2><ul class="admin-next-list">{% for line in dashboard.monthly_brief %}<li>{{ line }}</li>{% endfor %}</ul></section>
+  <section class="admin-panel admin-panel--wide"><h2>Analytics coverage</h2><p class="admin-muted">{{ dashboard.analytics_coverage.status }}. Tracking since {{ dashboard.analytics_coverage.tracking_since_label }}. {{ dashboard.analytics_coverage.comparison_label }}.</p></section>
+  <section class="admin-panel admin-panel--wide"><h2>JSM Pulse</h2><div class="admin-pulse-grid">{% for group in dashboard.jsm_pulse %}<article class="admin-pulse-card"><h3>{{ group.label }}</h3><dl>{% for item in group["items"] %}<div><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>{% endfor %}</dl></article>{% endfor %}</div></section>
+  <section class="admin-panel admin-panel--wide"><h2>Conversion rates</h2><div class="admin-conversion-strip">{% for rate in dashboard.conversion_rates %}<article class="admin-rate-card"><span>{{ rate.label }}</span><strong>{{ rate.value }}</strong><small>{{ rate.definition }}</small></article>{% endfor %}</div></section>
   <section class="admin-panel admin-panel--wide"><h2>Core metrics</h2><div class="admin-mini-grid">{% for stat in dashboard.stats %}<article><span>{{ stat.label }}</span><strong>{{ stat.value }}</strong><small>{{ stat.help }}</small></article>{% endfor %}</div></section>
+  <section class="admin-panel admin-panel--wide"><h2>Acquisition -> Outcome</h2>{{ table_panel("Acquisition outcomes", ["Source", "Sessions", "Book Actions", "Checkout Starts", "Newsletter", "Action Rate"], dashboard.summary.acquisition_outcomes, ["source", "sessions", "book_actions", "checkout_starts", "newsletter_signups", "meaningful_action_rate"], "No acquisition outcomes yet.") }}</section>
+  <section class="admin-panel admin-panel--wide"><h2>Content Winners</h2><div class="admin-winner-list">{% for winner in dashboard.summary.content_winners %}<article><span>{{ winner.label }}</span><strong>{{ winner.title }}</strong><p>{{ winner.metric }}</p></article>{% endfor %}</div></section>
+  <section class="admin-panel admin-panel--wide"><h2>Book Pulse</h2><p class="admin-muted">{{ dashboard.book_pulse.statement }}</p><div class="admin-mini-grid">{% for item in dashboard.book_pulse.metrics %}<article><span>{{ item.label }}</span><strong>{{ item.value }}</strong></article>{% endfor %}</div></section>
   <section class="admin-panel admin-panel--wide"><h2>Top opportunities</h2><div class="admin-opportunity-grid">{% for item in dashboard.opportunities[:4] %}<article class="admin-opportunity-card admin-opportunity-card--{{ item.priority|lower }}"><span>{{ item.priority }} · {{ item.confidence }} confidence</span><h3>{{ item.title }}</h3><p>{{ item.metric }}</p><strong>{{ item.action }}</strong></article>{% endfor %}</div></section>
   <section class="admin-panel admin-panel--wide"><h2>Board update</h2><div class="admin-board-grid">{% for item in dashboard.board_update %}<article><span>{{ item.label }}</span><strong>{{ item.value }}</strong><p>{{ item.note }}</p></article>{% endfor %}</div></section>
 </section>
 {% endblock %}
+
+{% macro table_panel(title, headers, rows, keys, empty_text) %}
+  {% if rows %}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>{% for header in headers %}<th scope="col">{{ header }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>{% for key in keys %}<td>{{ row.get(key, "-") if row.get(key, "") != "" else "-" }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="admin-empty">{{ empty_text }}</p>
+  {% endif %}
+{% endmacro %}

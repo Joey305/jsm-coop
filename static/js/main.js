@@ -229,6 +229,43 @@
 
   sendFirstParty("page_view", buildPayload({}));
 
+  const engagementEvents = new Set();
+  const trackEngagementOnce = (eventName) => {
+    if (engagementEvents.has(eventName)) return;
+    engagementEvents.add(eventName);
+    track(eventName, { cta_location: "engagement_depth" });
+  };
+
+  let activeSeconds = 0;
+  let lastTick = Date.now();
+  const engagementTimer = window.setInterval(() => {
+    const now = Date.now();
+    if (!document.hidden && document.hasFocus()) {
+      activeSeconds += Math.min(5, Math.max(0, (now - lastTick) / 1000));
+      if (activeSeconds >= 30) {
+        trackEngagementOnce("engaged_30s");
+        window.clearInterval(engagementTimer);
+      }
+    }
+    lastTick = now;
+  }, 1000);
+
+  const checkScrollDepth = () => {
+    const doc = document.documentElement;
+    const body = document.body;
+    const scrollTop = window.scrollY || doc.scrollTop || body.scrollTop || 0;
+    const viewport = window.innerHeight || doc.clientHeight || 0;
+    const height = Math.max(doc.scrollHeight, body.scrollHeight, doc.offsetHeight, body.offsetHeight) - viewport;
+    if (height <= 0) return;
+    const depth = (scrollTop / height) * 100;
+    if (depth >= 50) trackEngagementOnce("scroll_50");
+    if (depth >= 75) trackEngagementOnce("scroll_75");
+    if (depth >= 90) trackEngagementOnce("scroll_90");
+  };
+  window.addEventListener("scroll", checkScrollDepth, { passive: true });
+  window.addEventListener("resize", checkScrollDepth, { passive: true });
+  checkScrollDepth();
+
   window.gtag_report_conversion = function (url) {
     track("retailer_click_amazon_us", { cta_location: "legacy_helper" }, () => {
       if (url) window.location = url;

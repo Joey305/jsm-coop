@@ -18,7 +18,10 @@
     <div class="admin-action-row admin-print-hide"><a href="{{ url_for('admin_analytics', range=dashboard.range_name, start=dashboard.start, end=dashboard.end) }}">Back</a><button type="button" onclick="window.print()">Print</button></div>
   </div>
   <section class="admin-panel admin-panel--wide"><h2>Plain-language update</h2><ul class="admin-next-list">{% for line in dashboard.monthly_brief %}<li>{{ line }}</li>{% endfor %}</ul></section>
+  <section class="admin-panel admin-panel--wide"><h2>Analytics coverage</h2><p class="admin-muted">{{ dashboard.analytics_coverage.status }}. Tracking since {{ dashboard.analytics_coverage.tracking_since_label }}. {{ dashboard.analytics_coverage.comparison_label }}.</p></section>
   <div class="admin-board-grid">{% for item in dashboard.board_update %}<article><span>{{ item.label }}</span><strong>{{ item.value }}</strong><p>{{ item.note }}</p></article>{% endfor %}</div>
+  <section class="admin-panel admin-panel--wide"><h2>JSM Pulse</h2><div class="admin-pulse-grid">{% for group in dashboard.jsm_pulse %}<article class="admin-pulse-card"><h3>{{ group.label }}</h3><dl>{% for item in group["items"] %}<div><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>{% endfor %}</dl></article>{% endfor %}</div></section>
+  <section class="admin-panel admin-panel--wide"><h2>Content Winners</h2><div class="admin-winner-list">{% for winner in dashboard.summary.content_winners %}<article><span>{{ winner.label }}</span><strong>{{ winner.title }}</strong><p>{{ winner.metric }}</p></article>{% endfor %}</div></section>
   <section class="admin-panel admin-panel--wide"><h2>Next-period priorities</h2><ul class="admin-next-list">{% for item in dashboard.opportunities[:3] %}<li>{{ item.action }}</li>{% endfor %}</ul></section>
 </section>
 {% endblock %}

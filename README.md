@@ -236,6 +236,34 @@ Retailer outbound clicks and PayPal return visits should not be described as con
 
 ---
 
+## Admin Command Center Analytics
+
+The Command Center uses first-party analytics for public visitor behavior and keeps admin pages out of tracking. Dashboard comparisons are gated by analytics coverage:
+
+- `No Data`: no first-party events have been recorded.
+- `Learning`: fewer than 7 tracked days.
+- `Limited History`: 7 to 29 tracked days.
+- `Full Comparison Available`: 30+ tracked days, with period comparison shown only when the selected previous window is actually covered.
+
+Canonical page traffic is based on `page_view`. Exact page metrics such as `Book Page Views` count `/book` only; broader family metrics are labeled as ecosystem metrics. Legacy explicit view events remain accepted for compatibility, but they do not inflate canonical page-view counts.
+
+Engagement events are lightweight and first-party: `engaged_30s`, `scroll_50`, `scroll_75`, and `scroll_90`. Each fires at most once per page view. Engagement Rate means unique page sessions with `engaged_30s` or `scroll_75` divided by page sessions.
+
+Conversion rates are session-aware where possible:
+
+- Visitor -> Action: sessions with at least one meaningful action divided by anonymous sessions.
+- Book Visitor -> Action: book ecosystem sessions that produce a book action.
+- Signed Page -> Checkout: `/book/signed` sessions that produce `direct_checkout_started`.
+- Checkout -> Verified: verified PayPal purchases divided by unique checkout-start sessions, with an identity-linkage caveat.
+- Newsletter Form -> Signup: successful signup sessions divided by newsletter form sessions.
+- Camino Visit -> Approval: PayPal approval callbacks divided by subscription-page sessions.
+
+Acquisition -> Outcome attributes each session from its first usable landing UTM, Google click identifier, referrer, or page-view source context, then attributes downstream actions in that session to the same source. Unknown event names are stored as `unknown_event` diagnostics with the original event name in metadata.
+
+`Since Your Last Visit` uses a small admin SQLite visit table containing only admin username and timestamps. It calculates recent activity before recording the current visit. Google Ads offline upload health is shown from the local upload log. Read-only Google Ads campaign reporting and Search Console reporting are not called on every admin page render; they require a cached reporting integration before going live.
+
+---
+
 
 ## License
 

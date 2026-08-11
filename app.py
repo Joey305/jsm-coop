@@ -4,6 +4,7 @@ import json
 import base64
 import csv
 import io
+import sqlite3
 import uuid
 from datetime import datetime, timezone
 from datetime import timedelta
@@ -97,6 +98,7 @@ app.config["ANALYTICS_STORAGE_BACKEND"] = os.getenv("ANALYTICS_STORAGE_BACKEND",
 app.config["ANALYTICS_REMOTE_BASE_URL"] = os.getenv("ANALYTICS_REMOTE_BASE_URL", "")
 app.config["ANALYTICS_REMOTE_API_TOKEN"] = os.getenv("ANALYTICS_REMOTE_API_TOKEN", "")
 app.config["ANALYTICS_REMOTE_TIMEOUT_SECONDS"] = os.getenv("ANALYTICS_REMOTE_TIMEOUT_SECONDS", "10")
+app.config["ADMIN_VISITS_DB_PATH"] = Path(os.getenv("ADMIN_VISITS_DB_PATH", BASE_DIR / "data" / "admin_dashboard_visits.sqlite3"))
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.getenv("SESSION_COOKIE_SECURE", "0").lower() in {"1", "true", "yes"}
@@ -1034,14 +1036,122 @@ def paypal_webhook_health(config):
     }
 
 
-def dashboard_stat(label, value, summary, key, help_text):
+def admin_visits_connection(config):
+    path = Path(config["ADMIN_VISITS_DB_PATH"])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin_dashboard_visits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            admin_username TEXT NOT NULL,
+            visited_at TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_admin_dashboard_visits_user_time ON admin_dashboard_visits (admin_username, visited_at)")
+    return connection
+
+
+def previous_admin_dashboard_visit(config, admin_username):
+    try:
+        with admin_visits_connection(config) as connection:
+            row = connection.execute(
+                "SELECT visited_at FROM admin_dashboard_visits WHERE admin_username = ? ORDER BY visited_at DESC LIMIT 1",
+                (admin_username,),
+            ).fetchone()
+        return row["visited_at"] if row else ""
+    except sqlite3.Error:
+        return ""
+
+
+def record_admin_dashboard_visit(config, admin_username):
+    try:
+        with admin_visits_connection(config) as connection:
+            connection.execute(
+                "INSERT INTO admin_dashboard_visits (admin_username, visited_at) VALUES (?, ?)",
+                (admin_username, analytics.utc_now_iso()),
+            )
+    except sqlite3.Error:
+        return False
+    return True
+
+
+def short_date_label(value):
+    parsed = analytics.parse_datetime(value)
+    if not parsed:
+        return ""
+    return parsed.strftime("%b %-d, %Y") if os.name != "nt" else parsed.strftime("%b %#d, %Y")
+
+
+def dashboard_analytics_coverage(storage, start, end):
+    event_count = int(storage.get("event_count") or 0)
+    tracking_days = int(storage.get("tracking_days") or 0)
+    first_recorded_at = storage.get("first_recorded_at") or ""
+    last_recorded_at = storage.get("last_recorded_at") or ""
+    first_dt = analytics.parse_datetime(first_recorded_at)
+    previous_start = start - (end - start)
+    if event_count <= 0:
+        status = "No Data"
+        tone = "low"
+        headline = "Analytics waiting for public traffic"
+        detail = "No first-party events have been recorded yet."
+        comparison_available = False
+        comparison_label = "Historical comparison unavailable"
+    elif tracking_days < 7:
+        status = "Learning"
+        tone = "watch"
+        headline = "Analytics Learning Mode"
+        detail = "Period-over-period insights will activate after enough tracked history exists."
+        comparison_available = False
+        comparison_label = f"Tracking began {short_date_label(first_recorded_at)}"
+    elif tracking_days < 30:
+        status = "Limited History"
+        tone = "watch"
+        headline = "Analytics Limited History"
+        detail = "Short-range comparisons may be useful; longer comparisons are still building."
+        comparison_available = bool(first_dt and first_dt <= previous_start)
+        comparison_label = "Historical comparison unavailable" if not comparison_available else "Comparison available"
+    else:
+        status = "Full Comparison Available"
+        tone = "good"
+        headline = "Analytics Healthy"
+        detail = "Full-period comparison is available when the selected previous window is covered."
+        comparison_available = bool(first_dt and first_dt <= previous_start)
+        comparison_label = "Full period comparison available" if comparison_available else f"Tracking began {short_date_label(first_recorded_at)}"
+    return {
+        "status": status,
+        "tone": tone,
+        "headline": headline,
+        "detail": detail,
+        "comparison_available": comparison_available,
+        "comparison_label": comparison_label,
+        "first_recorded_at": first_recorded_at,
+        "last_recorded_at": last_recorded_at,
+        "tracking_days": tracking_days,
+        "event_count": event_count,
+        "coverage_start_date": storage.get("coverage_start_date") or first_recorded_at[:10],
+        "coverage_end_date": storage.get("coverage_end_date") or last_recorded_at[:10],
+        "tracking_since_label": short_date_label(first_recorded_at) or "Not started",
+    }
+
+
+def dashboard_stat(label, value, summary, key, help_text, coverage=None, comparison_text=None):
     comparison = summary.get("comparison", {}).get(key, {})
+    change = comparison.get("label", "No previous activity")
+    direction = comparison.get("direction", "flat")
+    if comparison_text:
+        change = comparison_text
+    elif coverage and not coverage.get("comparison_available"):
+        change = coverage.get("comparison_label") or "Historical comparison unavailable"
+        direction = "flat"
     return {
         "label": label,
         "value": value,
         "previous": summary.get("previous", {}).get(key, 0),
-        "change": comparison.get("label", "No previous activity"),
-        "direction": comparison.get("direction", "flat"),
+        "change": change,
+        "direction": direction,
         "help": help_text,
     }
 
@@ -1160,9 +1270,11 @@ def dashboard_funnels(summary, verified):
     }
 
 
-def growth_scorecard(label, current, previous, explanation, action):
+def growth_scorecard(label, current, previous, explanation, action, comparison_available=True, comparison_label="Historical comparison unavailable"):
     comparison = analytics.compare_counts(current, previous)
-    if int(current or 0) >= 25:
+    if not comparison_available:
+        status = "Learning"
+    elif int(current or 0) >= 25:
         status = "Strong"
     elif comparison["direction"] == "up":
         status = "Improving"
@@ -1176,7 +1288,7 @@ def growth_scorecard(label, current, previous, explanation, action):
         "tone": "good" if status in {"Strong", "Improving"} else "watch" if status == "Watch" else "low",
         "current": current,
         "previous": previous,
-        "change": comparison["label"],
+        "change": comparison["label"] if comparison_available else comparison_label,
         "explanation": explanation,
         "action": action,
     }
@@ -1220,11 +1332,323 @@ def dashboard_opportunities(summary, verified, google_uploads):
     return sorted(opportunities, key=lambda item: (order.get(item["priority"], 9), item["title"]))[:10]
 
 
+def rate_item(label, numerator, denominator, definition, minimum=1):
+    if int(denominator or 0) < minimum:
+        value = "Need more data" if denominator else "No baseline"
+        tone = "low"
+    else:
+        value = analytics.percent_label(analytics.numeric_rate(numerator, denominator))
+        tone = "good" if float(numerator or 0) > 0 else "watch"
+    return {
+        "label": label,
+        "value": value,
+        "numerator": int(numerator or 0),
+        "denominator": int(denominator or 0),
+        "definition": definition,
+        "tone": tone,
+    }
+
+
+def dashboard_conversion_rates(summary, verified):
+    totals = summary["totals"]
+    return [
+        rate_item(
+            "Visitor -> Action",
+            totals.get("meaningful_action_sessions", 0),
+            totals.get("anonymous_sessions", 0),
+            "Sessions with at least one meaningful action divided by anonymous sessions.",
+            minimum=1,
+        ),
+        rate_item(
+            "Book Visitor -> Action",
+            totals.get("book_action_sessions", 0),
+            totals.get("book_sessions", 0),
+            "Book ecosystem sessions that produced at least one book action.",
+            minimum=1,
+        ),
+        rate_item(
+            "Signed Page -> Checkout",
+            totals.get("direct_checkout_sessions", 0),
+            totals.get("signed_copy_sessions", 0),
+            "Unique /book/signed sessions that started direct checkout.",
+            minimum=1,
+        ),
+        rate_item(
+            "Checkout -> Verified",
+            verified["count"],
+            totals.get("direct_checkout_sessions", 0),
+            "Verified PayPal purchases divided by unique checkout-start sessions. Identity linkage may be incomplete.",
+            minimum=1,
+        ),
+        rate_item(
+            "Newsletter Form -> Signup",
+            totals.get("newsletter_signup_sessions", totals.get("newsletter_signups", 0)),
+            totals.get("newsletter_form_sessions", totals.get("newsletter_form_views", 0)),
+            "Successful signup sessions divided by sessions where the newsletter form was viewed.",
+            minimum=1,
+        ),
+        rate_item(
+            "Camino Visit -> Approval",
+            totals.get("camino_completions", 0),
+            totals.get("camino_sessions", 0),
+            "PayPal approval callbacks divided by subscription-page sessions.",
+            minimum=1,
+        ),
+    ]
+
+
+def dashboard_pulse(summary, verified):
+    totals = summary["totals"]
+    pages_per_session = "No baseline"
+    if totals.get("anonymous_sessions"):
+        pages_per_session = f"{totals.get('page_views', 0) / totals.get('anonymous_sessions', 1):.1f}"
+    top_page = (summary.get("top_pages") or [{}])[0]
+    top_coruna = (summary.get("a_coruna_pages") or [{}])[0]
+    top_article = (summary.get("through_lens_content") or [{}])[0]
+    top_source = (summary.get("traffic_sources") or [{}])[0]
+    top_campaign = (summary.get("campaign_performance") or [{}])[0]
+    source_rows = {row["label"]: row["count"] for row in summary.get("traffic_sources", [])}
+    return [
+        {
+            "label": "Audience",
+            "items": [
+                {"label": "Sessions", "value": totals.get("anonymous_sessions", 0)},
+                {"label": "Page Views", "value": totals.get("page_views", 0)},
+                {"label": "Pages / Session", "value": pages_per_session},
+                {"label": "Action Rate", "value": analytics.percent_label(analytics.numeric_rate(totals.get("meaningful_action_sessions", 0), totals.get("anonymous_sessions", 0)))},
+            ],
+        },
+        {
+            "label": "Book",
+            "items": [
+                {"label": "Book Visitors", "value": totals.get("book_sessions", 0)},
+                {"label": "Book Actions", "value": totals.get("book_actions", 0)},
+                {"label": "Checkout Starts", "value": totals.get("direct_checkout_starts", 0)},
+                {"label": "Verified Sales", "value": verified["count"]},
+                {"label": "Verified Revenue", "value": verified["revenue_label"]},
+            ],
+        },
+        {
+            "label": "Content",
+            "items": [
+                {"label": "Top Page", "value": top_page.get("label") or "No data"},
+                {"label": "Top A Coruña", "value": top_coruna.get("label") or "No data"},
+                {"label": "Top Lens Article", "value": top_article.get("title") or "No data"},
+                {"label": "Newsletter Signups", "value": totals.get("newsletter_signups", 0)},
+            ],
+        },
+        {
+            "label": "Acquisition",
+            "items": [
+                {"label": "Top Source", "value": top_source.get("label") or "No data"},
+                {"label": "Top Campaign", "value": top_campaign.get("label") or "No data"},
+                {"label": "Google CPC Sessions", "value": source_rows.get("Google CPC", 0)},
+                {"label": "Organic Sessions", "value": source_rows.get("Google Organic", 0)},
+            ],
+        },
+    ]
+
+
+def score_priority_item(item):
+    priority_score = {"High": 50, "Medium": 30, "Low": 10}.get(item.get("priority"), 10)
+    confidence_score = {"High": 20, "Medium": 10, "Low": 0}.get(item.get("confidence"), 0)
+    return priority_score + confidence_score + int(item.get("sample_size") or 0)
+
+
+def dashboard_what_matters(summary, verified, opportunities, google_uploads, coverage):
+    totals = summary["totals"]
+    items = []
+    if not coverage.get("comparison_available"):
+        items.append({
+            "category": "Operations",
+            "priority": "High",
+            "confidence": "High",
+            "title": coverage["headline"],
+            "metric": f"{coverage['tracking_days']} tracking days · {coverage['event_count']} events",
+            "why": coverage["detail"],
+            "action": "Use current-period totals, but wait for covered history before trusting growth comparisons.",
+            "sample_size": coverage["event_count"],
+        })
+    for item in opportunities:
+        candidate = dict(item)
+        candidate.setdefault("category", "Opportunity")
+        candidate["sample_size"] = max(totals.get("anonymous_sessions", 0), totals.get("page_views", 0))
+        items.append(candidate)
+    if totals.get("direct_checkout_sessions", 0) >= 10 and verified["count"] < totals.get("direct_checkout_sessions", 0):
+        items.append({
+            "category": "Conversion",
+            "priority": "High",
+            "confidence": "Medium",
+            "title": "Signed checkout leakage",
+            "metric": f"{totals.get('direct_checkout_sessions', 0)} checkout sessions; {verified['count']} verified purchases",
+            "why": "Checkout starts are purchase intent, but verified PayPal purchases remain lower.",
+            "action": "Inspect PayPal completion and webhook logs before increasing paid traffic.",
+            "sample_size": totals.get("direct_checkout_sessions", 0),
+        })
+    if google_uploads["has_failures"]:
+        items.append({
+            "category": "Operations",
+            "priority": "High",
+            "confidence": "High",
+            "title": "Google Ads upload warning",
+            "metric": "Recent failed or partial upload attempts",
+            "why": "Offline conversion upload health affects ad optimization diagnostics.",
+            "action": "Review recent upload details in Campaigns.",
+            "sample_size": 100,
+        })
+    ranked = sorted(items, key=score_priority_item, reverse=True)
+    return ranked[:3] or [{
+        "category": "Operations",
+        "priority": "Low",
+        "confidence": "Low",
+        "title": "Keep building the baseline",
+        "metric": "No urgent observations yet",
+        "why": "The dashboard needs more visitor behavior before ranking changes confidently.",
+        "action": "Check again after the next public traffic push.",
+    }]
+
+
+def dashboard_book_pulse(summary, verified):
+    totals = summary["totals"]
+    signed_rate = rate_item(
+        "Signed visitor checkout rate",
+        totals.get("direct_checkout_sessions", 0),
+        totals.get("signed_copy_sessions", 0),
+        "Unique /book/signed sessions that started checkout.",
+        minimum=10,
+    )
+    if signed_rate["denominator"] < 10:
+        statement = "Not enough signed-book traffic yet for a reliable conversion rate."
+    else:
+        statement = f"{signed_rate['value']} of signed-book visitors entered checkout."
+    return {
+        "metrics": [
+            {"label": "Book Visitors", "value": totals.get("book_sessions", 0)},
+            {"label": "Preview Engagement", "value": totals.get("book_preview_clicks", 0)},
+            {"label": "Retailer Clicks", "value": totals.get("retailer_clicks", 0)},
+            {"label": "Signed Book Visitors", "value": totals.get("signed_copy_sessions", 0)},
+            {"label": "Checkout Starts", "value": totals.get("direct_checkout_starts", 0)},
+            {"label": "Verified Purchases", "value": verified["count"]},
+            {"label": "Verified Revenue", "value": verified["revenue_label"]},
+        ],
+        "statement": statement,
+    }
+
+
+def dashboard_data_quality(summary, storage, verified, coverage):
+    quality = summary.get("data_quality", {})
+    return [
+        {"label": "Analytics coverage", "value": coverage["status"], "detail": f"{coverage['tracking_days']} days · {coverage['event_count']} events"},
+        {"label": "Source attribution", "value": quality.get("source_attribution_rate", "No baseline"), "detail": "Session-level source coverage."},
+        {"label": "Device metadata", "value": quality.get("device_metadata_rate", "No baseline"), "detail": "Events with device category."},
+        {"label": "CTA location metadata", "value": quality.get("cta_position_rate", "No baseline"), "detail": "Meaningful actions with location metadata."},
+        {"label": "Valid landing page", "value": quality.get("landing_page_rate", "No baseline"), "detail": "Events with landing page context."},
+        {"label": "Unknown events", "value": quality.get("unknown_events", 0), "detail": "Unrecognized names stored as diagnostics."},
+        {"label": "Verified purchases", "value": verified["count"], "detail": "Deduplicated PayPal webhook records."},
+        {"label": "Storage health", "value": "OK" if storage.get("ok") else "Needs attention", "detail": storage.get("backend", "local")},
+    ]
+
+
+def google_ads_upload_detail_rows(google_uploads):
+    rows = []
+    for record in google_uploads.get("recent", [])[-12:][::-1]:
+        rows.append({
+            "time": record.get("attempted_at") or record.get("created_at") or "",
+            "conversion_type": analytics.human_event_label(record.get("event_name") or record.get("conversion_type") or "conversion"),
+            "status": record.get("status") or "unknown",
+            "click_id_type": (record.get("click_id_type") or "none").upper(),
+            "order": record.get("order_id") or record.get("checkout_id") or "-",
+            "value": record.get("value") or "-",
+            "reason": record.get("reason") or "-",
+        })
+    return rows
+
+
+def live_activity_feed(events):
+    important = []
+    priority_events = analytics.MEANINGFUL_ACTION_EVENTS | {"verified_direct_purchase_completed"}
+    for event in events:
+        if event.get("event_name") not in priority_events:
+            continue
+        source = analytics.classify_source(event)
+        detail_parts = [part for part in (source, (event.get("device_category") or "").title(), event.get("page_path")) if part]
+        important.append({
+            "time": event.get("occurred_at_label", ""),
+            "label": event.get("human_label") or analytics.human_event_label(event.get("event_name")),
+            "detail": " · ".join(detail_parts),
+        })
+    return important[:20]
+
+
+def external_reporting_status(config):
+    google_ads_configured = bool(os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN") and config.get("GOOGLE_ADS_CUSTOMER_ID"))
+    search_console_configured = bool(os.getenv("GOOGLE_SEARCH_CONSOLE_SITE_URL") and os.getenv("GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON"))
+    return {
+        "google_ads": {
+            "live": False,
+            "status": "Google Ads campaign reporting not connected",
+            "detail": "Offline upload health is active. Read-only campaign reporting needs a cached reporting integration before it should run on admin page loads.",
+            "configured": google_ads_configured,
+        },
+        "search_console": {
+            "live": False,
+            "status": "Search Console reporting not connected",
+            "detail": "No Search Console-specific property and credential configuration was found in the repo environment.",
+            "configured": search_console_configured,
+        },
+    }
+
+
+def dashboard_since_last_visit(config, store, previous_visit):
+    if not previous_visit:
+        return {"has_previous": False, "previous_visit": "", "items": [], "observations": ["This is the first recorded admin visit for this user."]}
+    previous_dt = analytics.parse_datetime(previous_visit)
+    if not previous_dt:
+        return {"has_previous": False, "previous_visit": "", "items": [], "observations": ["Previous admin visit could not be read safely."]}
+    now = datetime.now(timezone.utc)
+    try:
+        summary = store.query_summary(previous_dt, now, {"environment": analytics.analytics_environment(config)})
+    except Exception:
+        return {"has_previous": True, "previous_visit": previous_visit, "items": [], "observations": ["Recent activity could not be loaded from analytics storage."]}
+    totals = summary["totals"]
+    verified = verified_purchase_summary(config, previous_dt, now)
+    items = [
+        {"label": "Sessions", "value": f"+{totals.get('anonymous_sessions', 0)}"},
+        {"label": "Page views", "value": f"+{totals.get('page_views', 0)}"},
+        {"label": "Book actions", "value": f"+{totals.get('book_actions', 0)}"},
+        {"label": "Checkout starts", "value": f"+{totals.get('direct_checkout_starts', 0)}"},
+        {"label": "Verified purchases", "value": f"+{verified['count']}"},
+        {"label": "Verified revenue", "value": verified["revenue_label"]},
+        {"label": "Newsletter signups", "value": f"+{totals.get('newsletter_signups', 0)}"},
+    ]
+    observations = []
+    if summary.get("traffic_sources"):
+        top_source = summary["traffic_sources"][0]
+        observations.append(f"Most new traffic came from {top_source['label']}.")
+    if summary.get("top_pages"):
+        top_page = summary["top_pages"][0]
+        observations.append(f"{top_page['label']} received the most new views.")
+    if not observations:
+        observations.append("No public visitor activity has arrived since the previous admin visit.")
+    return {"has_previous": True, "previous_visit": previous_visit, "items": items, "observations": observations[:2]}
+
+
 def dashboard_health_scores(config, storage, verified, google_uploads):
     paypal = paypal_webhook_health(config)
+    tracking_status = "Configured"
+    tracking_tone = "good"
+    if not analytics.analytics_enabled(config):
+        tracking_status = "Not Configured"
+        tracking_tone = "low"
+    elif int(storage.get("event_count") or 0) == 0:
+        tracking_status = "Waiting"
+        tracking_tone = "watch"
+    elif int(storage.get("tracking_days") or 0) < 7:
+        tracking_status = "Learning"
+        tracking_tone = "watch"
     return [
         {"label": "Analytics Storage", "status": "Healthy" if storage.get("ok") else "Needs Attention", "value": storage.get("backend", "local"), "tone": "good" if storage.get("ok") else "watch", "help": "Durable SQLite event storage."},
-        {"label": "First-Party Event Tracking", "status": "Configured" if analytics.analytics_enabled(config) else "Not Configured", "value": f"{storage.get('event_count', 0)} events", "tone": "good" if analytics.analytics_enabled(config) else "low", "help": "Browser events post to the local analytics endpoint."},
+        {"label": "First-Party Event Tracking", "status": tracking_status, "value": f"{storage.get('event_count', 0)} events", "tone": tracking_tone, "help": "Browser events post to the local analytics endpoint."},
         {"label": "PayPal Webhook", "status": "Configured" if paypal["configured"] else "Needs Attention", "value": paypal["last_event"] or "No recent events", "tone": "good" if paypal["configured"] else "watch", "help": "Webhook verifies signed-copy purchases."},
         {"label": "Verified Purchase Tracking", "status": "Active" if verified["count"] else "No Recent Data", "value": f"{verified['count']} purchases", "tone": "good" if verified["count"] else "low", "help": "Only completed PayPal webhook records."},
         {"label": "Google Ads API", "status": "Configured" if os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN") and config.get("GOOGLE_ADS_CUSTOMER_ID") else "Not Configured", "value": "Read panel optional", "tone": "good" if os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN") and config.get("GOOGLE_ADS_CUSTOMER_ID") else "low", "help": "Credential presence only; no secrets shown."},
@@ -1246,6 +1670,9 @@ def dashboard_report_links(args):
         "content": url_for("admin_analytics_named_export", kind="content", **clean),
         "coruna": url_for("admin_analytics_named_export", kind="coruna", **clean),
         "campaigns": url_for("admin_analytics_named_export", kind="campaigns", **clean),
+        "acquisition": url_for("admin_analytics_named_export", kind="acquisition", **clean),
+        "engagement_content": url_for("admin_analytics_named_export", kind="engagement_content", **clean),
+        "google_ads_uploads": url_for("admin_analytics_named_export", kind="google_ads_uploads", **clean),
         "purchases": url_for("admin_analytics_named_export", kind="purchases", **clean),
         "opportunities": url_for("admin_analytics_named_export", kind="opportunities", **clean),
         "events": url_for("admin_analytics_export", **clean),
@@ -1266,7 +1693,11 @@ def dashboard_metric_definitions():
     return [
         "Page View: a first-party public page_view event; admin pages are excluded.",
         "Anonymous Session: a browser session identifier with no name or email attached.",
+        "Pages / Session: public page_view events divided by anonymous sessions.",
+        "Meaningful Action Rate: sessions with at least one meaningful action divided by anonymous sessions.",
         "Meaningful Action: a tracked book, newsletter, Camino, donation-intent, checkout, or A Coruña journey action.",
+        "Book Page Views: exact /book page_view events. Book Ecosystem Views include /book and /book/* routes.",
+        "Signed Book Page Views: exact /book/signed page_view events. Legacy signed_copy_page_view events are kept for compatibility but do not inflate canonical page views.",
         "Checkout Start: the visitor entered the PayPal signed-copy checkout flow. It is not a sale.",
         "PayPal Return: PayPal sent the visitor back to JSM. It is not proof of payment.",
         "Verified Purchase: a deduplicated completed-payment record from the verified PayPal webhook.",
@@ -1274,6 +1705,9 @@ def dashboard_metric_definitions():
         "Donation Intent: donation buttons or PayPal donation opens. JSM does not currently verify donation revenue here.",
         "Newsletter Signup: counted only when the public implementation reports a successful provider submission.",
         "Camino Completion: current client-side PayPal approval callback, not verified ongoing subscription status.",
+        "Engagement Rate: unique page sessions with engaged_30s or scroll_75 divided by page sessions.",
+        "Acquisition -> Outcome: each session is attributed from its first usable landing UTM, click identifier, referrer, or page-view source context.",
+        "Unknown Events: unrecognized event names are stored as unknown_event diagnostics instead of becoming official event types.",
     ]
 
 
@@ -1316,6 +1750,18 @@ def dashboard_csv_export(kind, dashboard):
         writer.writerow(["Campaign", "Source", "Medium", "Views", "Sessions", "Book actions", "Checkout starts", "Verified purchases", "Newsletter signups", "Camino actions", "Donation intent", "Meaningful actions", "Action rate"])
         for row in dashboard["summary"].get("campaign_performance", []):
             writer.writerow([row.get("label"), row.get("source"), row.get("medium"), row.get("views"), row.get("sessions"), row.get("book_actions"), row.get("checkout_starts"), row.get("verified_purchases"), row.get("newsletter_signups"), row.get("camino_actions"), row.get("donation_intent"), row.get("meaningful_actions"), row.get("action_rate_label")])
+    elif kind == "acquisition":
+        writer.writerow(["Source", "Sessions", "Page views", "Book action sessions", "Checkout sessions", "Verified purchase sessions", "Newsletter signup sessions", "Meaningful action rate"])
+        for row in dashboard["summary"].get("acquisition_outcomes", []):
+            writer.writerow([row.get("source"), row.get("sessions"), row.get("page_views"), row.get("book_actions"), row.get("checkout_starts"), row.get("verified_purchases"), row.get("newsletter_signups"), row.get("meaningful_action_rate")])
+    elif kind == "engagement_content":
+        writer.writerow(["Page", "Title", "Purpose", "Views", "Sessions", "30s engaged", "Scroll 50", "Scroll 75", "Scroll 90", "Engagement rate", "Book actions", "Newsletter signups", "Meaningful actions"])
+        for row in dashboard["summary"].get("top_content", []):
+            writer.writerow([row.get("page"), row.get("title"), row.get("purpose"), row.get("views"), row.get("sessions"), row.get("engaged_30s"), row.get("scroll_50"), row.get("scroll_75"), row.get("scroll_90"), row.get("engagement_rate_label"), row.get("book_actions"), row.get("newsletter_signups"), row.get("meaningful_actions")])
+    elif kind == "google_ads_uploads":
+        writer.writerow(["Time", "Conversion Type", "Status", "Click ID Type", "Order / Checkout", "Value", "Reason"])
+        for row in dashboard.get("google_upload_detail_rows", []):
+            writer.writerow([row.get("time"), row.get("conversion_type"), row.get("status"), row.get("click_id_type"), row.get("order"), row.get("value"), row.get("reason")])
     elif kind == "purchases":
         writer.writerow(["Order ID", "Checkout ID", "Event ID", "Value", "Currency", "Attributed", "Click ID type"])
         for row in dashboard["verified_purchases"].get("records", []):
@@ -1328,7 +1774,7 @@ def dashboard_csv_export(kind, dashboard):
     return output.getvalue()
 
 
-def build_admin_dashboard(config, args=None):
+def build_admin_dashboard(config, args=None, previous_admin_visit=""):
     args = args or {}
     start, end, range_name = analytics.date_range_from_args(args)
     filters = analytics.filters_from_args(args)
@@ -1345,7 +1791,9 @@ def build_admin_dashboard(config, args=None):
     verified = verified_purchase_summary(config, start, end)
     google_uploads = google_ads_upload_summary(config, start, end)
     totals = summary["totals"]
+    coverage = dashboard_analytics_coverage(storage, start, end)
     opportunities = dashboard_opportunities(summary, verified, google_uploads)
+    what_matters = dashboard_what_matters(summary, verified, opportunities, google_uploads, coverage)
     growth_goals = dashboard_growth_goals(config, summary, verified)
     health_scores = dashboard_health_scores(config, storage, verified, google_uploads)
     insights = [
@@ -1359,20 +1807,23 @@ def build_admin_dashboard(config, args=None):
     if opportunities:
         insights.append(f"Top opportunity: {opportunities[0]['title']}.")
     stats = [
-        dashboard_stat("Page Views", totals.get("page_views", 0), summary, "page_views", "Public first-party page views."),
-        dashboard_stat("Anonymous Sessions", totals.get("anonymous_sessions", 0), summary, "anonymous_sessions", "Anonymous browser sessions, not identified people."),
-        dashboard_stat("Meaningful Actions", totals.get("meaningful_actions", 0), summary, "meaningful_actions", "Book, newsletter, Camino, donation-intent, and journey actions."),
-        dashboard_stat("Newsletter Signups", totals.get("newsletter_signups", 0), summary, "newsletter_signups", "Successful signup events only."),
-        dashboard_stat("Signed Checkout Starts", totals.get("direct_checkout_starts", 0), summary, "direct_checkout_starts", "Entered signed-copy checkout flow."),
-        dashboard_stat("Verified Signed-Book Sales", verified["count"], {"previous": {}, "comparison": {}}, "verified", "PayPal webhook verified purchases only."),
-        dashboard_stat("Verified Book Revenue", verified["revenue_label"], {"previous": {}, "comparison": {}}, "verified_revenue", "Revenue from verified purchase records only."),
-        dashboard_stat("Camino Completions", totals.get("camino_completions", 0), summary, "camino_completions", "PayPal approval callbacks, not ongoing subscription verification."),
+        dashboard_stat("Page Views", totals.get("page_views", 0), summary, "page_views", "Public first-party page views.", coverage=coverage),
+        dashboard_stat("Anonymous Sessions", totals.get("anonymous_sessions", 0), summary, "anonymous_sessions", "Anonymous browser sessions, not identified people.", coverage=coverage),
+        dashboard_stat("Meaningful Actions", totals.get("meaningful_actions", 0), summary, "meaningful_actions", "Book, newsletter, Camino, donation-intent, and journey actions.", coverage=coverage),
+        dashboard_stat("Newsletter Signups", totals.get("newsletter_signups", 0), summary, "newsletter_signups", "Successful signup events only.", coverage=coverage),
+        dashboard_stat("Signed Checkout Starts", totals.get("direct_checkout_starts", 0), summary, "direct_checkout_starts", "Entered signed-copy checkout flow.", coverage=coverage),
+        dashboard_stat("Verified Signed-Book Sales", verified["count"], {"previous": {}, "comparison": {}}, "verified", "PayPal webhook verified purchases only.", comparison_text="Tracked from PayPal webhooks"),
+        dashboard_stat("Verified Book Revenue", verified["revenue_label"], {"previous": {}, "comparison": {}}, "verified_revenue", "Revenue from verified purchase records only.", comparison_text="Tracked from PayPal webhooks"),
+        dashboard_stat("Camino Completions", totals.get("camino_completions", 0), summary, "camino_completions", "PayPal approval callbacks, not ongoing subscription verification.", coverage=coverage),
     ]
     for event in recent["events"]:
         event["human_label"] = analytics.human_event_label(event["event_name"])
+    live_activity = live_activity_feed(recent["events"])
     return {
         "storage_backend": storage.get("backend", "local sqlite"),
         "storage": storage,
+        "analytics_coverage": coverage,
+        "since_last_visit": dashboard_since_last_visit(config, store, previous_admin_visit),
         "range_name": range_name,
         "start": start.date().isoformat(),
         "end": (end - timedelta(days=1)).date().isoformat(),
@@ -1382,15 +1833,22 @@ def build_admin_dashboard(config, args=None):
         "google_uploads": google_uploads,
         "stats": stats,
         "insights": insights,
+        "jsm_pulse": dashboard_pulse(summary, verified),
+        "what_matters": what_matters,
+        "conversion_rates": dashboard_conversion_rates(summary, verified),
+        "book_pulse": dashboard_book_pulse(summary, verified),
+        "data_quality": dashboard_data_quality(summary, storage, verified, coverage),
+        "external_reporting": external_reporting_status(config),
+        "google_upload_detail_rows": google_ads_upload_detail_rows(google_uploads),
         "growth_scorecards": [
-            growth_scorecard("Audience Growth", totals.get("anonymous_sessions", 0), summary["previous"].get("anonymous_sessions", 0), "Anonymous sessions in this period.", "Share the strongest page through the best current source."),
-            growth_scorecard("Book Interest", totals.get("book_actions", 0), summary["previous"].get("book_actions", 0), "Preview, modal, retailer, signed-copy, and book journey actions.", "Promote the page with the strongest book-action rate."),
-            growth_scorecard("Signed Copy Conversion", verified["count"], 0, "Verified PayPal sales only.", "Reduce checkout leakage before scaling paid traffic."),
-            growth_scorecard("Content Discovery", len(summary.get("top_content", [])), 0, "Pages with measurable activity.", "Strengthen CTAs on high-traffic low-action pages."),
-            growth_scorecard("Newsletter Growth", totals.get("newsletter_signups", 0), summary["previous"].get("newsletter_signups", 0), "Successful newsletter signup events.", "Test a clearer Camino promise on editorial pages."),
-            growth_scorecard("A Coruña Engagement", totals.get("a_coruna_page_views", 0), summary["previous"].get("a_coruna_page_views", 0), "A Coruña pages and series views.", "Bridge the strongest A Coruña article into the book."),
-            growth_scorecard("Camino Interest", totals.get("camino_clicks", 0), summary["previous"].get("camino_clicks", 0), "Subscription CTA clicks.", "Clarify subscription status and next steps near PayPal."),
-            growth_scorecard("Campaign Efficiency", sum(row.get("meaningful_actions", 0) for row in summary.get("campaign_performance", [])), 0, "Meaningful actions from tracked campaigns.", "Use campaign links for every newsletter and social push."),
+            growth_scorecard("Audience Growth", totals.get("anonymous_sessions", 0), summary["previous"].get("anonymous_sessions", 0), "Anonymous sessions in this period.", "Share the strongest page through the best current source.", coverage["comparison_available"], coverage["comparison_label"]),
+            growth_scorecard("Book Interest", totals.get("book_actions", 0), summary["previous"].get("book_actions", 0), "Preview, modal, retailer, signed-copy, and book journey actions.", "Promote the page with the strongest book-action rate.", coverage["comparison_available"], coverage["comparison_label"]),
+            growth_scorecard("Signed Copy Conversion", verified["count"], 0, "Verified PayPal sales only.", "Reduce checkout leakage before scaling paid traffic.", False, "Tracked from PayPal webhooks"),
+            growth_scorecard("Content Discovery", len(summary.get("top_content", [])), 0, "Pages with measurable activity.", "Strengthen CTAs on high-traffic low-action pages.", False, "Current content baseline"),
+            growth_scorecard("Newsletter Growth", totals.get("newsletter_signups", 0), summary["previous"].get("newsletter_signups", 0), "Successful newsletter signup events.", "Test a clearer Camino promise on editorial pages.", coverage["comparison_available"], coverage["comparison_label"]),
+            growth_scorecard("A Coruña Engagement", totals.get("a_coruna_page_views", 0), summary["previous"].get("a_coruna_page_views", 0), "A Coruña pages and series views.", "Bridge the strongest A Coruña article into the book.", coverage["comparison_available"], coverage["comparison_label"]),
+            growth_scorecard("Camino Interest", totals.get("camino_clicks", 0), summary["previous"].get("camino_clicks", 0), "Subscription CTA clicks.", "Clarify subscription status and next steps near PayPal.", coverage["comparison_available"], coverage["comparison_label"]),
+            growth_scorecard("Campaign Efficiency", sum(row.get("meaningful_actions", 0) for row in summary.get("campaign_performance", [])), 0, "Meaningful actions from tracked campaigns.", "Use campaign links for every newsletter and social push.", False, "Current campaign baseline"),
         ],
         "growth_goals": growth_goals,
         "weekly_brief": insights[:4],
@@ -1411,10 +1869,12 @@ def build_admin_dashboard(config, args=None):
         "missed_opportunities": [row for row in summary.get("top_content", []) if row["views"] >= 10 and row["meaningful_actions"] == 0][:10],
         "device_insights": [f"{row['label'].title()} represents {row['count']} tracked events." for row in summary.get("device_categories", [])[:3]] or ["Device insights will appear after public activity is recorded."],
         "recent_events": recent["events"],
+        "live_activity": live_activity,
         "metric_definitions": dashboard_metric_definitions(),
         "report_links": dashboard_report_links(args),
         "campaign_builder": dashboard_campaign_builder(config, args),
         "board_update": [
+            {"label": "Analytics coverage", "value": coverage["status"], "note": f"Tracking since {coverage['tracking_since_label']}; {coverage['comparison_label']}."},
             {"label": "Audience", "value": totals.get("anonymous_sessions", 0), "note": "Anonymous sessions, not identified people."},
             {"label": "Book engagement", "value": totals.get("book_actions", 0), "note": "Book actions are interest signals."},
             {"label": "Verified direct sales", "value": verified["count"], "note": f"{verified['revenue_label']} verified revenue."},
@@ -2499,8 +2959,11 @@ def api_newsletter():
 @app.route("/admin", methods=["GET"])
 @login_required
 def admin_dashboard():
-    dashboard = build_admin_dashboard(app.config, request.args)
-    return render_template("admin/dashboard.html", title="Command Center", dashboard=dashboard, admin_user=os.getenv("ADMIN_USERNAME", "admin"))
+    admin_user = os.getenv("ADMIN_USERNAME", "admin")
+    previous_visit = previous_admin_dashboard_visit(app.config, admin_user)
+    dashboard = build_admin_dashboard(app.config, request.args, previous_admin_visit=previous_visit)
+    record_admin_dashboard_visit(app.config, admin_user)
+    return render_template("admin/dashboard.html", title="Command Center", dashboard=dashboard, admin_user=admin_user)
 
 
 @app.route("/admin/login", methods=["GET", "POST"])
@@ -2693,8 +3156,11 @@ tags: {tags}
 @app.route("/admin/analytics")
 @login_required
 def admin_analytics():
-    dashboard = build_admin_dashboard(app.config, request.args)
-    return render_template("admin/dashboard.html", title="Analytics", dashboard=dashboard, admin_user=os.getenv("ADMIN_USERNAME", "admin"), analytics_page=True)
+    admin_user = os.getenv("ADMIN_USERNAME", "admin")
+    previous_visit = previous_admin_dashboard_visit(app.config, admin_user)
+    dashboard = build_admin_dashboard(app.config, request.args, previous_admin_visit=previous_visit)
+    record_admin_dashboard_visit(app.config, admin_user)
+    return render_template("admin/dashboard.html", title="Analytics", dashboard=dashboard, admin_user=admin_user, analytics_page=True)
 
 
 @app.route("/admin/analytics/events")
@@ -2758,8 +3224,27 @@ def admin_analytics_page_report():
     events = analytics.analytics_store(app.config).query_events(start, end, filters, page=1, page_size=25)
     recommendations = []
     totals = summary["totals"]
+    page_metrics = [
+        {"label": "Engagement Rate", "value": analytics.percent_label(analytics.numeric_rate(totals.get("engaged_sessions", 0), totals.get("anonymous_sessions", 0))), "note": "Sessions with 30s engaged or 75% scroll."},
+        {"label": "30s Engaged", "value": totals.get("engaged_30s", 0), "note": "Fires once per page view after active time."},
+        {"label": "75% Read", "value": totals.get("scroll_75", 0), "note": "Scroll-depth event, once per page view."},
+        {"label": "Book Click Rate", "value": analytics.percent_label(analytics.numeric_rate(totals.get("book_action_sessions", 0), totals.get("anonymous_sessions", 0))), "note": "Book-action sessions divided by page sessions."},
+        {"label": "Newsletter Signup Rate", "value": analytics.percent_label(analytics.numeric_rate(totals.get("newsletter_signup_sessions", 0), totals.get("anonymous_sessions", 0))), "note": "Signup sessions divided by page sessions."},
+    ]
+    if page_path == "/book":
+        page_metrics.extend([
+            {"label": "Preview Rate", "value": analytics.percent_label(analytics.numeric_rate(totals.get("book_preview_clicks", 0), totals.get("anonymous_sessions", 0))), "note": "Preview clicks divided by page sessions."},
+            {"label": "Retailer Click Rate", "value": analytics.percent_label(analytics.numeric_rate(totals.get("retailer_clicks", 0), totals.get("anonymous_sessions", 0))), "note": "Retailer clicks divided by page sessions."},
+            {"label": "Signed-Copy Transition Rate", "value": analytics.percent_label(analytics.numeric_rate(totals.get("signed_cta_clicks", 0), totals.get("anonymous_sessions", 0))), "note": "Signed-copy CTA clicks divided by page sessions."},
+        ])
+    if page_path == "/book/signed":
+        page_metrics.append({"label": "Checkout Start Rate", "value": analytics.percent_label(analytics.numeric_rate(totals.get("direct_checkout_sessions", 0), totals.get("anonymous_sessions", 0))), "note": "Checkout-start sessions divided by signed page sessions."})
     if totals.get("page_views", 0) >= 10 and not totals.get("book_actions", 0):
         recommendations.append("This page has traffic but no recorded book action. Test a contextual book or signed-copy CTA.")
+    if totals.get("anonymous_sessions", 0) >= 20 and totals.get("engaged_sessions", 0) and not totals.get("meaningful_action_sessions", 0):
+        recommendations.append("This page is getting engaged sessions but no meaningful actions. Test a clearer contextual next step.")
+    if totals.get("anonymous_sessions", 0) < 20:
+        recommendations.append("Not enough traffic yet for reliable page-level comparisons.")
     if totals.get("newsletter_signup_attempts", 0) and totals.get("newsletter_signups", 0) == 0:
         recommendations.append("Signup attempts are not becoming successful signup events. Check the Mailchimp flow for this page.")
     if not recommendations:
@@ -2770,6 +3255,8 @@ def admin_analytics_page_report():
         page_path=page_path,
         summary=summary,
         events=events,
+        page_metrics=page_metrics,
+        traffic_sources=summary.get("traffic_sources", []),
         recommendations=recommendations,
         range_name=range_name,
         start=start.date().isoformat(),

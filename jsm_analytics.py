@@ -25,6 +25,7 @@ EVENT_NAME_ALIASES = {
 }
 
 VALID_EVENT_NAMES = {
+    "engaged_30s",
     "page_view",
     "session_start",
     "book_preview_click",
@@ -61,6 +62,10 @@ VALID_EVENT_NAMES = {
     "signed_copy_promo_impression",
     "signed_copy_promo_reopen",
     "signed_page_preview_click",
+    "scroll_50",
+    "scroll_75",
+    "scroll_90",
+    "unknown_event",
     "verified_direct_purchase_completed",
     "view_coruna_literary_tour",
     "view_coruna_things_to_do",
@@ -98,6 +103,7 @@ MEANINGFUL_ACTION_EVENTS = BOOK_ACTION_EVENTS | {
 }
 
 EVENT_CATEGORIES = {
+    "engaged_30s": "engagement",
     "page_view": "content",
     "session_start": "content",
     "newsletter_form_view": "newsletter",
@@ -110,6 +116,10 @@ EVENT_CATEGORIES = {
     "direct_checkout_started": "checkout",
     "direct_checkout_returned": "checkout",
     "verified_direct_purchase_completed": "sales",
+    "scroll_50": "engagement",
+    "scroll_75": "engagement",
+    "scroll_90": "engagement",
+    "unknown_event": "diagnostic",
 }
 
 for _event in BOOK_ACTION_EVENTS:
@@ -331,32 +341,82 @@ class LocalAnalyticsStore:
     def health_check(self):
         try:
             with self.connect() as connection:
-                row = connection.execute("SELECT COUNT(*) AS count, MAX(occurred_at) AS last_recorded_at FROM analytics_events").fetchone()
+                row = connection.execute(
+                    """
+                    SELECT
+                        COUNT(*) AS count,
+                        MIN(occurred_at) AS first_recorded_at,
+                        MAX(occurred_at) AS last_recorded_at
+                    FROM analytics_events
+                    """
+                ).fetchone()
+            first_recorded_at = row["first_recorded_at"] or ""
+            last_recorded_at = row["last_recorded_at"] or ""
+            tracking_days = tracking_day_count(first_recorded_at, last_recorded_at)
             return {
                 "ok": True,
                 "backend": "local sqlite",
                 "path": str(self.path),
                 "event_count": row["count"],
-                "last_recorded_at": row["last_recorded_at"] or "",
+                "first_recorded_at": first_recorded_at,
+                "last_recorded_at": last_recorded_at,
+                "tracking_days": tracking_days,
+                "coverage_start_date": first_recorded_at[:10],
+                "coverage_end_date": last_recorded_at[:10],
             }
         except sqlite3.Error as error:
-            return {"ok": False, "backend": "local sqlite", "error": str(error), "event_count": 0, "last_recorded_at": ""}
+            return {
+                "ok": False,
+                "backend": "local sqlite",
+                "error": str(error),
+                "event_count": 0,
+                "first_recorded_at": "",
+                "last_recorded_at": "",
+                "tracking_days": 0,
+                "coverage_start_date": "",
+                "coverage_end_date": "",
+            }
 
     def _period_summary(self, start, end, filters):
         events = self._events(start, end, filters)
         page_views = count_events(events, "page_view")
         sessions = len({event["anonymous_session_id"] for event in events if event.get("anonymous_session_id")})
+        session_map = events_by_session(events)
+        book_sessions = unique_page_sessions_prefix(events, "/book")
+        signed_copy_sessions = unique_page_sessions_exact(events, "/book/signed")
+        direct_checkout_sessions = sessions_with_event(events, "direct_checkout_started")
+        meaningful_action_sessions = sessions_with_any_event(events, MEANINGFUL_ACTION_EVENTS)
+        engagement_sessions = sessions_with_any_event(events, {"engaged_30s", "scroll_75"})
+        a_coruna_sessions = {sid for sid, items in session_map.items() if any(is_a_coruna_event(event) for event in items)}
+        a_coruna_checkout_sessions = {
+            sid
+            for sid in a_coruna_sessions
+            if any(event["event_name"] == "direct_checkout_started" for event in session_map.get(sid, []))
+        }
+        a_coruna_engaged_sessions = {
+            sid
+            for sid in a_coruna_sessions
+            if any(event["event_name"] in {"engaged_30s", "scroll_75"} for event in session_map.get(sid, []))
+        }
         totals = {
             "page_views": page_views,
             "anonymous_sessions": sessions,
             "meaningful_actions": sum(1 for event in events if event["event_name"] in MEANINGFUL_ACTION_EVENTS),
+            "meaningful_action_sessions": len(meaningful_action_sessions),
             "book_actions": sum(1 for event in events if event["event_name"] in BOOK_ACTION_EVENTS),
+            "book_action_sessions": len(sessions_with_any_event(events, BOOK_ACTION_EVENTS)),
             "newsletter_form_views": count_events(events, "newsletter_form_view"),
+            "newsletter_form_sessions": len(sessions_with_event(events, "newsletter_form_view")),
             "newsletter_signup_attempts": count_events(events, "newsletter_signup_attempt"),
             "newsletter_signups": count_events(events, "newsletter_signup"),
+            "newsletter_signup_sessions": len(sessions_with_event(events, "newsletter_signup")),
             "newsletter_errors": count_events(events, "newsletter_signup_error"),
-            "signed_copy_page_views": count_events(events, "signed_copy_page_view") + count_page_prefix(events, "/book/signed"),
-            "book_page_views": count_page_prefix(events, "/book"),
+            "signed_copy_page_views": count_page_exact(events, "/book/signed"),
+            "signed_copy_legacy_view_events": count_events(events, "signed_copy_page_view"),
+            "signed_copy_sessions": len(signed_copy_sessions),
+            "book_page_views": count_page_exact(events, "/book"),
+            "book_ecosystem_page_views": count_page_prefix(events, "/book"),
+            "book_sessions": len(book_sessions),
             "book_preview_clicks": count_events(events, "book_preview_click") + count_events(events, "signed_copy_preview_click"),
             "purchase_modal_opens": count_events(events, "purchase_modal_open"),
             "signed_promo_impressions": count_events(events, "signed_copy_promo_impression"),
@@ -364,14 +424,18 @@ class LocalAnalyticsStore:
             "signed_cta_clicks": count_events(events, "signed_copy_checkout_click") + count_events(events, "click_signed_copy_cta"),
             "retailer_clicks": sum(count_events(events, name) for name in ("retailer_click_amazon_us", "retailer_click_barnes_noble", "retailer_click_amazon_es")),
             "direct_checkout_starts": count_events(events, "direct_checkout_started"),
+            "direct_checkout_sessions": len(direct_checkout_sessions),
             "paypal_returns": count_events(events, "direct_checkout_returned"),
             "camino_page_views": count_page_prefix(events, "/novel-subscription"),
+            "camino_sessions": len(unique_page_sessions_prefix(events, "/novel-subscription")),
             "camino_clicks": count_events(events, "camino_subscription_click"),
             "camino_completions": count_events(events, "camino_subscription_completed"),
             "donation_page_views": count_page_prefix(events, "/donate"),
             "donation_clicks": count_events(events, "donation_click"),
             "a_coruna_page_views": sum(1 for event in events if event["event_name"] == "page_view" and is_a_coruna_path(event.get("page_path", ""))),
-            "a_coruna_sessions": len({event["anonymous_session_id"] for event in events if event.get("anonymous_session_id") and is_a_coruna_event(event)}),
+            "a_coruna_sessions": len(a_coruna_sessions),
+            "engaged_a_coruna_sessions": len(a_coruna_engaged_sessions),
+            "a_coruna_checkout_sessions": len(a_coruna_checkout_sessions),
             "through_lens_views": sum(1 for event in events if event["event_name"] == "page_view" and is_through_lens_path(event.get("page_path", ""), event)),
             "things_to_do_views": count_page_prefix(events, "/a-coruna/things-to-do"),
             "literary_tour_views": count_page_prefix(events, "/a-coruna/literary-walking-tour"),
@@ -379,6 +443,12 @@ class LocalAnalyticsStore:
             "literary_tour_clicks": count_events(events, "click_coruna_to_literary_tour") + count_events(events, "click_literary_tour_to_book"),
             "book_clicks_from_coruna": count_events(events, "click_coruna_to_book") + count_events(events, "click_literary_tour_to_book"),
             "signed_clicks_from_coruna": count_events(events, "click_signed_copy_cta"),
+            "engaged_30s": count_events(events, "engaged_30s"),
+            "scroll_50": count_events(events, "scroll_50"),
+            "scroll_75": count_events(events, "scroll_75"),
+            "scroll_90": count_events(events, "scroll_90"),
+            "engaged_sessions": len(engagement_sessions),
+            "unknown_events": count_events(events, "unknown_event"),
         }
         return {
             "totals": totals,
@@ -392,6 +462,9 @@ class LocalAnalyticsStore:
             "through_lens_content": through_lens_table(events),
             "retailer_performance": retailer_performance(events),
             "campaign_performance": campaign_performance(events),
+            "acquisition_outcomes": acquisition_outcomes(events),
+            "content_winners": content_winners(events),
+            "data_quality": data_quality(events),
             "newsletter_pages": group_counts(events, "page_path", event_name="newsletter_signup"),
             "newsletter_sources": group_counts(events, "source", event_name="newsletter_signup"),
             "camino_sources": group_counts([event for event in events if event["event_name"].startswith("camino_") or event.get("page_path") == "/novel-subscription"], "source"),
@@ -452,7 +525,11 @@ def storage_health(config):
             "backend": config.get("ANALYTICS_STORAGE_BACKEND", "local"),
             "error": str(error),
             "event_count": 0,
+            "first_recorded_at": "",
             "last_recorded_at": "",
+            "tracking_days": 0,
+            "coverage_start_date": "",
+            "coverage_end_date": "",
         }
 
 
@@ -576,8 +653,10 @@ def parse_event_request(request, config):
 def normalize_event(raw, config):
     name = clean_string(raw.get("event_name") or raw.get("name"), 64)
     name = EVENT_NAME_ALIASES.get(name, name)
+    original_event_name = ""
     if name not in VALID_EVENT_NAMES:
-        VALID_EVENT_NAMES.add(name)
+        original_event_name = name
+        name = "unknown_event"
     event = {
         "event_id": clean_string(raw.get("event_id") or f"server:{uuid.uuid4().hex}", 96),
         "schema_version": SCHEMA_VERSION,
@@ -613,6 +692,8 @@ def normalize_event(raw, config):
         "environment": clean_string(raw.get("environment") or analytics_environment(config), 32),
         "metadata": safe_metadata(raw.get("metadata") or {}, raw),
     }
+    if original_event_name:
+        event["metadata"]["original_event_name"] = original_event_name
     if event["client_occurred_at"]:
         parsed = parse_datetime(event["client_occurred_at"])
         if parsed:
@@ -646,7 +727,45 @@ def build_empty_summary():
         "page_views": 0,
         "anonymous_sessions": 0,
         "meaningful_actions": 0,
+        "meaningful_action_sessions": 0,
         "book_actions": 0,
+        "book_action_sessions": 0,
+        "book_page_views": 0,
+        "book_ecosystem_page_views": 0,
+        "book_sessions": 0,
+        "signed_copy_page_views": 0,
+        "signed_copy_sessions": 0,
+        "direct_checkout_starts": 0,
+        "direct_checkout_sessions": 0,
+        "newsletter_form_views": 0,
+        "newsletter_form_sessions": 0,
+        "newsletter_signup_attempts": 0,
+        "newsletter_signups": 0,
+        "newsletter_signup_sessions": 0,
+        "newsletter_errors": 0,
+        "camino_page_views": 0,
+        "camino_sessions": 0,
+        "camino_clicks": 0,
+        "camino_completions": 0,
+        "donation_page_views": 0,
+        "donation_clicks": 0,
+        "a_coruna_page_views": 0,
+        "a_coruna_sessions": 0,
+        "engaged_a_coruna_sessions": 0,
+        "a_coruna_checkout_sessions": 0,
+        "through_lens_views": 0,
+        "things_to_do_views": 0,
+        "literary_tour_views": 0,
+        "through_lens_article_clicks": 0,
+        "literary_tour_clicks": 0,
+        "book_clicks_from_coruna": 0,
+        "signed_clicks_from_coruna": 0,
+        "engaged_30s": 0,
+        "scroll_50": 0,
+        "scroll_75": 0,
+        "scroll_90": 0,
+        "engaged_sessions": 0,
+        "unknown_events": 0,
     }
     return {
         "totals": totals,
@@ -662,6 +781,15 @@ def build_empty_summary():
         "through_lens_content": [],
         "retailer_performance": [],
         "campaign_performance": [],
+        "acquisition_outcomes": [],
+        "content_winners": [],
+        "data_quality": {
+            "source_attribution_rate": "No baseline",
+            "device_metadata_rate": "No baseline",
+            "cta_position_rate": "No baseline",
+            "landing_page_rate": "No baseline",
+            "unknown_events": 0,
+        },
         "daily_trend": [],
         "events": [],
     }
@@ -682,6 +810,14 @@ def parse_datetime(value):
     except ValueError:
         return None
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def tracking_day_count(first_recorded_at, last_recorded_at):
+    first = parse_datetime(first_recorded_at)
+    last = parse_datetime(last_recorded_at)
+    if not first or not last:
+        return 0
+    return max(1, (last.date() - first.date()).days + 1)
 
 
 def utc_now_iso():
@@ -745,6 +881,7 @@ def safe_metadata(metadata, raw):
         "event_id",
         "status",
         "reason",
+        "original_event_name",
     }
     merged = {}
     if isinstance(metadata, dict):
@@ -773,8 +910,45 @@ def count_events(events, name):
     return sum(1 for event in events if event["event_name"] == name)
 
 
+def count_page_exact(events, path):
+    return sum(1 for event in events if event["event_name"] == "page_view" and (event.get("page_path") or "") == path)
+
+
 def count_page_prefix(events, prefix):
     return sum(1 for event in events if event["event_name"] == "page_view" and (event.get("page_path") or "").startswith(prefix))
+
+
+def unique_page_sessions_exact(events, path):
+    return {
+        event["anonymous_session_id"]
+        for event in events
+        if event["event_name"] == "page_view" and event.get("anonymous_session_id") and (event.get("page_path") or "") == path
+    }
+
+
+def unique_page_sessions_prefix(events, prefix):
+    return {
+        event["anonymous_session_id"]
+        for event in events
+        if event["event_name"] == "page_view" and event.get("anonymous_session_id") and (event.get("page_path") or "").startswith(prefix)
+    }
+
+
+def sessions_with_event(events, name):
+    return {event["anonymous_session_id"] for event in events if event.get("anonymous_session_id") and event["event_name"] == name}
+
+
+def sessions_with_any_event(events, names):
+    return {event["anonymous_session_id"] for event in events if event.get("anonymous_session_id") and event["event_name"] in names}
+
+
+def events_by_session(events):
+    session_map = defaultdict(list)
+    for event in events:
+        sid = event.get("anonymous_session_id")
+        if sid:
+            session_map[sid].append(event)
+    return session_map
 
 
 def group_counts(events, field, event_name=None, limit=10):
@@ -792,12 +966,21 @@ def group_counts(events, field, event_name=None, limit=10):
 
 def traffic_sources(events):
     counter = Counter()
-    for event in events:
-        if event["event_name"] != "page_view":
-            continue
-        source = classify_source(event)
+    for _sid, items in events_by_session(events).items():
+        source = session_source(items)
         counter[source] += 1
     return [{"label": label, "count": count} for label, count in counter.most_common(10)]
+
+
+def session_source(events):
+    candidates = sorted(events, key=lambda event: event.get("occurred_at") or "")
+    for event in candidates:
+        if event["event_name"] == "page_view":
+            return classify_source(event)
+    for event in candidates:
+        if event.get("source") or event.get("medium") or event.get("referrer_domain") or event.get("gclid") or event.get("gbraid") or event.get("wbraid"):
+            return classify_source(event)
+    return "Direct"
 
 
 def classify_source(event):
@@ -861,15 +1044,38 @@ def journey_paths(events):
 
 
 def content_table(events):
-    by_page = defaultdict(lambda: {"views": 0, "sessions": set(), "actions": 0, "book_actions": 0, "newsletter_signups": 0, "donation_clicks": 0, "title": ""})
+    by_page = defaultdict(
+        lambda: {
+            "views": 0,
+            "sessions": set(),
+            "actions": 0,
+            "book_actions": 0,
+            "newsletter_signups": 0,
+            "donation_clicks": 0,
+            "engaged_30s_sessions": set(),
+            "scroll_50_sessions": set(),
+            "scroll_75_sessions": set(),
+            "scroll_90_sessions": set(),
+            "title": "",
+        }
+    )
     for event in events:
         page = event.get("page_path") or "Unknown"
         row = by_page[page]
         row["title"] = row["title"] or event.get("page_title") or page
         if event["event_name"] == "page_view":
             row["views"] += 1
-        if event.get("anonymous_session_id"):
-            row["sessions"].add(event["anonymous_session_id"])
+        sid = event.get("anonymous_session_id")
+        if sid:
+            row["sessions"].add(sid)
+            if event["event_name"] == "engaged_30s":
+                row["engaged_30s_sessions"].add(sid)
+            if event["event_name"] == "scroll_50":
+                row["scroll_50_sessions"].add(sid)
+            if event["event_name"] == "scroll_75":
+                row["scroll_75_sessions"].add(sid)
+            if event["event_name"] == "scroll_90":
+                row["scroll_90_sessions"].add(sid)
         if event["event_name"] in MEANINGFUL_ACTION_EVENTS:
             row["actions"] += 1
         if event["event_name"] in BOOK_ACTION_EVENTS:
@@ -880,12 +1086,20 @@ def content_table(events):
             row["donation_clicks"] += 1
     result = []
     for page, row in by_page.items():
+        engaged_sessions = row["engaged_30s_sessions"] | row["scroll_75_sessions"]
+        sessions = len(row["sessions"])
         result.append({
             "page": page,
             "title": row["title"],
             "purpose": page_purpose(page),
             "views": row["views"],
-            "sessions": len(row["sessions"]),
+            "sessions": sessions,
+            "engaged_30s": len(row["engaged_30s_sessions"]),
+            "scroll_50": len(row["scroll_50_sessions"]),
+            "scroll_75": len(row["scroll_75_sessions"]),
+            "scroll_90": len(row["scroll_90_sessions"]),
+            "engaged_sessions": len(engaged_sessions),
+            "engagement_rate_label": percent_label(numeric_rate(len(engaged_sessions), sessions)),
             "meaningful_actions": row["actions"],
             "book_actions": row["book_actions"],
             "newsletter_signups": row["newsletter_signups"],
@@ -897,6 +1111,87 @@ def content_table(events):
 def through_lens_table(events):
     rows = [row for row in content_table(events) if is_through_lens_path(row["page"], row)]
     return rows[:12]
+
+
+def acquisition_outcomes(events):
+    rows = defaultdict(
+        lambda: {
+            "sessions": 0,
+            "page_views": 0,
+            "book_action_sessions": 0,
+            "checkout_sessions": 0,
+            "verified_purchase_sessions": 0,
+            "newsletter_signup_sessions": 0,
+            "meaningful_action_sessions": 0,
+        }
+    )
+    for _sid, items in events_by_session(events).items():
+        source = session_source(items)
+        row = rows[source]
+        row["sessions"] += 1
+        row["page_views"] += sum(1 for event in items if event["event_name"] == "page_view")
+        row["book_action_sessions"] += int(any(event["event_name"] in BOOK_ACTION_EVENTS for event in items))
+        row["checkout_sessions"] += int(any(event["event_name"] == "direct_checkout_started" for event in items))
+        row["verified_purchase_sessions"] += int(any(event["event_name"] == "verified_direct_purchase_completed" for event in items))
+        row["newsletter_signup_sessions"] += int(any(event["event_name"] == "newsletter_signup" for event in items))
+        row["meaningful_action_sessions"] += int(any(event["event_name"] in MEANINGFUL_ACTION_EVENTS for event in items))
+    result = []
+    for source, row in rows.items():
+        sessions = row["sessions"]
+        result.append({
+            "source": source,
+            "sessions": sessions,
+            "page_views": row["page_views"],
+            "book_actions": row["book_action_sessions"],
+            "checkout_starts": row["checkout_sessions"],
+            "verified_purchases": row["verified_purchase_sessions"],
+            "newsletter_signups": row["newsletter_signup_sessions"],
+            "meaningful_action_rate": percent_label(numeric_rate(row["meaningful_action_sessions"], sessions)),
+        })
+    return sorted(result, key=lambda item: (item["sessions"], item["book_actions"], item["checkout_starts"]), reverse=True)[:12]
+
+
+def content_winners(events):
+    rows = [row for row in content_table(events) if row["page"] != "Unknown" and row["views"] > 0]
+    if not rows:
+        return []
+    winners = []
+    most_traffic = max(rows, key=lambda row: (row["views"], row["sessions"]))
+    winners.append({"label": "Most Traffic", "title": most_traffic["title"], "metric": f"{most_traffic['views']} views", "page": most_traffic["page"]})
+    engaged_candidates = [row for row in rows if row["sessions"] >= 3]
+    if engaged_candidates:
+        best_engagement = max(engaged_candidates, key=lambda row: (row["engaged_sessions"] / max(row["sessions"], 1), row["engaged_sessions"]))
+        winners.append({"label": "Best Engagement", "title": best_engagement["title"], "metric": best_engagement["engagement_rate_label"], "page": best_engagement["page"]})
+    book_candidates = [row for row in rows if row["sessions"] >= 3 and row["book_actions"]]
+    if book_candidates:
+        best_book = max(book_candidates, key=lambda row: (row["book_actions"] / max(row["sessions"], 1), row["book_actions"]))
+        winners.append({"label": "Best Book Driver", "title": best_book["title"], "metric": f"{best_book['book_actions']} book actions", "page": best_book["page"]})
+    newsletter_candidates = [row for row in rows if row["sessions"] >= 3 and row["newsletter_signups"]]
+    if newsletter_candidates:
+        best_newsletter = max(newsletter_candidates, key=lambda row: (row["newsletter_signups"] / max(row["sessions"], 1), row["newsletter_signups"]))
+        winners.append({"label": "Best Newsletter Driver", "title": best_newsletter["title"], "metric": f"{best_newsletter['newsletter_signups']} signups", "page": best_newsletter["page"]})
+    return winners[:5]
+
+
+def data_quality(events):
+    sessions = events_by_session(events)
+    session_count = len(sessions)
+    attributed_sessions = sum(
+        1
+        for items in sessions.values()
+        if any(event.get("source") or event.get("medium") or event.get("referrer_domain") or event.get("gclid") or event.get("gbraid") or event.get("wbraid") for event in items)
+    )
+    cta_events = [event for event in events if event["event_name"] in MEANINGFUL_ACTION_EVENTS]
+    cta_with_position = sum(1 for event in cta_events if event.get("element_position"))
+    events_with_landing = sum(1 for event in events if event.get("landing_page"))
+    device_events = sum(1 for event in events if event.get("device_category"))
+    return {
+        "source_attribution_rate": percent_label(numeric_rate(attributed_sessions, session_count)),
+        "device_metadata_rate": percent_label(numeric_rate(device_events, len(events))),
+        "cta_position_rate": percent_label(numeric_rate(cta_with_position, len(cta_events))),
+        "landing_page_rate": percent_label(numeric_rate(events_with_landing, len(events))),
+        "unknown_events": count_events(events, "unknown_event"),
+    }
 
 
 def retailer_performance(events):

@@ -31,11 +31,26 @@
     <p class="admin-alert admin-alert--warning">Analytics storage needs attention. The dashboard will keep rendering, but event data may be incomplete.</p>
   {% endif %}
 
+  <section class="admin-coverage-banner admin-coverage-banner--{{ dashboard.analytics_coverage.tone }}" aria-label="Analytics coverage">
+    <div>
+      <span>{{ dashboard.analytics_coverage.status }}</span>
+      <h2>{{ dashboard.analytics_coverage.headline }}</h2>
+      <p>{{ dashboard.analytics_coverage.detail }}</p>
+    </div>
+    <dl>
+      <div><dt>Tracking since</dt><dd>{{ dashboard.analytics_coverage.tracking_since_label }}</dd></div>
+      <div><dt>Tracked days</dt><dd>{{ dashboard.analytics_coverage.tracking_days }}</dd></div>
+      <div><dt>Events</dt><dd>{{ dashboard.analytics_coverage.event_count }}</dd></div>
+      <div><dt>Comparison</dt><dd>{{ dashboard.analytics_coverage.comparison_label }}</dd></div>
+    </dl>
+  </section>
+
   <section class="admin-panel admin-panel--wide" aria-label="Analytics storage status">
     <div class="admin-analytics-health">
       <span>Backend: {{ dashboard.storage.backend }}</span>
       <span>Health: {{ "OK" if dashboard.storage.ok else "Needs attention" }}</span>
       <span>Events: {{ dashboard.storage.event_count }}</span>
+      <span>First event: {{ dashboard.storage.first_recorded_at or "None yet" }}</span>
       <span>Last event: {{ dashboard.storage.last_recorded_at or "None yet" }}</span>
     </div>
   </section>
@@ -73,6 +88,121 @@
   </nav>
 
   <div class="admin-tab-panel" id="admin-tab-overview" data-admin-tab-panel="overview">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header">
+        <h2>JSM Pulse</h2>
+        <span>Current selected period</span>
+      </div>
+      <div class="admin-pulse-grid">
+        {% for group in dashboard.jsm_pulse %}
+          <article class="admin-pulse-card">
+            <h3>{{ group.label }}</h3>
+            <dl>
+              {% for item in group["items"] %}
+                <div><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>
+              {% endfor %}
+            </dl>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header">
+        <h2>What Matters Right Now</h2>
+        <span>Top three rule-based observations</span>
+      </div>
+      <div class="admin-action-card-grid admin-action-card-grid--three">
+        {% for item in dashboard.what_matters %}
+          <article class="admin-action-card admin-action-card--{{ item.priority|lower }}">
+            <span>{{ item.category }} · {{ item.priority }} · {{ item.confidence }} confidence</span>
+            <h3>{{ item.title }}</h3>
+            <strong>{{ item.metric }}</strong>
+            <p>{{ item.why }}</p>
+            <b>{{ item.action }}</b>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header">
+        <h2>Conversion Rates</h2>
+        <span>Session-aware where the data supports it</span>
+      </div>
+      <div class="admin-conversion-strip">
+        {% for rate in dashboard.conversion_rates %}
+          <article class="admin-rate-card admin-rate-card--{{ rate.tone }}" title="{{ rate.definition }}">
+            <span>{{ rate.label }}</span>
+            <strong>{{ rate.value }}</strong>
+            <small>{{ rate.numerator }} of {{ rate.denominator }}</small>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="admin-dashboard__grid">
+      <section class="admin-panel">
+        <div class="admin-panel__header"><h2>Acquisition -> Outcome</h2><span>Session source attribution</span></div>
+        {% if dashboard.summary.acquisition_outcomes %}
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Source</th><th>Sessions</th><th>Book Actions</th><th>Checkout Starts</th><th>Verified</th><th>Newsletter</th><th>Action Rate</th></tr></thead>
+              <tbody>
+                {% for row in dashboard.summary.acquisition_outcomes %}
+                  <tr><td>{{ row.source }}</td><td>{{ row.sessions }}</td><td>{{ row.book_actions }}</td><td>{{ row.checkout_starts }}</td><td>{{ row.verified_purchases }}</td><td>{{ row.newsletter_signups }}</td><td>{{ row.meaningful_action_rate }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="admin-empty">Source outcomes will appear after public sessions are recorded.</p>
+        {% endif %}
+      </section>
+
+      <section class="admin-panel">
+        <div class="admin-panel__header"><h2>Content Winners</h2><span>Enough data only</span></div>
+        {% if dashboard.summary.content_winners %}
+          <div class="admin-winner-list">
+            {% for winner in dashboard.summary.content_winners %}
+              <article>
+                <span>{{ winner.label }}</span>
+                <a href="{{ url_for('admin_analytics_page_report', page_path=winner.page, range=dashboard.range_name, start=dashboard.start, end=dashboard.end) }}">{{ winner.title }}</a>
+                <strong>{{ winner.metric }}</strong>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="admin-empty">Content winners need more tracked page sessions before ranking.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Book Pulse</h2><span>{{ dashboard.book_pulse.statement }}</span></div>
+      <div class="admin-mini-grid">
+        {% for item in dashboard.book_pulse.metrics %}
+          <article><span>{{ item.label }}</span><strong>{{ item.value }}</strong></article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Since Your Last Visit</h2><span>{% if dashboard.since_last_visit.previous_visit %}Since {{ dashboard.since_last_visit.previous_visit }}{% else %}Baseline starts now{% endif %}</span></div>
+      {% if dashboard.since_last_visit.has_previous %}
+        <div class="admin-mini-grid">
+          {% for item in dashboard.since_last_visit["items"] %}
+            <article><span>{{ item.label }}</span><strong>{{ item.value }}</strong></article>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <ul class="admin-insight-list">
+        {% for observation in dashboard.since_last_visit.observations %}
+          <li>{{ observation }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
     <section class="admin-panel admin-panel--wide admin-insight-panel">
       <div class="admin-panel__header">
         <h2>What changed?</h2>
@@ -198,19 +328,21 @@
         {% for label, value in [
           ("A Coruña Page Views", dashboard.summary.totals.a_coruna_page_views),
           ("A Coruña Sessions", dashboard.summary.totals.a_coruna_sessions),
+          ("Engaged A Coruña Sessions", dashboard.summary.totals.engaged_a_coruna_sessions),
           ("Through the Lens Views", dashboard.summary.totals.through_lens_views),
           ("Things-to-Do Views", dashboard.summary.totals.things_to_do_views),
           ("Literary Tour Views", dashboard.summary.totals.literary_tour_views),
           ("Article Clicks", dashboard.summary.totals.through_lens_article_clicks),
           ("Book Clicks", dashboard.summary.totals.book_clicks_from_coruna),
-          ("Signed-Copy Clicks", dashboard.summary.totals.signed_clicks_from_coruna)
+          ("Signed-Copy Clicks", dashboard.summary.totals.signed_clicks_from_coruna),
+          ("Checkout Starts from A Coruña Sessions", dashboard.summary.totals.a_coruna_checkout_sessions)
         ] %}
           <article><span>{{ label }}</span><strong>{{ value }}</strong></article>
         {% endfor %}
       </div>
     </section>
-    <section class="admin-panel admin-panel--wide"><div class="admin-panel__header"><h2>A Coruña content journey</h2><span>{{ dashboard.funnels.a_coruna.finding }}</span></div>{{ funnel_chart(dashboard.funnels.a_coruna) }}</section>
-    {{ table_panel("Through the Lens performance", ["Page", "Title", "Views", "Sessions", "Book actions", "Meaningful actions"], dashboard.summary.through_lens_content, ["page", "title", "views", "sessions", "book_actions", "meaningful_actions"], "Through the Lens performance appears after series articles receive tracked page views.") }}
+    <section class="admin-panel admin-panel--wide"><div class="admin-panel__header"><h2>Common A Coruña Journey</h2><span>{{ dashboard.funnels.a_coruna.finding }}</span></div>{{ funnel_chart(dashboard.funnels.a_coruna) }}</section>
+    {{ table_panel("Through the Lens performance", ["Article", "Views", "Sessions", "Engagement Rate", "75% Readers", "Book Actions", "Meaningful Actions"], dashboard.summary.through_lens_content, ["title", "views", "sessions", "engagement_rate_label", "scroll_75", "book_actions", "meaningful_actions"], "Through the Lens performance appears after series articles receive tracked page views.") }}
   </div>
 
   <div class="admin-tab-panel" id="admin-tab-content" data-admin-tab-panel="content">
@@ -226,7 +358,7 @@
         <a href="{{ url_for('a_coruna_through_the_lens') }}" target="_blank" rel="noopener">Through the Lens</a>
       </div>
     </section>
-    {{ table_panel("Most-read content", ["Page", "Title", "Purpose", "Views", "Sessions", "Book actions", "Newsletter", "Meaningful actions"], dashboard.summary.top_content, ["page", "title", "purpose", "views", "sessions", "book_actions", "newsletter_signups", "meaningful_actions"], "Content analytics appears after public page views are recorded.") }}
+    {{ table_panel("Content performance", ["Page", "Title", "Purpose", "Views", "Sessions", "30s Engaged", "50% Scroll", "75% Scroll", "90% Scroll", "Engagement Rate", "Book Actions", "Newsletter", "Meaningful Actions"], dashboard.summary.top_content, ["page", "title", "purpose", "views", "sessions", "engaged_30s", "scroll_50", "scroll_75", "scroll_90", "engagement_rate_label", "book_actions", "newsletter_signups", "meaningful_actions"], "Content analytics appears after public page views are recorded.") }}
     <section class="admin-panel admin-panel--wide">
       <div class="admin-panel__header"><h2>Top pages by purpose</h2><span>Different pages have different jobs</span></div>
       <div class="admin-purpose-grid">
@@ -323,6 +455,11 @@
       <div class="admin-panel__header"><h2>Google Ads offline conversion health</h2><span>Google Ads data is separate from JSM verified purchases</span></div>
       <div class="admin-mini-grid">{% for row in dashboard.google_uploads.rows %}<article><span>{{ row.label }}</span><strong>{{ row.count }}</strong></article>{% endfor %}</div>
     </section>
+    {{ table_panel("Recent Google Ads upload attempts", ["Time", "Conversion Type", "Status", "Click ID Type", "Order / Checkout", "Value", "Reason"], dashboard.google_upload_detail_rows, ["time", "conversion_type", "status", "click_id_type", "order", "value", "reason"], "Upload attempts will appear after checkout or purchase conversion uploads run.") }}
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Google Ads campaign reporting</h2><span>{{ dashboard.external_reporting.google_ads.status }}</span></div>
+      <p class="admin-muted">{{ dashboard.external_reporting.google_ads.detail }}</p>
+    </section>
   </div>
 
   <div class="admin-tab-panel" id="admin-tab-opportunities" data-admin-tab-panel="opportunities">
@@ -362,13 +499,40 @@
         <a href="{{ dashboard.report_links.daily }}">Daily Traffic CSV</a>
         <a href="{{ dashboard.report_links.book }}">Book Performance CSV</a>
         <a href="{{ dashboard.report_links.content }}">Content Performance CSV</a>
+        <a href="{{ dashboard.report_links.engagement_content }}">Engagement Content CSV</a>
         <a href="{{ dashboard.report_links.coruna }}">A Coruña CSV</a>
         <a href="{{ dashboard.report_links.campaigns }}">Campaign CSV</a>
+        <a href="{{ dashboard.report_links.acquisition }}">Acquisition Outcome CSV</a>
+        <a href="{{ dashboard.report_links.google_ads_uploads }}">Google Ads Upload Attempts CSV</a>
         <a href="{{ dashboard.report_links.purchases }}">Verified Purchase CSV</a>
         <a href="{{ dashboard.report_links.opportunities }}">Opportunity Alerts CSV</a>
         <a href="{{ dashboard.report_links.events }}">Analytics Events CSV</a>
       </div>
       <div class="admin-board-grid">{% for item in dashboard.board_update %}<article><span>{{ item.label }}</span><strong>{{ item.value }}</strong><p>{{ item.note }}</p></article>{% endfor %}</div>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Data Quality</h2><span>Trust indicators</span></div>
+      <div class="admin-health-score-grid">
+        {% for item in dashboard.data_quality %}
+          <article class="admin-health-score"><span>{{ item.label }}</span><strong>{{ item.value }}</strong><small>{{ item.detail }}</small></article>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Search & SEO</h2><span>{{ dashboard.external_reporting.search_console.status }}</span></div>
+      <p class="admin-muted">{{ dashboard.external_reporting.search_console.detail }}</p>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Live Activity Feed</h2><span>Meaningful actions only</span></div>
+      {% if dashboard.live_activity %}
+        <div class="admin-live-feed">
+          {% for item in dashboard.live_activity %}
+            <article><span>{{ item.time }}</span><strong>{{ item.label }}</strong><p>{{ item.detail }}</p></article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="admin-empty">Meaningful actions will appear here. Page views remain available in Event Explorer.</p>
+      {% endif %}
     </section>
     <section class="admin-panel admin-panel--wide">
       <div class="admin-panel__header"><h2>Recent activity</h2><span>{{ dashboard.recent_events|length }} latest</span></div>

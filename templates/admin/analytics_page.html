@@ -40,6 +40,8 @@
   <div class="admin-mini-grid">
     <article><span>Views</span><strong>{{ summary.totals.page_views }}</strong></article>
     <article><span>Sessions</span><strong>{{ summary.totals.anonymous_sessions }}</strong></article>
+    <article><span>Engagement Rate</span><strong>{{ page_metrics[0].value }}</strong></article>
+    <article><span>75% Read</span><strong>{{ summary.totals.scroll_75 }}</strong></article>
     <article><span>Book Actions</span><strong>{{ summary.totals.book_actions }}</strong></article>
     <article><span>Checkout Starts</span><strong>{{ summary.totals.direct_checkout_starts }}</strong></article>
     <article><span>Preview Clicks</span><strong>{{ summary.totals.book_preview_clicks }}</strong></article>
@@ -47,6 +49,28 @@
     <article><span>Newsletter Signups</span><strong>{{ summary.totals.newsletter_signups }}</strong></article>
     <article><span>Donation Intent</span><strong>{{ summary.totals.donation_clicks }}</strong></article>
   </div>
+
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header"><h2>Page performance</h2><span>Session-based where possible</span></div>
+    <div class="admin-conversion-strip">
+      {% for metric in page_metrics %}
+        <article class="admin-rate-card" title="{{ metric.note }}"><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong><small>{{ metric.note }}</small></article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header"><h2>Traffic source mix</h2><span>For this page</span></div>
+    {% if traffic_sources %}
+      <ol class="admin-ranked-list">
+        {% for item in traffic_sources %}
+          <li><span>{{ item.label }}</span><span>{{ item.count }}</span></li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="admin-empty">Traffic source mix will appear after this page receives tracked sessions.</p>
+    {% endif %}
+  </section>
 
   <section class="admin-panel admin-panel--wide">
     <h2>Recommended next moves</h2>
