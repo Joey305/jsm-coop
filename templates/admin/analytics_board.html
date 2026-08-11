@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Board Summary · {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard admin-print-report">
+  <div class="admin-dashboard__header">
+    <div>
+      <p class="eyebrow">Board update</p>
+      <h1>JSM Cooperative Board Summary</h1>
+      <p class="admin-muted">{{ dashboard.start }} through {{ dashboard.end }}. Verified purchase and intent metrics are deliberately separate.</p>
+    </div>
+    <div class="admin-action-row admin-print-hide"><a href="{{ url_for('admin_analytics', range=dashboard.range_name, start=dashboard.start, end=dashboard.end) }}">Back</a><button type="button" onclick="window.print()">Print</button></div>
+  </div>
+  <section class="admin-panel admin-panel--wide"><h2>Plain-language update</h2><ul class="admin-next-list">{% for line in dashboard.monthly_brief %}<li>{{ line }}</li>{% endfor %}</ul></section>
+  <div class="admin-board-grid">{% for item in dashboard.board_update %}<article><span>{{ item.label }}</span><strong>{{ item.value }}</strong><p>{{ item.note }}</p></article>{% endfor %}</div>
+  <section class="admin-panel admin-panel--wide"><h2>Next-period priorities</h2><ul class="admin-next-list">{% for item in dashboard.opportunities[:3] %}<li>{{ item.action }}</li>{% endfor %}</ul></section>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Printable Dashboard Report · {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard admin-print-report">
+  <div class="admin-dashboard__header">
+    <div>
+      <p class="eyebrow">Printable report</p>
+      <h1>JSM Cooperative analytics report</h1>
+      <p class="admin-muted">{{ dashboard.start }} through {{ dashboard.end }}. Prepared for {{ admin_user }}.</p>
+    </div>
+    <div class="admin-action-row admin-print-hide"><a href="{{ url_for('admin_analytics', range=dashboard.range_name, start=dashboard.start, end=dashboard.end) }}">Back</a><button type="button" onclick="window.print()">Print</button></div>
+  </div>
+
+  <section class="admin-panel admin-panel--wide"><h2>Executive summary</h2><ul class="admin-next-list">{% for line in dashboard.monthly_brief %}<li>{{ line }}</li>{% endfor %}</ul></section>
+  <section class="admin-panel admin-panel--wide"><h2>Core metrics</h2><div class="admin-mini-grid">{% for stat in dashboard.stats %}<article><span>{{ stat.label }}</span><strong>{{ stat.value }}</strong><small>{{ stat.help }}</small></article>{% endfor %}</div></section>
+  <section class="admin-panel admin-panel--wide"><h2>Top opportunities</h2><div class="admin-opportunity-grid">{% for item in dashboard.opportunities[:4] %}<article class="admin-opportunity-card admin-opportunity-card--{{ item.priority|lower }}"><span>{{ item.priority }} · {{ item.confidence }} confidence</span><h3>{{ item.title }}</h3><p>{{ item.metric }}</p><strong>{{ item.action }}</strong></article>{% endfor %}</div></section>
+  <section class="admin-panel admin-panel--wide"><h2>Board update</h2><div class="admin-board-grid">{% for item in dashboard.board_update %}<article><span>{{ item.label }}</span><strong>{{ item.value }}</strong><p>{{ item.note }}</p></article>{% endfor %}</div></section>
+</section>
+{% endblock %}

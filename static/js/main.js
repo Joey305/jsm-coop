@@ -56,6 +56,40 @@
   };
 
   const attribution = captureAttribution();
+  const firstPartyConfig = window.__JSM_FIRST_PARTY_ANALYTICS__ || {};
+  const FIRST_PARTY_SESSION_KEY = "jsm_first_party_session_id";
+
+  const randomId = () => {
+    if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  };
+
+  const firstPartySessionId = () => {
+    try {
+      const existing = window.sessionStorage.getItem(FIRST_PARTY_SESSION_KEY);
+      if (existing) return existing;
+      const generated = "sess_" + randomId();
+      window.sessionStorage.setItem(FIRST_PARTY_SESSION_KEY, generated);
+      return generated;
+    } catch (error) {
+      return "sess_" + randomId();
+    }
+  };
+
+  const deviceCategory = () => {
+    const width = window.innerWidth || document.documentElement.clientWidth || 1200;
+    if (width < 760) return "mobile";
+    if (width < 1100) return "tablet";
+    return "desktop";
+  };
+
+  const domainFor = (url) => {
+    try {
+      return url ? new URL(url, window.location.href).hostname : "";
+    } catch (error) {
+      return "";
+    }
+  };
 
   const buildPayload = (extra) => ({
     page_path: window.location.pathname,
@@ -70,6 +104,71 @@
     wbraid: attribution.wbraid || "",
     ...extra,
   });
+
+  const firstPartyEventName = (eventName, payload) => {
+    if (eventName === "newsletter_signup" && payload.first_party_success !== true) {
+      return "newsletter_signup_attempt";
+    }
+    return eventName;
+  };
+
+  const sendFirstParty = (eventName, payload) => {
+    if (!firstPartyConfig.enabled || !firstPartyConfig.endpoint || window.location.pathname.startsWith("/admin")) {
+      return;
+    }
+
+    const firstPartyName = firstPartyEventName(eventName, payload || {});
+    const event = {
+      event_id: "client:" + randomId(),
+      schema_version: 1,
+      event_name: firstPartyName,
+      client_occurred_at: new Date().toISOString(),
+      page_path: window.location.pathname || "/",
+      page_title: document.title || "",
+      landing_page: payload.landing_page || attribution.landing_page || window.location.pathname || "/",
+      referrer_url: document.referrer || "",
+      referrer_domain: domainFor(document.referrer),
+      source: payload.utm_source || attribution.utm_source || "",
+      medium: payload.utm_medium || attribution.utm_medium || "",
+      campaign: payload.utm_campaign || attribution.utm_campaign || "",
+      term: payload.utm_term || attribution.utm_term || "",
+      campaign_content: payload.utm_content || attribution.utm_content || "",
+      gclid: payload.gclid || attribution.gclid || "",
+      gbraid: payload.gbraid || attribution.gbraid || "",
+      wbraid: payload.wbraid || attribution.wbraid || "",
+      anonymous_session_id: firstPartySessionId(),
+      device_category: deviceCategory(),
+      environment: firstPartyConfig.environment || "",
+      article_slug: payload.article_slug || "",
+      series: payload.series || "",
+      element_position: payload.cta_location || payload.position || "",
+      destination_url: payload.destination || "",
+      destination_domain: domainFor(payload.destination || ""),
+      metadata: {
+        retailer: payload.retailer || "",
+        book_language: payload.book_language || "",
+        cta_location: payload.cta_location || "",
+        value: payload.value || "",
+        currency: payload.currency || "",
+        transaction_id: payload.transaction_id || ""
+      }
+    };
+
+    const body = JSON.stringify(event);
+    try {
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        if (navigator.sendBeacon(firstPartyConfig.endpoint, blob)) return;
+      }
+      window.fetch(firstPartyConfig.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        credentials: "same-origin",
+        keepalive: true
+      }).catch(() => {});
+    } catch (error) {}
+  };
 
   const sendAdsConversion = (eventName, payload, callback) => {
     if (!ADS_CONVERSION_EVENTS.has(eventName) || typeof window.gtag !== "function") {
@@ -102,6 +201,7 @@
       window.gtag("event", eventName, payload);
     }
 
+    sendFirstParty(eventName, payload);
     sendAdsConversion(eventName, payload, callback);
   };
 
@@ -126,6 +226,8 @@
     trackMany,
     attribution: () => ({ ...attribution }),
   };
+
+  sendFirstParty("page_view", buildPayload({}));
 
   window.gtag_report_conversion = function (url) {
     track("retailer_click_amazon_us", { cta_location: "legacy_helper" }, () => {

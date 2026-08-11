@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 <style>
   .editor-tools {
@@ -124,6 +125,7 @@
         <div
           id="media-upload-panel"
           data-upload-url="{{ url_for('admin_media_upload') }}"
+          data-csrf-token="{{ admin_csrf_token() }}"
         >
           <div class="media-upload-grid">
             <label>
@@ -190,7 +192,17 @@
       </div>
     </div>
 
+    <div class="admin-action-row editor-top-actions">
+      <a href="{{ url_for('admin_content_index') }}">Content Studio</a>
+      {% if post %}
+        <a href="{{ url_for('blog_detail', slug=post.slug) }}" target="_blank" rel="noopener">Preview</a>
+        <a href="{{ url_for('admin_analytics_page_report', page_path='/blogs/' ~ post.slug) }}">Analytics</a>
+        <a href="{{ url_for('admin_content_revisions', slug=post.slug) }}">Revisions</a>
+      {% endif %}
+    </div>
+
     <form class="admin-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ admin_csrf_token() }}">
       <label>
         Title
         <input name="title" value="{{ post.title if post else '' }}" required>
@@ -216,6 +228,15 @@
       <label>
         Tags
         <input name="tags" value="{{ post.tags|join(', ') if post else '' }}" placeholder="Camino, Books, Impact">
+      </label>
+
+      <label>
+        Series
+        <select name="series">
+          {% set selected_series = post.series if post else '' %}
+          <option value="" {% if not selected_series %}selected{% endif %}>No series</option>
+          <option value="A Coruña Through the Lens" {% if selected_series == "A Coruña Through the Lens" %}selected{% endif %}>A Coruña Through the Lens</option>
+        </select>
       </label>
 
       <div class="body-editor-wrap">
@@ -327,7 +348,8 @@
       try {
         const response = await fetch(uploadUrl, {
           method: "POST",
-          body: formData
+          body: formData,
+          headers: { "X-CSRF-Token": uploadPanel.getAttribute("data-csrf-token") || "" }
         });
 
         const result = await response.json();

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Event Explorer · {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard admin-analytics-dashboard" aria-labelledby="event-explorer-heading">
+  <div class="admin-dashboard__header">
+    <div>
+      <p class="eyebrow">Analytics</p>
+      <h1 id="event-explorer-heading">Event Explorer</h1>
+      <p class="admin-muted">Filter first-party analytics events. Anonymous session IDs are not shown here.</p>
+    </div>
+    <div class="admin-action-row">
+      <a href="{{ url_for('admin_analytics') }}">Dashboard</a>
+      <a href="{{ url_for('admin_content_index') }}">Content Studio</a>
+    </div>
+  </div>
+
+  <section class="admin-panel admin-panel--wide" aria-label="Event filters">
+    <form class="admin-filter-form admin-filter-form--dense" action="{{ url_for('admin_analytics_events') }}" method="get">
+      <label>Date range
+        <select name="range">
+          {% for value, label in [("today", "Today"), ("7d", "Last 7 days"), ("30d", "Last 30 days"), ("90d", "Last 90 days"), ("this_month", "This month"), ("previous_month", "Previous month"), ("custom", "Custom")] %}
+            <option value="{{ value }}" {% if range_name == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Start <input name="start" type="date" value="{{ start }}"></label>
+      <label>End <input name="end" type="date" value="{{ end }}"></label>
+      {% for key, label in [("event_name", "Event"), ("event_category", "Category"), ("page_path", "Source page"), ("content_type", "Content type"), ("series", "Series"), ("article_slug", "Article"), ("element_position", "Position"), ("destination_domain", "Destination"), ("device_category", "Device"), ("campaign", "Campaign"), ("source", "Source"), ("medium", "Medium"), ("environment", "Environment")] %}
+        <label>{{ label }} <input name="{{ key }}" value="{{ filters.get(key, '') }}"></label>
+      {% endfor %}
+      <button type="submit">Filter</button>
+      <a href="{{ url_for('admin_analytics_export', **request.args) }}">Export CSV</a>
+    </form>
+  </section>
+
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header"><h2>Events</h2><span>{{ result.total }} total</span></div>
+    {% if result.events %}
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Time</th><th>Event</th><th>Source page</th><th>Element</th><th>Position</th><th>Destination</th><th>Campaign / source</th><th>Device</th></tr></thead>
+          <tbody>
+            {% for event in result.events %}
+              <tr>
+                <td>{{ event.occurred_at_label }}</td>
+                <td>{{ event.human_label }}</td>
+                <td>{{ event.page_path or "-" }}</td>
+                <td>{{ event.element_label or "-" }}</td>
+                <td>{{ event.element_position or "-" }}</td>
+                <td>{{ event.destination_domain or event.destination_url or "-" }}</td>
+                <td>{{ event.campaign or event.source or "-" }}</td>
+                <td>{{ event.device_category or "-" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <nav class="pagination" aria-label="Event pages">
+        {% if result.page > 1 %}<a href="{{ url_for('admin_analytics_events', page=result.page - 1, **request.args) }}">Previous</a>{% endif %}
+        <span>Page {{ result.page }} of {{ result.pages }}</span>
+        {% if result.page < result.pages %}<a href="{{ url_for('admin_analytics_events', page=result.page + 1, **request.args) }}">Next</a>{% endif %}
+      </nav>
+    {% else %}
+      <p class="admin-empty">No events match these filters.</p>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

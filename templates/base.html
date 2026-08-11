@@ -7,6 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ meta.get('title', title or site_name) }}{% if site_name not in meta.get('title', '') %} · {{ site_name }}{% endif %}{% endblock %}</title>
 
+  {% if request.path.startswith('/admin') %}
+    <meta name="robots" content="noindex, nofollow">
+  {% endif %}
   <meta name="description" content="{{ meta.get('description', 'Stories that fund a better world through publishing and nonprofit-aligned impact.') }}">
   <link rel="canonical" href="{{ meta.get('canonical_url', site_domain ~ request.path) }}">
   <meta property="og:title" content="{{ meta.get('og_title', meta.get('title', title or site_name)) }}">
@@ -18,18 +21,20 @@
   {% for lang, href in meta.get('hreflang', {}).items() %}
     <link rel="alternate" hreflang="{{ lang }}" href="{{ href }}">
   {% endfor %}
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16512731660"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+  {% if not request.path.startswith('/admin') %}
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16512731660"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
-    gtag('config', 'AW-16512731660');
-    {% if ga_measurement_id %}
-      gtag('config', '{{ ga_measurement_id }}');
-    {% endif %}
-  </script>
+      gtag('config', 'AW-16512731660');
+      {% if ga_measurement_id %}
+        gtag('config', '{{ ga_measurement_id }}');
+      {% endif %}
+    </script>
+  {% endif %}
   
 
   <link rel="icon" href="{{ url_for('static', filename='images/Logo.png') }}">
@@ -480,7 +485,7 @@
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  {% if not reduced_nav|default(false) %}
+  {% if not reduced_nav|default(false) and not request.path.startswith('/admin') %}
   <header class="site-header" data-header>
     <div class="container header-inner">
       
@@ -616,7 +621,9 @@
     {% block content %}{% endblock %}
   </main>
 
-  {% include "partials/purchase_modal.html" %}
+  {% if not request.path.startswith('/admin') %}
+    {% include "partials/purchase_modal.html" %}
+  {% endif %}
 
   {% set signed_promo_suppressed_endpoints = [
     'book_signed',
@@ -636,7 +643,7 @@
   {% set instagram_url = social_links.instagram if social_links is defined else 'https://www.instagram.com/jsm.cooperative/' %}
   {% set tiktok_url = social_links.tiktok if social_links is defined else 'https://www.tiktok.com/@jsm.cooperative' %}
 
-  {% if not reduced_nav|default(false) %}
+  {% if not reduced_nav|default(false) and not request.path.startswith('/admin') %}
   <footer class="site-footer">
     <div class="container footer-grid">
       <section>
@@ -801,6 +808,15 @@
   </footer>
   {% endif %}
 
+  {% if not request.path.startswith('/admin') %}
+    <script>
+      window.__JSM_FIRST_PARTY_ANALYTICS__ = {
+        enabled: {{ 1 if analytics_browser_config.enabled else 0 }},
+        endpoint: "{{ analytics_browser_config.endpoint }}",
+        environment: "{{ analytics_browser_config.environment }}"
+      };
+    </script>
+  {% endif %}
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 {% block extra_scripts %}{% endblock %}

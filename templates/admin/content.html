@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Content Studio · {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard" aria-labelledby="content-studio-heading">
+  <div class="admin-dashboard__header">
+    <div>
+      <p class="eyebrow">JSM Content Studio</p>
+      <h1 id="content-studio-heading">Markdown Blog Library</h1>
+      <p class="admin-muted">Search, filter, edit, view, and inspect analytics for the existing JSM Markdown posts.</p>
+    </div>
+    <div class="admin-action-row">
+      <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('admin_blog_new') }}">New Blog</a>
+      <a href="{{ url_for('blogs') }}" target="_blank" rel="noopener">View Blogs</a>
+      <a href="{{ url_for('a_coruna_through_the_lens') }}" target="_blank" rel="noopener">Through the Lens</a>
+    </div>
+  </div>
+
+  <section class="admin-panel admin-panel--wide">
+    <form class="admin-filter-form admin-filter-form--content" action="{{ url_for('admin_content_index') }}" method="get">
+      <label>Search <input name="q" value="{{ filters.q }}" placeholder="Title, slug, excerpt"></label>
+      <label>Series
+        <select name="series">
+          <option value="">All series</option>
+          {% for item in series_options %}<option value="{{ item }}" {% if filters.series == item %}selected{% endif %}>{{ item }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Tag <input name="tag" value="{{ filters.tag }}" list="tag-options"></label>
+      <label>Author <input name="author" value="{{ filters.author }}"></label>
+      <button type="submit">Filter</button>
+      <datalist id="tag-options">{% for item in tag_options %}<option value="{{ item }}">{% endfor %}</datalist>
+    </form>
+  </section>
+
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header"><h2>Blog posts</h2><span>{{ posts|length }} shown</span></div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Title</th><th>Series</th><th>Tags</th><th>Date</th><th>Author</th><th>Updated</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for post in posts %}
+            <tr>
+              <td><strong>{{ post.title }}</strong><br><small>{{ post.slug }}</small></td>
+              <td>{{ post.series or "-" }}</td>
+              <td>{{ post.tags|join(", ") }}</td>
+              <td>{{ post.date }}</td>
+              <td>{{ post.author }}</td>
+              <td>{{ post.updated or "-" }}</td>
+              <td class="admin-table-actions">
+                <a href="{{ url_for('admin_blog_edit', slug=post.slug) }}">Edit</a>
+                <a href="{{ url_for('blog_detail', slug=post.slug) }}" target="_blank" rel="noopener">View</a>
+                <a href="{{ url_for('admin_analytics_page_report', page_path='/blogs/' ~ post.slug) }}">Analytics</a>
+                <a href="{{ url_for('admin_content_revisions', slug=post.slug) }}">Revisions</a>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7">No posts match these filters.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Page Analytics · {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard admin-analytics-dashboard" aria-labelledby="page-analytics-heading">
+  <div class="admin-dashboard__header">
+    <div>
+      <p class="eyebrow">Page analytics</p>
+      <h1 id="page-analytics-heading">{{ page_path }}</h1>
+      <p class="admin-muted">Context-aware metrics for the selected public page.</p>
+    </div>
+    <div class="admin-action-row">
+      <a href="{{ url_for('admin_analytics') }}">Dashboard</a>
+      <a href="{{ page_path }}" target="_blank" rel="noopener">Open Page</a>
+    </div>
+  </div>
+
+  <section class="admin-panel admin-panel--wide">
+    <form class="admin-filter-form" action="{{ url_for('admin_analytics_page_report') }}" method="get">
+      <input type="hidden" name="page_path" value="{{ page_path }}">
+      <label>Date range
+        <select name="range">
+          {% for value, label in [("today", "Today"), ("7d", "Last 7 days"), ("30d", "Last 30 days"), ("90d", "Last 90 days"), ("custom", "Custom")] %}
+            <option value="{{ value }}" {% if range_name == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Start <input name="start" type="date" value="{{ start }}"></label>
+      <label>End <input name="end" type="date" value="{{ end }}"></label>
+      <button type="submit">Update</button>
+    </form>
+  </section>
+
+  <div class="admin-mini-grid">
+    <article><span>Views</span><strong>{{ summary.totals.page_views }}</strong></article>
+    <article><span>Sessions</span><strong>{{ summary.totals.anonymous_sessions }}</strong></article>
+    <article><span>Book Actions</span><strong>{{ summary.totals.book_actions }}</strong></article>
+    <article><span>Checkout Starts</span><strong>{{ summary.totals.direct_checkout_starts }}</strong></article>
+    <article><span>Preview Clicks</span><strong>{{ summary.totals.book_preview_clicks }}</strong></article>
+    <article><span>Retailer Clicks</span><strong>{{ summary.totals.retailer_clicks }}</strong></article>
+    <article><span>Newsletter Signups</span><strong>{{ summary.totals.newsletter_signups }}</strong></article>
+    <article><span>Donation Intent</span><strong>{{ summary.totals.donation_clicks }}</strong></article>
+  </div>
+
+  <section class="admin-panel admin-panel--wide">
+    <h2>Recommended next moves</h2>
+    <ul class="admin-insight-list">{% for recommendation in recommendations %}<li>{{ recommendation }}</li>{% endfor %}</ul>
+  </section>
+
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header"><h2>Recent events from this page</h2><span>{{ events.total }} total</span></div>
+    {% if events.events %}
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Time</th><th>Event</th><th>Element</th><th>Position</th><th>Destination</th><th>Device</th></tr></thead>
+          <tbody>
+            {% for event in events.events %}
+              <tr><td>{{ event.occurred_at_label }}</td><td>{{ event.human_label }}</td><td>{{ event.element_label or "-" }}</td><td>{{ event.element_position or "-" }}</td><td>{{ event.destination_domain or event.destination_url or "-" }}</td><td>{{ event.device_category or "-" }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="admin-empty">No events have been recorded for this page during the selected period.</p>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

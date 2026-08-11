@@ -1,71 +1,528 @@
 {% extends "base.html" %}
+
+{% block title %}JSM Command Center · {{ site_name }}{% endblock %}
+
 {% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 {% endblock %}
+
 {% block content %}
-<section class="admin-layout">
-  <div class="container">
-    <div class="admin-top">
-      <div>
-        <p class="eyebrow">Admin Dashboard</p>
-        <h1>JSM Command Center</h1>
-      </div>
-      <div class="admin-actions">
-        <a class="btn btn-ghost" href="{{ url_for('admin_blog_new') }}">New Blog</a>
-        <a class="btn btn-ghost" href="{{ url_for('admin_analytics') }}">Analytics</a>
-        <a class="btn btn-donate" href="{{ url_for('admin_logout') }}">Logout</a>
-      </div>
+<section class="admin-dashboard admin-analytics-dashboard" aria-labelledby="admin-dashboard-heading">
+  <div class="admin-dashboard__header">
+    <div>
+      <p class="eyebrow">JSM Cooperative</p>
+      <h1 id="admin-dashboard-heading">Command Center</h1>
+      <p class="admin-muted">
+        Signed in as {{ admin_user }}. {{ dashboard.start }} through {{ dashboard.end }}.
+        Storage: {{ dashboard.storage_backend }}. Latest event: {{ dashboard.storage.last_recorded_at or "None yet" }}.
+      </p>
     </div>
-
-    <div class="admin-grid">
-      <section class="admin-panel">
-        <h2>Recent Contacts</h2>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Subject</th><th>Date</th></tr></thead>
-            <tbody>
-              {% for c in contacts %}
-                <tr><td>{{ c.name }}</td><td>{{ c.email }}</td><td>{{ c.subject }}</td><td>{{ c.created_at[:10] }}</td></tr>
-              {% else %}
-                <tr><td colspan="4">No contacts yet.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="admin-panel">
-        <h2>Newsletter Subscribers</h2>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Email</th><th>Name</th><th>Date</th></tr></thead>
-            <tbody>
-              {% for s in subscribers %}
-                <tr><td>{{ s.email }}</td><td>{{ s.first_name }} {{ s.last_name }}</td><td>{{ s.created_at[:10] }}</td></tr>
-              {% else %}
-                <tr><td colspan="3">No subscribers yet.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="admin-panel wide">
-        <h2>Blog Posts</h2>
-        <div class="blog-admin-list">
-          {% for post in posts %}
-            <div>
-              <strong>{{ post.title }}</strong>
-              <span>{{ post.date }}</span>
-              <a href="{{ url_for('admin_blog_edit', slug=post.slug) }}">Edit</a>
-              <a href="{{ url_for('blog_detail', slug=post.slug) }}">View</a>
-            </div>
-          {% else %}
-            <p>No posts yet.</p>
-          {% endfor %}
-        </div>
-      </section>
+    <div class="admin-action-row">
+      <a href="{{ url_for('admin_content_index') }}">Content Studio</a>
+      <a href="{{ url_for('admin_analytics_events') }}">Event Explorer</a>
+      <a href="{{ url_for('admin_blog_new') }}">New Blog</a>
+      <a href="{{ url_for('home') }}" target="_blank" rel="noopener">View Website</a>
+      <a class="admin-logout" href="{{ url_for('admin_logout') }}">Sign Out</a>
     </div>
   </div>
+
+  {% if not dashboard.storage.ok %}
+    <p class="admin-alert admin-alert--warning">Analytics storage needs attention. The dashboard will keep rendering, but event data may be incomplete.</p>
+  {% endif %}
+
+  <section class="admin-panel admin-panel--wide" aria-label="Analytics storage status">
+    <div class="admin-analytics-health">
+      <span>Backend: {{ dashboard.storage.backend }}</span>
+      <span>Health: {{ "OK" if dashboard.storage.ok else "Needs attention" }}</span>
+      <span>Events: {{ dashboard.storage.event_count }}</span>
+      <span>Last event: {{ dashboard.storage.last_recorded_at or "None yet" }}</span>
+    </div>
+  </section>
+
+  <section class="admin-panel admin-panel--wide" aria-label="Analytics date range">
+    <form class="admin-filter-form" action="{{ url_for('admin_analytics') }}" method="get">
+      <label>Date range
+        <select name="range">
+          {% for value, label in [("today", "Today"), ("7d", "Last 7 days"), ("30d", "Last 30 days"), ("90d", "Last 90 days"), ("this_month", "This month"), ("previous_month", "Previous month"), ("custom", "Custom")] %}
+            <option value="{{ value }}" {% if dashboard.range_name == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Start <input name="start" type="date" value="{{ dashboard.start }}"></label>
+      <label>End <input name="end" type="date" value="{{ dashboard.end }}"></label>
+      <button type="submit">Update</button>
+    </form>
+  </section>
+
+  <div class="admin-stat-grid" aria-label="Analytics summary">
+    {% for stat in dashboard.stats %}
+      <article class="admin-stat" title="{{ stat.help }}">
+        <span>{{ stat.label }}</span>
+        <strong>{{ stat.value }}</strong>
+        <small>{{ stat.help }}</small>
+        <small class="admin-stat__change admin-stat__change--{{ stat.direction }}">{{ stat.change }}</small>
+      </article>
+    {% endfor %}
+  </div>
+
+  <nav class="admin-analytics-tabs" aria-label="Dashboard sections" data-admin-tabs>
+    {% for key, label in [("overview", "Overview"), ("traffic", "Traffic"), ("books", "Books & Sales"), ("acoruna", "A Coruña"), ("content", "Content"), ("newsletter", "Newsletter"), ("camino", "Camino"), ("donations", "Donations"), ("campaigns", "Campaigns"), ("opportunities", "Opportunities"), ("reports", "Reports")] %}
+      <button class="admin-tab-button" type="button" data-admin-tab="{{ key }}" aria-controls="admin-tab-{{ key }}">{{ label }}</button>
+    {% endfor %}
+  </nav>
+
+  <div class="admin-tab-panel" id="admin-tab-overview" data-admin-tab-panel="overview">
+    <section class="admin-panel admin-panel--wide admin-insight-panel">
+      <div class="admin-panel__header">
+        <h2>What changed?</h2>
+        <span>Plain-language readout</span>
+      </div>
+      <ul class="admin-insight-list">
+        {% for insight in dashboard.insights %}
+          <li>{{ insight }}</li>
+        {% endfor %}
+      </ul>
+      <div class="admin-report-actions">
+        <a href="{{ dashboard.report_links.print }}">Printable report</a>
+        <a href="{{ dashboard.report_links.board }}">Board summary</a>
+        <a href="{{ dashboard.report_links.daily }}">Daily CSV</a>
+      </div>
+    </section>
+
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header">
+        <h2>Growth scorecards</h2>
+        <span>Status, comparison, and one next action</span>
+      </div>
+      <div class="admin-scorecard-grid">
+        {% for score in dashboard.growth_scorecards %}
+          <article class="admin-scorecard admin-scorecard--{{ score.tone }}">
+            <span>{{ score.label }}</span>
+            <strong>{{ score.status }}</strong>
+            <small>{{ score.current }} now; {{ score.previous }} before. {{ score.change }}</small>
+            <p>{{ score.explanation }}</p>
+            <b>{{ score.action }}</b>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header">
+        <h2>Growth goals</h2>
+        <span>Configurable from environment variables</span>
+      </div>
+      <div class="admin-goal-grid">
+        {% for goal in dashboard.growth_goals %}
+          <article class="admin-goal-card">
+            <div class="admin-goal-card__top"><span>{{ goal.status }}</span><strong>{{ goal.progress }}%</strong></div>
+            <h3>{{ goal.label }}</h3>
+            <p>{{ goal.value }} of {{ goal.target }} {{ goal.unit }}</p>
+            <div class="admin-progress"><span style="width: {{ goal.progress }}%"></span></div>
+            <small>{{ goal.why }}</small>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header">
+        <h2>Weekly and monthly brief</h2>
+        <span>Supported by actual tracked data</span>
+      </div>
+      <div class="admin-dashboard__grid">
+        {{ brief_list("Weekly", dashboard.weekly_brief) }}
+        {{ brief_list("Monthly", dashboard.monthly_brief) }}
+      </div>
+    </section>
+
+    {{ health_panel(dashboard) }}
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-traffic" data-admin-tab-panel="traffic">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Traffic</h2><a href="{{ dashboard.report_links.content }}">Export content CSV</a></div>
+      <div class="admin-dashboard__grid">
+        {{ ranked_chart("Top landing pages", dashboard.chart_blocks.top_pages, "Page views will appear after public pages are visited.") }}
+        {{ donut_chart("Traffic source mix", dashboard.chart_blocks.traffic_sources, "Traffic sources will appear after tracked visits.") }}
+        {{ donut_chart("Device mix", dashboard.chart_blocks.devices, "Device mix appears after visitor activity.") }}
+        {{ analytics_list("Visitor paths", dashboard.summary.journey_paths, "Tracked CTA paths will appear here.") }}
+      </div>
+    </section>
+    {{ trend_panel(dashboard) }}
+    {{ table_panel("CTA performance", ["CTA", "Page", "Position", "Impressions", "Clicks", "Click rate"], dashboard.summary.cta_performance, ["label", "page", "position", "impressions", "clicks", "click_rate_label"], "CTA performance will appear after tracked CTAs are visible or clicked.") }}
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-books" data-admin-tab-panel="books">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Book performance</h2><a href="{{ dashboard.report_links.book }}">Export book CSV</a></div>
+      <p class="admin-muted">Checkout starts and PayPal returns are intent signals. Verified purchases only come from PayPal webhook records.</p>
+      <div class="admin-mini-grid">
+        {% for label, value, note in [
+          ("Book Page Views", dashboard.summary.totals.book_page_views, "Includes /book page views"),
+          ("Signed Book Page Views", dashboard.summary.totals.signed_copy_page_views, "Signed-copy page and event views"),
+          ("Book Preview Clicks", dashboard.summary.totals.book_preview_clicks, "Preview engagement"),
+          ("Purchase Modal Opens", dashboard.summary.totals.purchase_modal_opens, "Interest only"),
+          ("Signed Promo Impressions", dashboard.summary.totals.signed_promo_impressions, "Floating promo seen"),
+          ("Signed Promo Clicks", dashboard.summary.totals.signed_promo_clicks, "Floating promo clicked"),
+          ("Retailer Outbound Clicks", dashboard.summary.totals.retailer_clicks, "Not purchases"),
+          ("Signed Checkout Starts", dashboard.summary.totals.direct_checkout_starts, "Entered PayPal checkout"),
+          ("PayPal Returns", dashboard.summary.totals.paypal_returns, "Not proof of payment"),
+          ("Verified Purchases", dashboard.verified_purchases.count, "Webhook verified"),
+          ("Verified Revenue", dashboard.verified_purchases.revenue_label, "Webhook verified"),
+          ("Average Order Value", dashboard.verified_purchases.average_order_value, "Verified records only")
+        ] %}
+          <article><span>{{ label }}</span><strong>{{ value }}</strong><small>{{ note }}</small></article>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="admin-panel admin-panel--wide"><div class="admin-panel__header"><h2>Signed book funnel</h2><span>{{ dashboard.funnels.signed_book.finding }}</span></div>{{ funnel_chart(dashboard.funnels.signed_book) }}</section>
+    <section class="admin-panel admin-panel--wide"><div class="admin-panel__header"><h2>Book discovery funnel</h2><span>{{ dashboard.funnels.book_discovery.finding }}</span></div>{{ funnel_chart(dashboard.funnels.book_discovery) }}</section>
+    {{ table_panel("Retailer performance", ["Retailer", "Clicks", "Share", "Source pages"], dashboard.summary.retailer_performance, ["label", "count", "share", "source_pages"], "Retailer outbound clicks will appear here. They are not counted as purchases.") }}
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Verified PayPal sales</h2><a href="{{ dashboard.report_links.purchases }}">Export verified purchases CSV</a></div>
+      <div class="admin-mini-grid">
+        <article><span>Attributed verified purchases</span><strong>{{ dashboard.verified_purchases.attributed }}</strong></article>
+        <article><span>Google CPC verified purchases</span><strong>{{ dashboard.verified_purchases.google_cpc }}</strong></article>
+        <article><span>Organic verified purchases</span><strong>{{ dashboard.verified_purchases.organic }}</strong></article>
+        <article><span>Unattributed verified purchases</span><strong>{{ dashboard.verified_purchases.unattributed }}</strong></article>
+      </div>
+    </section>
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-acoruna" data-admin-tab-panel="acoruna">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>A Coruña ecosystem</h2><a href="{{ dashboard.report_links.coruna }}">Export A Coruña CSV</a></div>
+      <div class="admin-mini-grid">
+        {% for label, value in [
+          ("A Coruña Page Views", dashboard.summary.totals.a_coruna_page_views),
+          ("A Coruña Sessions", dashboard.summary.totals.a_coruna_sessions),
+          ("Through the Lens Views", dashboard.summary.totals.through_lens_views),
+          ("Things-to-Do Views", dashboard.summary.totals.things_to_do_views),
+          ("Literary Tour Views", dashboard.summary.totals.literary_tour_views),
+          ("Article Clicks", dashboard.summary.totals.through_lens_article_clicks),
+          ("Book Clicks", dashboard.summary.totals.book_clicks_from_coruna),
+          ("Signed-Copy Clicks", dashboard.summary.totals.signed_clicks_from_coruna)
+        ] %}
+          <article><span>{{ label }}</span><strong>{{ value }}</strong></article>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="admin-panel admin-panel--wide"><div class="admin-panel__header"><h2>A Coruña content journey</h2><span>{{ dashboard.funnels.a_coruna.finding }}</span></div>{{ funnel_chart(dashboard.funnels.a_coruna) }}</section>
+    {{ table_panel("Through the Lens performance", ["Page", "Title", "Views", "Sessions", "Book actions", "Meaningful actions"], dashboard.summary.through_lens_content, ["page", "title", "views", "sessions", "book_actions", "meaningful_actions"], "Through the Lens performance appears after series articles receive tracked page views.") }}
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-content" data-admin-tab-panel="content">
+    <section class="admin-panel admin-panel--wide admin-cms-actions">
+      <div>
+        <h2>Content Studio</h2>
+        <p class="admin-muted">JSM keeps Markdown blog files and Jinja pages. This studio wraps the existing model without migrating the site into a new CMS.</p>
+      </div>
+      <div class="admin-action-row">
+        <a href="{{ url_for('admin_content_index') }}">Manage Content</a>
+        <a href="{{ url_for('admin_blog_new') }}">New Blog</a>
+        <a href="{{ url_for('blogs') }}" target="_blank" rel="noopener">View Blogs</a>
+        <a href="{{ url_for('a_coruna_through_the_lens') }}" target="_blank" rel="noopener">Through the Lens</a>
+      </div>
+    </section>
+    {{ table_panel("Most-read content", ["Page", "Title", "Purpose", "Views", "Sessions", "Book actions", "Newsletter", "Meaningful actions"], dashboard.summary.top_content, ["page", "title", "purpose", "views", "sessions", "book_actions", "newsletter_signups", "meaningful_actions"], "Content analytics appears after public page views are recorded.") }}
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Top pages by purpose</h2><span>Different pages have different jobs</span></div>
+      <div class="admin-purpose-grid">
+        {% for bucket in dashboard.pages_by_purpose %}
+          <section class="admin-subpanel">
+            <h3>{{ bucket.label }}</h3>
+            {% if bucket["items"] %}
+              <ol class="admin-ranked-list">
+                {% for item in bucket["items"] %}
+                  <li><a href="{{ url_for('admin_analytics_page_report', page_path=item.page, range=dashboard.range_name, start=dashboard.start, end=dashboard.end) }}">{{ item.title }}</a><span>{{ item.count }}</span></li>
+                {% endfor %}
+              </ol>
+            {% else %}
+              <p class="admin-empty">No pages in this bucket yet.</p>
+            {% endif %}
+          </section>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="admin-panel admin-panel--wide"><div class="admin-panel__header"><h2>Device notes</h2><span>Mobile and desktop behavior</span></div><ul class="admin-insight-list">{% for note in dashboard.device_insights %}<li>{{ note }}</li>{% endfor %}</ul></section>
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-newsletter" data-admin-tab-panel="newsletter">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Newsletter growth</h2><span>Signup conversion: {{ dashboard.rates.newsletter }}</span></div>
+      <p class="admin-muted">Mailchimp list totals are not shown without real audience API access. This tab reports first-party signup events only.</p>
+      <div class="admin-mini-grid">
+        <article><span>Form Views</span><strong>{{ dashboard.summary.totals.newsletter_form_views }}</strong></article>
+        <article><span>Signup Attempts</span><strong>{{ dashboard.summary.totals.newsletter_signup_attempts }}</strong></article>
+        <article><span>Successful Signup Events</span><strong>{{ dashboard.summary.totals.newsletter_signups }}</strong></article>
+        <article><span>Signup Errors</span><strong>{{ dashboard.summary.totals.newsletter_errors }}</strong></article>
+      </div>
+    </section>
+    <section class="admin-panel admin-panel--wide">{{ funnel_chart(dashboard.funnels.newsletter) }}</section>
+    <div class="admin-dashboard__grid">
+      {{ analytics_list("Top signup pages", dashboard.summary.newsletter_pages, "No successful newsletter signup events yet.") }}
+      {{ analytics_list("Top acquisition sources", dashboard.summary.newsletter_sources, "No signup sources yet.") }}
+    </div>
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-camino" data-admin-tab-panel="camino">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Camino subscription</h2><span>Approval conversion: {{ dashboard.rates.camino }}</span></div>
+      <p class="admin-muted">The current completion event is a PayPal approval callback from the client integration, not verified ongoing subscription status.</p>
+      <div class="admin-mini-grid">
+        <article><span>Subscription Page Views</span><strong>{{ dashboard.summary.totals.camino_page_views }}</strong></article>
+        <article><span>Subscription CTA Clicks</span><strong>{{ dashboard.summary.totals.camino_clicks }}</strong></article>
+        <article><span>Completed Approval Callbacks</span><strong>{{ dashboard.summary.totals.camino_completions }}</strong></article>
+        <article><span>Conversion Rate</span><strong>{{ dashboard.rates.camino }}</strong></article>
+      </div>
+    </section>
+    <section class="admin-panel admin-panel--wide">{{ funnel_chart(dashboard.funnels.camino) }}</section>
+    <div class="admin-dashboard__grid">
+      {{ analytics_list("Traffic sources", dashboard.summary.camino_sources, "Camino sources will appear after tracked activity.") }}
+      {{ donut_chart("Device mix", dashboard.chart_blocks.devices, "Device mix appears after activity.") }}
+    </div>
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-donations" data-admin-tab-panel="donations">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Donation intent</h2><span>Intent rate: {{ dashboard.rates.donation }}</span></div>
+      <p class="admin-muted">JSM does not currently verify donation revenue in this dashboard. Donation clicks are support intent, not donations or donors.</p>
+      <div class="admin-mini-grid">
+        <article><span>Donation Page Views</span><strong>{{ dashboard.summary.totals.donation_page_views }}</strong></article>
+        <article><span>Donation CTA Clicks</span><strong>{{ dashboard.summary.totals.donation_clicks }}</strong></article>
+        <article><span>Donation Intent Rate</span><strong>{{ dashboard.rates.donation }}</strong></article>
+      </div>
+    </section>
+    <div class="admin-dashboard__grid">
+      {{ analytics_list("Top source pages", dashboard.summary.donation_sources, "Donation-intent sources will appear here.") }}
+      {{ donut_chart("Device mix", dashboard.chart_blocks.devices, "Device mix appears after activity.") }}
+    </div>
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-campaigns" data-admin-tab-panel="campaigns">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Campaign links</h2><span>Use UTMs for email, social, partners, and ads</span></div>
+      <form class="admin-filter-form admin-filter-form--campaign" action="{{ url_for('admin_analytics') }}#campaigns" method="get">
+        <input type="hidden" name="range" value="{{ dashboard.range_name }}">
+        <input type="hidden" name="start" value="{{ dashboard.start }}">
+        <input type="hidden" name="end" value="{{ dashboard.end }}">
+        <label>Destination <input name="campaign_page" value="{{ dashboard.campaign_builder.page_path }}"></label>
+        <label>Source <input name="campaign_source" value="{{ dashboard.campaign_builder.source }}"></label>
+        <label>Medium <input name="campaign_medium" value="{{ dashboard.campaign_builder.medium }}"></label>
+        <label>Campaign <input name="campaign_name" value="{{ dashboard.campaign_builder.campaign }}"></label>
+        <label>Content <input name="campaign_content" value="{{ dashboard.campaign_builder.content }}"></label>
+        <label>Term <input name="campaign_term" value="{{ dashboard.campaign_builder.term }}"></label>
+        <button type="submit">Build Link</button>
+      </form>
+      <div class="admin-copy-box"><strong>Trackable link</strong><code>{{ dashboard.campaign_builder.url }}</code></div>
+    </section>
+    {{ table_panel("First-party campaign attribution", ["Campaign", "Source", "Medium", "Views", "Sessions", "Book Actions", "Checkout Starts", "Verified Purchases", "Newsletter", "Camino", "Donation Intent", "Actions", "Action Rate"], dashboard.summary.campaign_performance, ["label", "source", "medium", "views", "sessions", "book_actions", "checkout_starts", "verified_purchases", "newsletter_signups", "camino_actions", "donation_intent", "meaningful_actions", "action_rate_label"], "Campaign performance will appear after tracked links include UTM parameters.") }}
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Google Ads offline conversion health</h2><span>Google Ads data is separate from JSM verified purchases</span></div>
+      <div class="admin-mini-grid">{% for row in dashboard.google_uploads.rows %}<article><span>{{ row.label }}</span><strong>{{ row.count }}</strong></article>{% endfor %}</div>
+    </section>
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-opportunities" data-admin-tab-panel="opportunities">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Recommended next actions</h2><span>Transparent, rule-based recommendations</span></div>
+      <div class="admin-action-card-grid">
+        {% for action in dashboard.recommended_actions %}
+          <article class="admin-action-card admin-action-card--{{ action.priority|lower }}">
+            <span>{{ action.priority }} priority</span>
+            <h3>{{ action.title }}</h3>
+            <p>{{ action.why }}</p>
+            <strong>{{ action.next_step }}</strong>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Growth experiments</h2><span>Small tests with clear measurement</span></div>
+      <div class="admin-experiment-grid">{% for experiment in dashboard.growth_experiments %}<article class="admin-experiment-card"><span>{{ experiment.status }}</span><h3>{{ experiment.title }}</h3><p>{{ experiment.why }}</p><strong>{{ experiment.action }}</strong><small>{{ experiment.measure }}</small></article>{% endfor %}</div>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Opportunity alerts</h2><a href="{{ dashboard.report_links.opportunities }}">Export CSV</a></div>
+      <div class="admin-opportunity-grid">{% for item in dashboard.opportunities %}<article class="admin-opportunity-card admin-opportunity-card--{{ item.priority|lower }}"><span>{{ item.priority }} · {{ item.confidence }} confidence</span><h3>{{ item.title }}</h3><strong>{{ item.metric }}</strong><p>{{ item.why }}</p><b>{{ item.action }}</b>{% if item.url %}<a href="{{ item.url }}">Open detail</a>{% endif %}</article>{% endfor %}</div>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Recent warnings</h2><span>Lightweight thresholds</span></div>
+      <div class="admin-warning-grid">{% for alert in dashboard.anomaly_alerts %}<article class="admin-warning-card admin-warning-card--{{ alert.tone }}"><h3>{{ alert.title }}</h3><p>{{ alert.detail }}</p><strong>{{ alert.action }}</strong></article>{% endfor %}</div>
+    </section>
+  </div>
+
+  <div class="admin-tab-panel" id="admin-tab-reports" data-admin-tab-panel="reports">
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Reports and exports</h2><span>Safe exports for this date range</span></div>
+      <div class="admin-report-actions">
+        <a href="{{ dashboard.report_links.print }}">Printable Dashboard Report</a>
+        <a href="{{ dashboard.report_links.board }}">Board Update Summary</a>
+        <a href="{{ dashboard.report_links.daily }}">Daily Traffic CSV</a>
+        <a href="{{ dashboard.report_links.book }}">Book Performance CSV</a>
+        <a href="{{ dashboard.report_links.content }}">Content Performance CSV</a>
+        <a href="{{ dashboard.report_links.coruna }}">A Coruña CSV</a>
+        <a href="{{ dashboard.report_links.campaigns }}">Campaign CSV</a>
+        <a href="{{ dashboard.report_links.purchases }}">Verified Purchase CSV</a>
+        <a href="{{ dashboard.report_links.opportunities }}">Opportunity Alerts CSV</a>
+        <a href="{{ dashboard.report_links.events }}">Analytics Events CSV</a>
+      </div>
+      <div class="admin-board-grid">{% for item in dashboard.board_update %}<article><span>{{ item.label }}</span><strong>{{ item.value }}</strong><p>{{ item.note }}</p></article>{% endfor %}</div>
+    </section>
+    <section class="admin-panel admin-panel--wide">
+      <div class="admin-panel__header"><h2>Recent activity</h2><span>{{ dashboard.recent_events|length }} latest</span></div>
+      {{ table_panel("Recent activity", ["When", "Event", "Source Page", "Element", "Device", "Campaign / Source"], dashboard.recent_events, ["occurred_at_label", "human_label", "page_path", "element_label", "device_category", "campaign"], "No activity yet. Public browser events will appear here after analytics is enabled.") }}
+    </section>
+    <section class="admin-panel admin-panel--wide"><h2>How these numbers work</h2><ul class="admin-next-list">{% for line in dashboard.metric_definitions %}<li>{{ line }}</li>{% endfor %}</ul></section>
+  </div>
 </section>
+
+<script>
+  (function () {
+    var root = document.querySelector(".admin-analytics-dashboard");
+    if (!root) return;
+    var tabs = Array.prototype.slice.call(root.querySelectorAll("[data-admin-tab]"));
+    var panels = Array.prototype.slice.call(root.querySelectorAll("[data-admin-tab-panel]"));
+    var allowed = tabs.map(function (tab) { return tab.dataset.adminTab; });
+    function selectedTab() {
+      var hash = (window.location.hash || "").replace("#", "");
+      return allowed.indexOf(hash) !== -1 ? hash : "overview";
+    }
+    function activate(name) {
+      tabs.forEach(function (tab) {
+        var active = tab.dataset.adminTab === name;
+        tab.classList.toggle("is-active", active);
+        tab.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      panels.forEach(function (panel) {
+        panel.hidden = panel.dataset.adminTabPanel !== name;
+      });
+    }
+    root.classList.add("admin-tabs-ready");
+    root.querySelector("[data-admin-tabs]").setAttribute("role", "tablist");
+    tabs.forEach(function (tab) {
+      tab.setAttribute("role", "tab");
+      tab.addEventListener("click", function () {
+        history.replaceState(null, "", "#" + tab.dataset.adminTab);
+        activate(tab.dataset.adminTab);
+      });
+    });
+    window.addEventListener("hashchange", function () { activate(selectedTab()); });
+    activate(selectedTab());
+  })();
+</script>
 {% endblock %}
+
+{% macro brief_list(title, rows) %}
+  <section class="admin-subpanel">
+    <h3>{{ title }}</h3>
+    <ul class="admin-next-list">{% for row in rows %}<li>{{ row }}</li>{% endfor %}</ul>
+  </section>
+{% endmacro %}
+
+{% macro health_panel(dashboard) %}
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header"><h2>Site health score</h2><span>Configuration status only; no secrets shown</span></div>
+    <div class="admin-health-score-grid">
+      {% for score in dashboard.health_scores %}
+        <article class="admin-health-score admin-health-score--{{ score.tone }}" title="{{ score.help }}"><span>{{ score.label }}</span><strong>{{ score.status }}</strong><small>{{ score.value }}</small></article>
+      {% endfor %}
+    </div>
+  </section>
+{% endmacro %}
+
+{% macro analytics_list(title, rows, empty_text) %}
+  <section class="admin-subpanel">
+    <h3>{{ title }}</h3>
+    {% if rows %}
+      <ol class="admin-ranked-list">
+        {% for item in rows %}
+          <li><span>{{ item.action_label or item.label or item.source_page or item.destination }}</span><span>{{ item.count }}</span></li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="admin-empty">{{ empty_text }}</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{% macro funnel_chart(funnel) %}
+  <div class="admin-funnel" aria-label="{{ funnel.title }}">
+    <p class="admin-muted">{{ funnel.note }}</p>
+    {% for step in funnel.steps %}
+      <div class="admin-funnel-step">
+        <div><strong>{{ step.label }}</strong><span>{{ step.count }} reached · {{ step.conversion }}</span></div>
+        <div class="admin-funnel-bar"><span style="width: {{ step.width }}%"></span></div>
+        <small>{{ step.dropoff }} drop-off · {{ step.availability }}</small>
+      </div>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro ranked_chart(title, rows, empty_text) %}
+  <section class="admin-subpanel">
+    <h3>{{ title }}</h3>
+    {% if rows %}
+      <div class="admin-bar-chart">{% for row in rows %}<div class="admin-bar-row"><span>{{ row.label }}</span><div><i style="width: {{ row.width }}%"></i></div><strong>{{ row.value }}</strong></div>{% endfor %}</div>
+    {% else %}
+      <p class="admin-empty">{{ empty_text }}</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{% macro donut_chart(title, chart, empty_text) %}
+  <section class="admin-subpanel">
+    <h3>{{ title }}</h3>
+    {% if chart.segments %}
+      <div class="admin-donut-layout">
+        <div class="admin-donut" style="background: {{ chart.gradient }}" role="img" aria-label="{{ title }}"></div>
+        <ol class="admin-donut-list">{% for item in chart.segments %}<li><span><i style="background: {{ item.color }}"></i>{{ item.label }}</span><strong>{{ item.count }} · {{ item.percent }}</strong></li>{% endfor %}</ol>
+      </div>
+    {% else %}
+      <p class="admin-empty">{{ empty_text }}</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{% macro table_panel(title, headers, rows, keys, empty_text) %}
+  <section class="admin-panel admin-panel--wide">
+    <h2>{{ title }}</h2>
+    {% if rows %}
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr>{% for header in headers %}<th scope="col">{{ header }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>{% for key in keys %}<td>{{ row.get(key, "-") if row.get(key, "") != "" else "-" }}</td>{% endfor %}</tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="admin-empty">{{ empty_text }}</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{% macro trend_panel(dashboard) %}
+  <section class="admin-panel admin-panel--wide">
+    <div class="admin-panel__header"><h2>30-day trend</h2><span>Views and action clicks</span></div>
+    {% if dashboard.summary.daily_trend %}
+      <div class="admin-trend-chart" role="img" aria-label="Daily page views and actions">
+        {% for row in dashboard.summary.daily_trend %}
+          <div class="admin-trend-day">
+            <span class="admin-trend-day__label">{{ row.day[5:] }}</span>
+            <span class="admin-trend-bar admin-trend-bar--views" style="height: {{ ((row.page_views or 0) / dashboard.trend_max * 100)|round(1) }}%" title="{{ row.day }} page views"></span>
+            <span class="admin-trend-bar admin-trend-bar--tools" style="height: {{ ((row.book_actions or 0) / dashboard.trend_max * 100)|round(1) }}%" title="{{ row.day }} book actions"></span>
+            <span class="admin-trend-bar admin-trend-bar--donation" style="height: {{ ((row.checkout_starts or 0) / dashboard.trend_max * 100)|round(1) }}%" title="{{ row.day }} checkout starts"></span>
+            <span class="admin-trend-bar admin-trend-bar--newsletter" style="height: {{ ((row.newsletter_signups or 0) / dashboard.trend_max * 100)|round(1) }}%" title="{{ row.day }} newsletter signups"></span>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="admin-chart-legend"><span><i class="admin-legend admin-legend--views"></i>Views</span><span><i class="admin-legend admin-legend--tools"></i>Book actions</span><span><i class="admin-legend admin-legend--donation"></i>Checkout</span><span><i class="admin-legend admin-legend--newsletter"></i>Newsletter</span></div>
+    {% else %}
+      <p class="admin-empty">Trend lines will appear after public events are recorded.</p>
+    {% endif %}
+  </section>
+{% endmacro %}
