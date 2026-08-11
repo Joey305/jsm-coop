@@ -92,6 +92,14 @@ class DashboardV3Tests(unittest.TestCase):
             dashboard = app.build_admin_dashboard(app.app.config, {"range": "7d"})
         self.assertIn("google_ads_report", dashboard)
 
+    def test_randy_remote_backend_label_is_clear(self):
+        config = {
+            "ANALYTICS_STORAGE_BACKEND": "remote",
+            "ANALYTICS_REMOTE_BASE_URL": "https://randy.rove-vernier.ts.net/jsm-coop/analytics",
+        }
+        storage = {"backend": "local sqlite"}
+        self.assertEqual(app.analytics_storage_backend_label(config, storage), "Randy backup (remote)")
+
     def test_site_audit_detects_broken_internal_link_and_missing_media(self):
         blog_dir = self.root / "blogs"
         blog_dir.mkdir()

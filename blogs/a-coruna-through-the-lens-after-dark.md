@@ -1,6 +1,6 @@
 ---
 title: "A Coruña Through the Lens: After Dark"
-date: 2026-08-14
+date: 2026-08-11
 author: JSM Cooperative
 excerpt: "See A Coruña after dark as a city of partial information, softened edges, reflected light, and questions that daylight does not fully answer."
 cover: /static/images/jsm-placeholder.svg

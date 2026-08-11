@@ -47,7 +47,7 @@
 
   <section class="admin-panel admin-panel--wide" aria-label="Analytics storage status">
     <div class="admin-analytics-health">
-      <span>Backend: {{ dashboard.storage.backend }}</span>
+      <span>Backend: {{ dashboard.storage.backend_label or dashboard.storage.backend }}</span>
       <span>Health: {{ "OK" if dashboard.storage.ok else "Needs attention" }}</span>
       <span>Events: {{ dashboard.storage.event_count }}</span>
       <span>First event: {{ dashboard.storage.first_recorded_at or "None yet" }}</span>

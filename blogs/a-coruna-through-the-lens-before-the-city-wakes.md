@@ -1,6 +1,6 @@
 ---
 title: "A Coruña Through the Lens: Before the City Wakes"
-date: 2026-09-04
+date: 2026-08-04
 author: JSM Cooperative
 excerpt: "Walk A Coruña in the early morning, when shutters, markets, delivery routes, pale light, and quiet streets make the city feel newly possible."
 cover: /static/images/jsm-placeholder.svg

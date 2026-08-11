@@ -2586,6 +2586,17 @@ def dashboard_csv_export(kind, dashboard):
     return output.getvalue()
 
 
+def analytics_storage_backend_label(config, storage):
+    configured_backend = (config.get("ANALYTICS_STORAGE_BACKEND") or "local").lower()
+    if configured_backend == "remote":
+        remote_url = config.get("ANALYTICS_REMOTE_BASE_URL") or ""
+        remote_host = (urlsplit(remote_url).hostname or "").lower()
+        if "randy" in remote_host or "randy" in remote_url.lower():
+            return "Randy backup (remote)"
+        return "Remote analytics"
+    return storage.get("backend") or "local sqlite"
+
+
 def build_admin_dashboard(config, args=None, previous_admin_visit=""):
     args = args or {}
     start, end, range_name = analytics.date_range_from_args(args)
@@ -2606,6 +2617,7 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
     search_console = fetch_search_console_report(config, start, end)
     google_campaign_rows = google_ads_campaign_rows(google_ads_report, summary, verified)
     site_audit = latest_site_audit(config)
+    storage["backend_label"] = analytics_storage_backend_label(config, storage)
     posts = get_posts()
     editorial_health = editorial_health_summary(posts, summary)
     annotations = list_annotations(config, start, end, limit=30)
@@ -2669,7 +2681,7 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
         event["human_label"] = analytics.human_event_label(event["event_name"])
     live_activity = live_activity_feed(recent["events"])
     return {
-        "storage_backend": storage.get("backend", "local sqlite"),
+        "storage_backend": storage.get("backend_label", storage.get("backend", "local sqlite")),
         "storage": storage,
         "analytics_coverage": coverage,
         "since_last_visit": dashboard_since_last_visit(config, store, previous_admin_visit),
