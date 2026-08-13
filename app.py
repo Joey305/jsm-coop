@@ -566,7 +566,7 @@ def get_article_schema(post, canonical_path):
         "@context": "https://schema.org",
         "@type": "Article",
         "headline": post["title"],
-        "description": post["excerpt"],
+        "description": post.get("meta_description") or post["excerpt"],
         "author": {
             "@type": "Organization",
             "name": post["author"],
@@ -702,6 +702,67 @@ def render_campaign_modules(body):
         lambda match: campaign_module_html(match.group(1)),
         body,
     )
+
+
+def blog_subscription_cta(post):
+    tags = {tag.lower() for tag in post.get("tags", [])}
+    title = (post.get("title") or "").lower()
+    slug = post.get("slug", "")
+
+    cta = {
+        "kicker": "Novel Subscription",
+        "title": "Enjoy stories like this?",
+        "copy": (
+            "Join the JSM Novel Subscription for $20/month and receive new original "
+            "fiction from JSM Cooperative."
+        ),
+        "label": "Explore the Novel Subscription",
+    }
+
+    if post.get("is_through_lens"):
+        cta.update(
+            {
+                "title": "Want more story-rich journeys through place?",
+                "copy": (
+                    "The JSM Novel Subscription is $20/month and brings new original "
+                    "fiction from JSM Cooperative to readers who enjoy atmosphere, mystery, and place."
+                ),
+            }
+        )
+    elif slug == "el-hombre-con-la-gorra":
+        cta.update(
+            {
+                "title": "¿Quieres seguir leyendo historias de JSM?",
+                "copy": (
+                    "Únete a la JSM Novel Subscription por $20/month y recibe nueva "
+                    "ficción original de JSM Cooperative."
+                ),
+                "label": "Ver la Novel Subscription",
+            }
+        )
+    elif {"mindful diabetes", "alzheimer’s", "alzheimer's", "mission", "community"} & tags:
+        cta.update(
+            {
+                "title": "Want stories to keep fueling impact?",
+                "copy": (
+                    "Join the JSM Novel Subscription for $20/month and receive new original "
+                    "fiction while supporting JSM Cooperative's reader-powered mission."
+                ),
+            }
+        )
+    elif "ball cap" in title or "gorra" in title or "camino" in tags:
+        cta.update(
+            {
+                "title": "Keep walking the Camino with JSM.",
+                "copy": (
+                    "The JSM Novel Subscription is $20/month and gives readers a recurring "
+                    "way to receive new original fiction from JSM Cooperative."
+                ),
+            }
+        )
+
+    cta["href"] = url_for("novel_subscription")
+    return cta
 
 
 def public_sitemap_routes():
@@ -871,12 +932,19 @@ def read_blog_file(path):
     if not location:
         location = next((tag for tag in tags if tag not in generic_tags), "")
 
+    fallback_title = metadata.get("title", slug.replace("-", " ").title())
+    fallback_excerpt = metadata.get("excerpt", body[:180].replace("\n", " ") + "...")
+
     return {
         "slug": slug,
-        "title": metadata.get("title", slug.replace("-", " ").title()),
+        "title": fallback_title,
         "date": metadata.get("date", "Undated"),
         "author": metadata.get("author", "JSM Cooperative"),
-        "excerpt": metadata.get("excerpt", body[:180].replace("\n", " ") + "..."),
+        "excerpt": fallback_excerpt,
+        "seo_title": metadata.get("seo_title", fallback_title),
+        "meta_description": metadata.get("meta_description", fallback_excerpt),
+        "og_title": metadata.get("og_title", metadata.get("seo_title", fallback_title)),
+        "og_description": metadata.get("og_description", metadata.get("meta_description", fallback_excerpt)),
         "cover": cover,
         "cover_webp": cover_webp,
         "tags": tags,
@@ -3132,8 +3200,10 @@ def render_blog_post(slug, canonical_prefix="/blogs"):
 
     canonical_path = f"{canonical_prefix}/{post['slug']}"
     meta = {
-        "title": post["title"],
-        "description": post["excerpt"],
+        "title": post.get("seo_title") or post["title"],
+        "description": post.get("meta_description") or post["excerpt"],
+        "og_title": post.get("og_title") or post.get("seo_title") or post["title"],
+        "og_description": post.get("og_description") or post.get("meta_description") or post["excerpt"],
         "canonical_url": absolute_url(canonical_path),
         "image": post["cover"].replace("/static/", "") if post["cover"].startswith("/static/") else "images/jsm-placeholder.svg",
     }
@@ -3152,6 +3222,7 @@ def render_blog_post(slug, canonical_prefix="/blogs"):
         "blogs",
         title=post["title"],
         post=post,
+        subscription_cta=blog_subscription_cta(post),
         meta=meta,
         structured_data=schemas,
     )
