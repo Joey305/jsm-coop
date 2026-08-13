@@ -36,6 +36,7 @@ from flask import (
 from markupsafe import Markup
 import markdown as md
 import jsm_analytics as analytics
+from marketing.google_ads import data_manager
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -92,6 +93,18 @@ app.config["GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_ID"] = os.getenv(
 app.config["GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_RESOURCE"] = os.getenv(
     "GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_RESOURCE", ""
 ).strip()
+app.config["GOOGLE_ADS_SIGNED_BOOK_PURCHASE_CONVERSION_ACTION_ID"] = os.getenv(
+    "GOOGLE_ADS_SIGNED_BOOK_PURCHASE_CONVERSION_ACTION_ID", ""
+).strip()
+app.config["GOOGLE_DATA_MANAGER_VALIDATE_ONLY"] = os.getenv(
+    "GOOGLE_DATA_MANAGER_VALIDATE_ONLY", ""
+).strip()
+app.config["GOOGLE_DATA_MANAGER_QUOTA_PROJECT"] = os.getenv(
+    "GOOGLE_DATA_MANAGER_QUOTA_PROJECT", "jsmcoop-ads-api-305-2026"
+).strip()
+app.config["GOOGLE_ADS_LEGACY_PURCHASE_UPLOAD_ENABLED"] = os.getenv(
+    "GOOGLE_ADS_LEGACY_PURCHASE_UPLOAD_ENABLED", "0"
+).lower() in {"1", "true", "yes", "on"}
 app.config["ANALYTICS_DB_PATH"] = Path(os.getenv("ANALYTICS_DB_PATH", BASE_DIR / "data" / "jsm_analytics.sqlite3"))
 app.config["ANALYTICS_ENABLED"] = os.getenv("ANALYTICS_ENABLED", "1")
 app.config["ANALYTICS_ENVIRONMENT"] = os.getenv("ANALYTICS_ENVIRONMENT", os.getenv("FLASK_ENV", "production"))
@@ -1097,6 +1110,40 @@ def google_ads_upload_summary(config, start, end):
         {"label": "Skipped", "count": statuses.get("skipped", 0)},
     ]
     return {"rows": rows, "recent": records[-8:], "has_failures": bool(statuses.get("failed") or statuses.get("partial_failure"))}
+
+
+def data_manager_connection_summary(config):
+    customer_id = data_manager.customer_id_from_config(config)
+    action_id = data_manager.purchase_conversion_action_id_from_config(config)
+    validate_only = data_manager.validate_only_from_config(config)
+    records = [
+        record for record in read_jsonl_records(config["GOOGLE_ADS_OFFLINE_CONVERSION_LOG"])
+        if record.get("event_name") == "signed_book_purchase_datamanager"
+    ]
+    successes = [record for record in records if record.get("status") in {"uploaded", "validated"}]
+    failures = [record for record in records if record.get("status") == "failed"]
+
+    if not customer_id or not action_id:
+        status = "Configuration Missing"
+        tone = "watch"
+    elif validate_only:
+        status = "Validation Only"
+        tone = "watch"
+    else:
+        status = "Production"
+        tone = "good"
+
+    latest_success = successes[-1].get("attempted_at", "") if successes else ""
+    latest_error = failures[-1].get("message") or failures[-1].get("reason") if failures else ""
+    return {
+        "configured": bool(customer_id and action_id),
+        "status": status,
+        "tone": tone,
+        "validate_only": validate_only,
+        "conversion_configured": bool(action_id),
+        "last_successful_purchase_upload": latest_success,
+        "last_error": (latest_error or "")[:160],
+    }
 
 
 def paypal_webhook_health(config):
@@ -2483,6 +2530,7 @@ def dashboard_since_last_visit(config, store, previous_visit):
 
 def dashboard_health_scores(config, storage, verified, google_uploads, google_ads_report=None, search_console_report=None, site_audit=None):
     paypal = paypal_webhook_health(config)
+    data_manager_status = data_manager_connection_summary(config)
     tracking_status = "Configured"
     tracking_tone = "good"
     if not analytics.analytics_enabled(config):
@@ -2500,6 +2548,7 @@ def dashboard_health_scores(config, storage, verified, google_uploads, google_ad
         {"label": "PayPal Webhook", "status": "Configured" if paypal["configured"] else "Needs Attention", "value": paypal["last_event"] or "No recent events", "tone": "good" if paypal["configured"] else "watch", "help": "Webhook verifies signed-copy purchases."},
         {"label": "Verified Purchase Tracking", "status": "Active" if verified["count"] else "No Recent Data", "value": f"{verified['count']} purchases", "tone": "good" if verified["count"] else "low", "help": "Only completed PayPal webhook records."},
         {"label": "Google Ads API", "status": (google_ads_report or {}).get("status") or google_ads_connection_status(config), "value": (google_ads_report or {}).get("cache_note") or "Cached read reporting", "tone": "good" if (google_ads_report or {}).get("status") == "Connected" else "watch", "help": "Read-only reporting status; no secrets shown."},
+        {"label": "Data Manager", "status": data_manager_status["status"], "value": data_manager_status["last_successful_purchase_upload"] or data_manager_status["last_error"] or "Signed-book purchase ingestion", "tone": data_manager_status["tone"], "help": "Verified PayPal purchases sent to Google Ads through Data Manager."},
         {"label": "Google Ads Uploads", "status": "Needs Attention" if google_uploads["has_failures"] else "Operational", "value": f"{sum(row['count'] for row in google_uploads['rows'][1:])} recent records", "tone": "watch" if google_uploads["has_failures"] else "good", "help": "Offline conversion upload attempts."},
         {"label": "Search Console", "status": (search_console_report or {}).get("status") or "Configuration Missing", "value": (search_console_report or {}).get("cache_note") or "SEO read reporting", "tone": "good" if (search_console_report or {}).get("status") == "Connected" else "watch", "help": "Query and page visibility reporting."},
         {"label": "Mailchimp", "status": "Configured" if config.get("MAILCHIMP_ACTION_URL") else "Not Configured", "value": "Forward form only", "tone": "good" if config.get("MAILCHIMP_ACTION_URL") else "low", "help": "No subscriber list is shown without API access."},
@@ -2681,6 +2730,7 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
         storage = {**storage, "ok": False, "error": str(error)}
     verified = verified_purchase_summary(config, start, end)
     google_uploads = google_ads_upload_summary(config, start, end)
+    data_manager_status = data_manager_connection_summary(config)
     google_ads_report = fetch_google_ads_report(config, start, end)
     search_console = fetch_search_console_report(config, start, end)
     google_campaign_rows = google_ads_campaign_rows(google_ads_report, summary, verified)
@@ -2762,6 +2812,7 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
         "verified_purchase_breakdown": purchase_breakdown,
         "google_uploads": google_uploads,
         "google_ads_report": google_ads_report,
+        "data_manager_status": data_manager_status,
         "google_ads_campaign_rows": google_campaign_rows,
         "google_ads_discrepancy": google_ads_discrepancy(google_ads_report, verified),
         "google_cpc_sessions": google_cpc_sessions,
@@ -3432,6 +3483,18 @@ def google_ads_conversion_time(dt):
     return f"{timestamp[:-2]}:{timestamp[-2:]}"
 
 
+def path_from_url(value):
+    if not value:
+        return ""
+    try:
+        parts = urlsplit(value)
+    except ValueError:
+        return ""
+    if not parts.scheme and not parts.netloc:
+        return value if value.startswith("/") else f"/{value}"
+    return urlunsplit(("", "", parts.path or "/", parts.query, ""))
+
+
 def read_latest_checkout_attribution(checkout_id):
     if not checkout_id:
         return None
@@ -3450,6 +3513,68 @@ def read_latest_checkout_attribution(checkout_id):
             if record.get("checkout_id") == checkout_id:
                 found = record
     return found
+
+
+def purchase_transaction_key(record):
+    return (
+        (record.get("capture_id") or "").strip()
+        or (record.get("resource_id") or "").strip()
+        or (record.get("order_id") or "").strip()
+        or (record.get("event_id") or "").strip()
+        or (record.get("checkout_id") or "").strip()
+    )
+
+
+def read_existing_verified_purchase(record):
+    key = purchase_transaction_key(record)
+    if not key:
+        return None
+
+    path = Path(app.config["PAYPAL_VERIFIED_PURCHASE_LOG"])
+    if not path.exists():
+        return None
+
+    found = None
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            try:
+                existing = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            existing_keys = {
+                existing.get("capture_id", ""),
+                existing.get("resource_id", ""),
+                existing.get("order_id", ""),
+                existing.get("event_id", ""),
+                existing.get("checkout_id", ""),
+            }
+            if key in existing_keys:
+                found = existing
+    return found
+
+
+def google_data_manager_upload_succeeded(transaction_id):
+    if not transaction_id:
+        return False
+
+    path = Path(app.config["GOOGLE_ADS_OFFLINE_CONVERSION_LOG"])
+    if not path.exists():
+        return False
+
+    success_statuses = {"uploaded", "validated"}
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if (
+                record.get("event_name") == "signed_book_purchase_datamanager"
+                and record.get("transaction_id") == transaction_id
+                and record.get("status") in success_statuses
+            ):
+                return True
+    return False
 
 
 def google_ads_conversion_action_resource(event_name):
@@ -3550,6 +3675,39 @@ def upload_google_ads_click_conversion(event_name, record):
     return upload_record
 
 
+def upload_data_manager_signed_book_purchase(record):
+    transaction_id = data_manager.purchase_transaction_id(record)
+    upload_record = {
+        "attempted_at": utc_now().isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "event_name": "signed_book_purchase_datamanager",
+        "checkout_id": record.get("checkout_id", ""),
+        "order_id": record.get("order_id", ""),
+        "capture_id": record.get("capture_id", ""),
+        "transaction_id": transaction_id,
+        "status": "skipped",
+        "validate_only": data_manager.validate_only_from_config(app.config),
+    }
+
+    if google_data_manager_upload_succeeded(transaction_id):
+        upload_record["reason"] = "already_sent"
+        append_jsonl(app.config["GOOGLE_ADS_OFFLINE_CONVERSION_LOG"], upload_record)
+        return upload_record
+
+    try:
+        result = data_manager.ingest_purchase(record, app.config)
+        upload_record.update(result.as_record())
+    except data_manager.DataManagerConfigError as error:
+        upload_record["reason"] = "configuration_missing"
+        upload_record["message"] = str(error)
+    except Exception as error:
+        upload_record["status"] = "failed"
+        upload_record["reason"] = "unexpected_error"
+        upload_record["message"] = f"{type(error).__name__}: {error}"
+
+    append_jsonl(app.config["GOOGLE_ADS_OFFLINE_CONVERSION_LOG"], upload_record)
+    return upload_record
+
+
 def paypal_access_token():
     client_id = app.config["PAYPAL_CLIENT_ID"]
     client_secret = app.config["PAYPAL_CLIENT_SECRET"]
@@ -3610,9 +3768,35 @@ def verify_paypal_webhook_signature(event_payload):
     return status == "SUCCESS", status or "unknown"
 
 
+def first_nested_value(value, keys):
+    if isinstance(value, dict):
+        for key in keys:
+            item = value.get(key)
+            if item:
+                return item
+        for item in value.values():
+            found = first_nested_value(item, keys)
+            if found:
+                return found
+    elif isinstance(value, list):
+        for item in value:
+            found = first_nested_value(item, keys)
+            if found:
+                return found
+    return ""
+
+
 def extract_paypal_payment_record(event_payload, verified):
     resource = event_payload.get("resource") or {}
     amount = resource.get("amount") or resource.get("seller_receivable_breakdown", {}).get("gross_amount") or {}
+    related_ids = resource.get("supplementary_data", {}).get("related_ids", {})
+    capture_id = resource.get("id", "")
+    paypal_order_id = related_ids.get("order_id") or resource.get("order_id", "")
+    checkout_id = (
+        resource.get("custom_id")
+        or resource.get("invoice_id")
+        or first_nested_value(resource, {"custom_id", "invoice_id", "custom", "invoice"})
+    )
 
     return {
         "received_at": utc_now().isoformat(timespec="seconds").replace("+00:00", "Z"),
@@ -3621,9 +3805,12 @@ def extract_paypal_payment_record(event_payload, verified):
         "event_type": event_payload.get("event_type", ""),
         "event_create_time": event_payload.get("create_time", ""),
         "resource_id": resource.get("id", ""),
+        "capture_id": capture_id,
+        "paypal_order_id": paypal_order_id,
         "resource_status": resource.get("status", ""),
         "invoice_id": resource.get("invoice_id", ""),
         "custom_id": resource.get("custom_id", ""),
+        "checkout_id": checkout_id,
         "currency": amount.get("currency_code", app.config["BOOK_DIRECT_PRICE_CURRENCY"]),
         "value": amount.get("value", app.config["BOOK_DIRECT_PRICE_AMOUNT"]),
     }
@@ -3647,63 +3834,73 @@ def paypal_webhook():
     append_jsonl(app.config["PAYPAL_WEBHOOK_EVENT_LOG"], record)
 
     if verified and event_payload.get("event_type") == "PAYMENT.CAPTURE.COMPLETED":
-        checkout_id = record.get("custom_id") or record.get("invoice_id") or ""
+        checkout_id = record.get("checkout_id") or record.get("custom_id") or record.get("invoice_id") or ""
         checkout_record = read_latest_checkout_attribution(checkout_id)
         purchase_record = {
             **(checkout_record or {}),
             **record,
             "checkout_id": checkout_id,
-            "order_id": record.get("resource_id") or record.get("event_id") or checkout_id,
+            "order_id": record.get("paypal_order_id") or record.get("resource_id") or record.get("event_id") or checkout_id,
             "event_name": "paypal_payment_completed",
+            "completed_at": record.get("event_create_time") or utc_now().isoformat(timespec="seconds").replace("+00:00", "Z"),
             "conversion_date_time": google_ads_conversion_time(utc_now()),
         }
-        append_jsonl(app.config["PAYPAL_VERIFIED_PURCHASE_LOG"], purchase_record)
-        try:
-            analytics.analytics_store(app.config).store_event(
-                {
-                    "event_id": f"paypal:{purchase_record.get('order_id') or purchase_record.get('event_id') or uuid.uuid4().hex}",
-                    "schema_version": 1,
-                    "event_name": "verified_direct_purchase_completed",
-                    "event_category": "sales",
-                    "occurred_at": utc_now().isoformat(timespec="seconds").replace("+00:00", "Z"),
-                    "client_occurred_at": "",
-                    "page_path": purchase_record.get("page_path", ""),
-                    "page_title": "Verified signed-copy purchase",
-                    "landing_page": purchase_record.get("landing_page", ""),
-                    "content_id": "",
-                    "content_type": "book",
-                    "article_slug": "",
-                    "series": "",
-                    "element_id": "",
-                    "element_label": "PayPal webhook",
-                    "element_type": "server",
-                    "element_position": "paypal_webhook",
-                    "destination_url": "",
-                    "destination_domain": "",
-                    "referrer_url": "",
-                    "referrer_domain": "",
-                    "source": purchase_record.get("utm_source", ""),
-                    "medium": purchase_record.get("utm_medium", ""),
-                    "campaign": purchase_record.get("utm_campaign", ""),
-                    "term": purchase_record.get("utm_term", ""),
-                    "campaign_content": purchase_record.get("utm_content", ""),
-                    "gclid": purchase_record.get("gclid", ""),
-                    "gbraid": purchase_record.get("gbraid", ""),
-                    "wbraid": purchase_record.get("wbraid", ""),
-                    "anonymous_session_id": "",
-                    "device_category": "",
-                    "environment": analytics.analytics_environment(app.config),
-                    "metadata": {
-                        "checkout_id": purchase_record.get("checkout_id", ""),
-                        "order_id": purchase_record.get("order_id", ""),
-                        "value": purchase_record.get("value", ""),
-                        "currency": purchase_record.get("currency", ""),
-                    },
-                }
-            )
-        except Exception:
-            pass
-        upload_google_ads_click_conversion("paypal_payment_completed", purchase_record)
+        existing_purchase = read_existing_verified_purchase(purchase_record)
+        is_duplicate_purchase = bool(existing_purchase)
+        if existing_purchase:
+            purchase_record = {**existing_purchase, **purchase_record}
+        else:
+            append_jsonl(app.config["PAYPAL_VERIFIED_PURCHASE_LOG"], purchase_record)
+            try:
+                analytics.analytics_store(app.config).store_event(
+                    {
+                        "event_id": f"paypal:{purchase_record.get('capture_id') or purchase_record.get('order_id') or purchase_record.get('event_id') or uuid.uuid4().hex}",
+                        "schema_version": 1,
+                        "event_name": "verified_direct_purchase_completed",
+                        "event_category": "sales",
+                        "occurred_at": utc_now().isoformat(timespec="seconds").replace("+00:00", "Z"),
+                        "client_occurred_at": "",
+                        "page_path": purchase_record.get("page_path", ""),
+                        "page_title": "Verified signed-copy purchase",
+                        "landing_page": purchase_record.get("landing_page", ""),
+                        "content_id": "",
+                        "content_type": "book",
+                        "article_slug": "",
+                        "series": "",
+                        "element_id": "",
+                        "element_label": "PayPal webhook",
+                        "element_type": "server",
+                        "element_position": "paypal_webhook",
+                        "destination_url": "",
+                        "destination_domain": "",
+                        "referrer_url": "",
+                        "referrer_domain": "",
+                        "source": purchase_record.get("utm_source", ""),
+                        "medium": purchase_record.get("utm_medium", ""),
+                        "campaign": purchase_record.get("utm_campaign", ""),
+                        "term": purchase_record.get("utm_term", ""),
+                        "campaign_content": purchase_record.get("utm_content", ""),
+                        "gclid": purchase_record.get("gclid", ""),
+                        "gbraid": purchase_record.get("gbraid", ""),
+                        "wbraid": purchase_record.get("wbraid", ""),
+                        "anonymous_session_id": purchase_record.get("anonymous_session_id", ""),
+                        "device_category": "",
+                        "environment": analytics.analytics_environment(app.config),
+                        "metadata": {
+                            "checkout_id": purchase_record.get("checkout_id", ""),
+                            "order_id": purchase_record.get("order_id", ""),
+                            "capture_id": purchase_record.get("capture_id", ""),
+                            "paypal_order_id": purchase_record.get("paypal_order_id", ""),
+                            "value": purchase_record.get("value", ""),
+                            "currency": purchase_record.get("currency", ""),
+                        },
+                    }
+                )
+            except Exception:
+                pass
+        upload_data_manager_signed_book_purchase(purchase_record)
+        if app.config.get("GOOGLE_ADS_LEGACY_PURCHASE_UPLOAD_ENABLED") and not is_duplicate_purchase:
+            upload_google_ads_click_conversion("paypal_payment_completed", purchase_record)
 
     return jsonify({"status": "received", "verified": verified}), 200
 
@@ -3713,24 +3910,32 @@ def direct_book_checkout():
     checkout_url = app.config["BOOK_DIRECT_CHECKOUT_URL"]
 
     if not checkout_url:
+        if request.args.get("format") == "json":
+            return jsonify({"status": "error", "reason": "checkout_not_configured"}), 503
         flash("Direct book checkout is not configured yet. Please choose a retailer option.", "info")
         return redirect(url_for("book_signed"))
 
     checkout_id = uuid.uuid4().hex
-    conversion_time = google_ads_conversion_time(utc_now())
+    checkout_started_at = utc_now()
+    conversion_time = google_ads_conversion_time(checkout_started_at)
+    attribution_fields = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid"]
     attribution = {
         key: request.args.get(key)
-        for key in ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid"]
+        for key in attribution_fields
         if request.args.get(key)
     }
+    landing_page = path_from_url(request.args.get("landing_page") or request.args.get("page_path") or request.referrer or "")
     checkout_record = {
         "checkout_id": checkout_id,
         "order_id": f"paypal-checkout-{checkout_id}",
         "event_name": "paypal_checkout_started",
+        "checkout_started_at": checkout_started_at.isoformat(timespec="seconds").replace("+00:00", "Z"),
         "conversion_date_time": conversion_time,
         "value": app.config["BOOK_DIRECT_PRICE_AMOUNT"],
         "currency": app.config["BOOK_DIRECT_PRICE_CURRENCY"],
-        "page_path": request.referrer or "",
+        "landing_page": landing_page,
+        "page_path": landing_page,
+        **{key: "" for key in attribution_fields},
         **attribution,
     }
     append_jsonl(app.config["BOOK_DIRECT_CHECKOUT_ATTRIBUTION_LOG"], checkout_record)
@@ -3739,6 +3944,8 @@ def direct_book_checkout():
     parsed = urlsplit(checkout_url)
     query = dict(parse_qsl(parsed.query, keep_blank_values=True))
     query.update(attribution)
+    if landing_page:
+        query["landing_page"] = landing_page
     query.update(
         {
             "custom": checkout_id,
@@ -3756,6 +3963,16 @@ def direct_book_checkout():
             parsed.fragment,
         )
     )
+
+    if request.args.get("format") == "json":
+        return jsonify(
+            {
+                "status": "ready",
+                "checkout_id": checkout_id,
+                "checkout_url": checkout_url,
+                "landing_page": landing_page,
+            }
+        )
 
     return redirect(checkout_url, code=302)
 

@@ -171,11 +171,16 @@ Core site configuration:
 Analytics and advertising:
 
 - `GA_MEASUREMENT_ID`: Optional GA4 Measurement ID. Leave blank until GA4 is ready; the existing Google Ads tag remains active.
-- `GOOGLE_ADS_CUSTOMER_ID`: Google Ads customer ID without dashes, for example `6517122239`.
+- `GOOGLE_ADS_CUSTOMER_ID`: Google Ads customer ID without dashes. Production JSM advertiser account: `5924203827`.
 - `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, `GOOGLE_ADS_REFRESH_TOKEN`: Google Ads API credentials used for server-side conversion uploads.
 - `GOOGLE_ADS_LOGIN_CUSTOMER_ID`: Optional manager account ID if using an MCC.
 - `GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_ID`: Google Ads conversion action ID for the primary `PayPal checkout started` import-from-clicks conversion.
-- `GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_ID`: Optional Google Ads conversion action ID for verified PayPal purchases after webhook matching.
+- `GOOGLE_ADS_SIGNED_BOOK_PURCHASE_CONVERSION_ACTION_ID`: Google Data Manager purchase conversion action ID for verified signed-book PayPal captures. Production value: `7718901779`.
+- `GOOGLE_DATA_MANAGER_SERVICE_ACCOUNT_JSON_BASE64`: Optional base64-encoded service-account JSON for Heroku Data Manager ingestion. Do not commit the JSON file.
+- `GOOGLE_DATA_MANAGER_SERVICE_ACCOUNT_JSON`: Optional raw service-account JSON alternative for environments that support multiline secrets.
+- `GOOGLE_DATA_MANAGER_QUOTA_PROJECT`: Google Cloud quota project for Data Manager. Production value: `jsmcoop-ads-api-305-2026`.
+- `GOOGLE_DATA_MANAGER_VALIDATE_ONLY`: Set to `1`/`true` for validation-only ingestion. Tests always force validation mode.
+- `GOOGLE_ADS_PAYPAL_PURCHASE_CONVERSION_ACTION_ID`: Legacy Google Ads API purchase conversion action ID. The verified signed-book purchase path now uses Data Manager instead.
 - `GOOGLE_ADS_OFFLINE_CONVERSION_LOG`: Optional path for Google Ads upload attempts. Defaults to `data/google_ads_offline_conversions.jsonl`.
 
 Signed-copy PayPal checkout:
@@ -195,6 +200,8 @@ Signed-copy PayPal checkout:
 The signed-copy website copy should describe price as `$15 + shipping` because shipping is configured inside PayPal. Configure PayPal return URLs to `/book/checkout/success` and `/book/checkout/cancel`, and configure the live PayPal webhook listener URL as `https://jsmcoop.com/paypal/webhook`. Subscribe the webhook to `PAYMENT.CAPTURE.COMPLETED` for verified paid-purchase tracking.
 
 When a visitor starts direct PayPal checkout, `/book/checkout/start` creates a local checkout ID, stores the Google Ads click attribution, passes that ID toward PayPal, and uploads a `PayPal checkout started` click conversion to Google Ads when the conversion action and Ads API credentials are configured. Create that Google Ads action as an import/offline conversion from clicks, then set its ID in `GOOGLE_ADS_PAYPAL_CHECKOUT_STARTED_CONVERSION_ACTION_ID`.
+
+When PayPal verifies a completed signed-book capture, the webhook persists the purchase, records a first-party/Randy analytics purchase event, and then attempts a Google Data Manager `events:ingest` upload to the signed-book purchase conversion action. Data Manager failures are logged safely and do not fail the PayPal webhook.
 
 ---
 

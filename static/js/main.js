@@ -150,7 +150,8 @@
         cta_location: payload.cta_location || "",
         value: payload.value || "",
         currency: payload.currency || "",
-        transaction_id: payload.transaction_id || ""
+        transaction_id: payload.transaction_id || "",
+        checkout_id: payload.checkout_id || ""
       }
     };
 
@@ -327,6 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
       value: element.dataset.value || undefined,
       currency: element.dataset.currency || undefined,
       transaction_id: element.dataset.transactionId || undefined,
+      checkout_id: element.dataset.checkoutId || undefined,
     });
 
     if (element.tagName === "FORM") {
@@ -348,7 +350,36 @@ document.addEventListener("DOMContentLoaded", () => {
           window.JSM_ATTRIBUTION_FIELDS.forEach((field) => {
             if (campaign[field]) url.searchParams.set(field, campaign[field]);
           });
+          if (campaign.landing_page) url.searchParams.set("landing_page", campaign.landing_page);
           href = url.pathname + url.search + url.hash;
+
+          if (!opensNewTab) {
+            event.preventDefault();
+            const jsonUrl = new URL(href, window.location.origin);
+            jsonUrl.searchParams.set("format", "json");
+            window.fetch(jsonUrl.pathname + jsonUrl.search, {
+              method: "GET",
+              headers: { "Accept": "application/json" },
+              credentials: "same-origin",
+            })
+              .then((response) => response.ok ? response.json() : Promise.reject(new Error("checkout_prepare_failed")))
+              .then((data) => {
+                const preparedPayload = {
+                  ...eventPayload,
+                  checkout_id: data.checkout_id || "",
+                  transaction_id: data.checkout_id || eventPayload.transaction_id,
+                };
+                window.JSMAnalytics.trackMany(eventNames, preparedPayload, () => {
+                  window.location.href = data.checkout_url || href;
+                });
+              })
+              .catch(() => {
+                window.JSMAnalytics.trackMany(eventNames, eventPayload, () => {
+                  window.location.href = href;
+                });
+              });
+            return;
+          }
         }
 
         if (opensNewTab || !href || href.startsWith("#") || href.startsWith("mailto:")) {

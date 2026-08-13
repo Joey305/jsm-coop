@@ -896,6 +896,8 @@ def safe_metadata(metadata, raw):
         "landing_page",
         "checkout_id",
         "order_id",
+        "capture_id",
+        "paypal_order_id",
         "resource_id",
         "event_id",
         "status",
