@@ -12,6 +12,7 @@ from pathlib import Path
 from collections import Counter
 from contextlib import contextmanager
 from functools import wraps
+from threading import Lock, Thread
 from urllib.parse import urlencode, quote, urlsplit, urlunsplit, parse_qsl
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
@@ -128,6 +129,7 @@ app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB upload limit
 
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "svg"}
 ALLOWED_VIDEO_EXTENSIONS = {"mp4", "webm", "mov", "m4v"}
+EXTERNAL_REPORT_REFRESH_LOCK = Lock()
 
 
 # Use the exact Mailchimp POST action URL from your embedded form.
@@ -1381,6 +1383,82 @@ def cache_is_fresh(cache_row, seconds):
     if not attempted:
         return False
     return (datetime.now(timezone.utc) - attempted).total_seconds() < int(seconds or 0)
+
+
+def cached_google_ads_report(config, start, end):
+    """Return the most recent campaign report without making a network request.
+
+    This function is deliberately used by web requests. External API refreshes
+    run in the worker so a slow provider cannot cause a Heroku H12 timeout.
+    """
+    cache_key = f"google_ads:{start.date().isoformat()}:{(end - timedelta(days=1)).date().isoformat()}"
+    cached = read_external_cache(config, cache_key)
+    if cached and cached.get("payload"):
+        payload = dict(cached["payload"])
+        timestamp = cached.get("last_successful_at") or cached.get("last_attempted_at")
+        payload["cache_note"] = f"Cached report from {cache_age_label(timestamp)}. Refreshes run outside admin page loads."
+        return payload
+    return {
+        "status": google_ads_connection_status(config),
+        "rows": [],
+        "topline": {},
+        "last_attempted_at": "",
+        "last_successful_at": "",
+        "cache_note": "No cached report yet. It will appear after the reporting worker refreshes it.",
+    }
+
+
+def cached_search_console_report(config, start, end):
+    """Return the most recent Search Console report without making a network request."""
+    cache_key = f"search_console:{start.date().isoformat()}:{(end - timedelta(days=1)).date().isoformat()}"
+    cached = read_external_cache(config, cache_key)
+    if cached and cached.get("payload"):
+        payload = dict(cached["payload"])
+        timestamp = cached.get("last_successful_at") or cached.get("last_attempted_at")
+        payload["cache_note"] = f"Cached report from {cache_age_label(timestamp)}. Refreshes run outside admin page loads."
+        return payload
+    return {
+        "status": "Connected" if config.get("GOOGLE_SEARCH_CONSOLE_SITE_URL") and config.get("GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON") else "Configuration Missing",
+        "site_url": config.get("GOOGLE_SEARCH_CONSOLE_SITE_URL", ""),
+        "topline": {},
+        "queries": [],
+        "pages": [],
+        "opportunities": [],
+        "last_attempted_at": "",
+        "last_successful_at": "",
+        "cache_note": "No cached report yet. It will appear after the reporting worker refreshes it.",
+    }
+
+
+def refresh_external_reports(config, start=None, end=None):
+    """Refresh external reporting caches. Never call this directly from a request."""
+    if start is None or end is None:
+        start, end, _ = analytics.date_range_from_args({"range": "30d"})
+    return {
+        "google_ads": fetch_google_ads_report(config, start, end),
+        "search_console": fetch_search_console_report(config, start, end),
+    }
+
+
+def refresh_external_reports_in_background(config, start, end):
+    """Refresh stale reports after the response path has finished its work."""
+    ads_key = f"google_ads:{start.date().isoformat()}:{(end - timedelta(days=1)).date().isoformat()}"
+    search_key = f"search_console:{start.date().isoformat()}:{(end - timedelta(days=1)).date().isoformat()}"
+    ads_is_fresh = cache_is_fresh(read_external_cache(config, ads_key), config.get("GOOGLE_ADS_REPORT_CACHE_SECONDS", 900))
+    search_is_fresh = cache_is_fresh(read_external_cache(config, search_key), config.get("SEARCH_CONSOLE_REPORT_CACHE_SECONDS", 900))
+    if ads_is_fresh and search_is_fresh:
+        return False
+    if not EXTERNAL_REPORT_REFRESH_LOCK.acquire(blocking=False):
+        return False
+
+    def refresh():
+        try:
+            refresh_external_reports(config, start, end)
+        finally:
+            EXTERNAL_REPORT_REFRESH_LOCK.release()
+
+    Thread(target=refresh, name="external-report-refresh", daemon=True).start()
+    return True
 
 
 def google_ads_connection_status(config):
@@ -2731,8 +2809,12 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
     verified = verified_purchase_summary(config, start, end)
     google_uploads = google_ads_upload_summary(config, start, end)
     data_manager_status = data_manager_connection_summary(config)
-    google_ads_report = fetch_google_ads_report(config, start, end)
-    search_console = fetch_search_console_report(config, start, end)
+    # Never contact third-party reporting APIs during a web request. Heroku's
+    # router has a 30-second request limit; cached reports keep /admin usable
+    # even if Google is slow or temporarily unavailable.
+    google_ads_report = cached_google_ads_report(config, start, end)
+    search_console = cached_search_console_report(config, start, end)
+    refresh_external_reports_in_background(config, start, end)
     google_campaign_rows = google_ads_campaign_rows(google_ads_report, summary, verified)
     site_audit = latest_site_audit(config)
     storage["backend_label"] = analytics_storage_backend_label(config, storage)

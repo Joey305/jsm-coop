@@ -92,6 +92,36 @@ class DashboardV3Tests(unittest.TestCase):
             dashboard = app.build_admin_dashboard(app.app.config, {"range": "7d"})
         self.assertIn("google_ads_report", dashboard)
 
+    def test_admin_dashboard_uses_cached_external_reports_without_live_fetches(self):
+        start, end, _ = analytics.date_range_from_args({"range": "30d"})
+        app.write_external_cache(
+            app.app.config,
+            f"google_ads:{start.date().isoformat()}:{(end - timedelta(days=1)).date().isoformat()}",
+            "google_ads",
+            "Connected",
+            {"status": "Connected", "rows": [], "topline": {"clicks": 4}},
+            successful=True,
+        )
+        app.write_external_cache(
+            app.app.config,
+            f"search_console:{start.date().isoformat()}:{(end - timedelta(days=1)).date().isoformat()}",
+            "search_console",
+            "Connected",
+            {"status": "Connected", "topline": {}, "queries": [], "pages": [], "opportunities": []},
+            successful=True,
+        )
+        original_ads = app.fetch_google_ads_report
+        original_search = app.fetch_search_console_report
+        app.fetch_google_ads_report = lambda *_: self.fail("/admin must not fetch Google Ads live")
+        app.fetch_search_console_report = lambda *_: self.fail("/admin must not fetch Search Console live")
+        self.addCleanup(setattr, app, "fetch_google_ads_report", original_ads)
+        self.addCleanup(setattr, app, "fetch_search_console_report", original_search)
+
+        dashboard = app.build_admin_dashboard(app.app.config, {"range": "30d"})
+
+        self.assertEqual(dashboard["google_ads_report"]["topline"]["clicks"], 4)
+        self.assertIn("Cached report", dashboard["google_ads_report"]["cache_note"])
+
     def test_randy_remote_backend_label_is_clear(self):
         config = {
             "ANALYTICS_STORAGE_BACKEND": "remote",

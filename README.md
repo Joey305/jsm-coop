@@ -278,7 +278,7 @@ Command Center V3 adds operating-focused sections without replacing the existing
 - `Editorial Health` is an internal completeness score for Markdown content. It is not a Google ranking score and does not automatically edit or publish content.
 - Public 404s can be recorded as sanitized first-party `page_not_found` events with path and referrer domain context only.
 
-Google Ads read reporting is separate from offline conversion upload:
+Google Ads read reporting is separate from offline conversion upload. The admin page is cache-only for external reports, so an unavailable Google API cannot delay `/admin`; the web process refreshes stale reports in a background thread after the dashboard response path has finished.
 
 - `GOOGLE_ADS_REPORT_CACHE_SECONDS`: optional cache TTL for read-only campaign reports. Defaults to `900`.
 - Google Ads reporting uses `GOOGLE_ADS_CUSTOMER_ID`, optional `GOOGLE_ADS_LOGIN_CUSTOMER_ID`, `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, and `GOOGLE_ADS_REFRESH_TOKEN`.
