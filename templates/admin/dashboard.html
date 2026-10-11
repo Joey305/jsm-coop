@@ -274,8 +274,8 @@
       </div>
     </section>
 
-    <section class="admin-panel admin-panel--wide">
-      <div class="admin-panel__header"><h2>Since Your Last Visit</h2><span>{% if dashboard.since_last_visit.previous_visit %}Since {{ dashboard.since_last_visit.previous_visit }}{% else %}Baseline starts now{% endif %}</span></div>
+    <section class="admin-panel admin-panel--wide" data-since-last-visit>
+      <div class="admin-panel__header"><h2>Since Your Last Visit</h2><span data-since-last-visit-heading>Loading recent activity…</span></div>
       {% if dashboard.since_last_visit.has_previous %}
         <div class="admin-mini-grid">
           {% for item in dashboard.since_last_visit["items"] %}
@@ -289,6 +289,29 @@
         {% endfor %}
       </ul>
     </section>
+
+    <script>
+    (() => {
+      const panel = document.querySelector("[data-since-last-visit]");
+      if (!panel) return;
+      fetch({{ url_for('admin_dashboard_since_last_visit')|tojson }}, { credentials: "same-origin" })
+        .then((response) => response.ok ? response.json() : null)
+        .then((data) => {
+          if (!data) return;
+          const heading = panel.querySelector("[data-since-last-visit-heading]");
+          heading.textContent = data.previous_visit ? "Since " + data.previous_visit : "Baseline starts now";
+          const existingGrid = panel.querySelector(".admin-mini-grid");
+          if (existingGrid) existingGrid.remove();
+          if (data.items && data.items.length) {
+            const grid = document.createElement("div"); grid.className = "admin-mini-grid";
+            data.items.forEach((item) => { const card = document.createElement("article"); card.innerHTML = "<span></span><strong></strong>"; card.querySelector("span").textContent = item.label; card.querySelector("strong").textContent = item.value; grid.appendChild(card); });
+            panel.insertBefore(grid, panel.querySelector(".admin-insight-list"));
+          }
+          const list = panel.querySelector(".admin-insight-list");
+          list.replaceChildren(...(data.observations || []).map((observation) => { const item = document.createElement("li"); item.textContent = observation; return item; }));
+        }).catch(() => {});
+    })();
+    </script>
 
     <section class="admin-panel admin-panel--wide admin-insight-panel">
       <div class="admin-panel__header">

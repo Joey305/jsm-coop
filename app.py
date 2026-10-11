@@ -5,6 +5,7 @@ import base64
 import csv
 import io
 import sqlite3
+import time
 import uuid
 from datetime import datetime, timezone
 from datetime import timedelta
@@ -33,6 +34,8 @@ from flask import (
     abort,
     jsonify,
     Response,
+    g,
+    has_request_context,
 )
 from markupsafe import Markup
 import markdown as md
@@ -114,6 +117,7 @@ app.config["ANALYTICS_REMOTE_BASE_URL"] = os.getenv("ANALYTICS_REMOTE_BASE_URL",
 app.config["ANALYTICS_REMOTE_API_TOKEN"] = os.getenv("ANALYTICS_REMOTE_API_TOKEN", "")
 app.config["ANALYTICS_REMOTE_TIMEOUT_SECONDS"] = os.getenv("ANALYTICS_REMOTE_TIMEOUT_SECONDS", "10")
 app.config["ADMIN_VISITS_DB_PATH"] = Path(os.getenv("ADMIN_VISITS_DB_PATH", BASE_DIR / "data" / "admin_dashboard_visits.sqlite3"))
+app.config["ADMIN_DASHBOARD_CACHE_SECONDS"] = int(os.getenv("ADMIN_DASHBOARD_CACHE_SECONDS", "300") or 300)
 app.config["GOOGLE_ADS_REPORT_CACHE_SECONDS"] = int(os.getenv("GOOGLE_ADS_REPORT_CACHE_SECONDS", "900") or 900)
 app.config["SEARCH_CONSOLE_REPORT_CACHE_SECONDS"] = int(os.getenv("SEARCH_CONSOLE_REPORT_CACHE_SECONDS", "900") or 900)
 app.config["GOOGLE_SEARCH_CONSOLE_SITE_URL"] = os.getenv("GOOGLE_SEARCH_CONSOLE_SITE_URL", "").strip()
@@ -1161,8 +1165,10 @@ def paypal_webhook_health(config):
 def admin_visits_connection(config):
     path = Path(config["ADMIN_VISITS_DB_PATH"])
     path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path)
+    connection = sqlite3.connect(path, timeout=3)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA busy_timeout=3000")
     connection.execute(
         """
         CREATE TABLE IF NOT EXISTS admin_dashboard_visits (
@@ -1214,16 +1220,52 @@ def admin_visits_connection(config):
         )
         """
     )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin_dashboard_cache (
+            cache_key TEXT PRIMARY KEY,
+            payload_json TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_admin_dashboard_cache_created ON admin_dashboard_cache (created_at)")
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin_dashboard_refresh_queue (
+            cache_key TEXT PRIMARY KEY,
+            args_json TEXT NOT NULL,
+            requested_at TEXT NOT NULL
+        )
+        """
+    )
     return connection
 
 
 @contextmanager
 def admin_db(config):
-    connection = admin_visits_connection(config)
+    connection = None
+    owns_connection = True
+    if has_request_context():
+        connection = getattr(g, "_admin_db_connection", None)
+        if connection is None:
+            connection = admin_visits_connection(config)
+            g._admin_db_connection = connection
+        owns_connection = False
+    else:
+        connection = admin_visits_connection(config)
     try:
         yield connection
         connection.commit()
     finally:
+        if owns_connection:
+            connection.close()
+
+
+@app.teardown_request
+def close_admin_request_connection(_error=None):
+    connection = g.pop("_admin_db_connection", None)
+    if connection is not None:
         connection.close()
 
 
@@ -1383,6 +1425,88 @@ def cache_is_fresh(cache_row, seconds):
     if not attempted:
         return False
     return (datetime.now(timezone.utc) - attempted).total_seconds() < int(seconds or 0)
+
+
+def dashboard_cache_key(args=None):
+    """Make equivalent admin filter URLs share one cached dashboard."""
+    args = args or {}
+    allowed = ("range", "start", "end", "environment")
+    values = {key: str(args.get(key, "")) for key in allowed if args.get(key)}
+    return "dashboard:" + json.dumps(values, sort_keys=True, separators=(",", ":"))
+
+
+def read_dashboard_cache(config, args=None, allow_stale=False):
+    try:
+        with admin_db(config) as connection:
+            row = connection.execute(
+                "SELECT * FROM admin_dashboard_cache WHERE cache_key = ?",
+                (dashboard_cache_key(args),),
+            ).fetchone()
+        if not row:
+            return None
+        created = analytics.parse_datetime(row["created_at"])
+        fresh = bool(created and (datetime.now(timezone.utc) - created).total_seconds() < config["ADMIN_DASHBOARD_CACHE_SECONDS"])
+        if not fresh and not allow_stale:
+            return None
+        return {"dashboard": json.loads(row["payload_json"]), "created_at": row["created_at"], "fresh": fresh}
+    except (sqlite3.Error, json.JSONDecodeError, TypeError):
+        return None
+
+
+def write_dashboard_cache(config, args, dashboard):
+    created_at = analytics.utc_now_iso()
+    payload = json.dumps(dashboard, sort_keys=True, default=str)
+    with admin_db(config) as connection:
+        connection.execute(
+            """
+            INSERT INTO admin_dashboard_cache (cache_key, payload_json, created_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(cache_key) DO UPDATE SET payload_json = excluded.payload_json, created_at = excluded.created_at
+            """,
+            (dashboard_cache_key(args), payload, created_at),
+        )
+    return created_at
+
+
+def enqueue_dashboard_refresh(config, args=None):
+    args = {key: str(value) for key, value in (args or {}).items() if key in {"range", "start", "end", "environment"} and value}
+    with admin_db(config) as connection:
+        connection.execute(
+            """
+            INSERT INTO admin_dashboard_refresh_queue (cache_key, args_json, requested_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(cache_key) DO NOTHING
+            """,
+            (dashboard_cache_key(args), json.dumps(args, sort_keys=True), analytics.utc_now_iso()),
+        )
+
+
+def next_dashboard_refresh_job(config):
+    with admin_db(config) as connection:
+        row = connection.execute(
+            "SELECT cache_key, args_json FROM admin_dashboard_refresh_queue ORDER BY requested_at ASC LIMIT 1"
+        ).fetchone()
+        if row:
+            connection.execute("DELETE FROM admin_dashboard_refresh_queue WHERE cache_key = ?", (row["cache_key"],))
+    if not row:
+        return None
+    try:
+        return json.loads(row["args_json"])
+    except json.JSONDecodeError:
+        return {}
+
+
+def refresh_dashboard_cache(config, args=None):
+    """Expensive raw-event aggregation. Call this only from the worker."""
+    started = time.perf_counter()
+    dashboard = build_admin_dashboard(config, args or {}, refresh_external=False)
+    created_at = write_dashboard_cache(config, args or {}, dashboard)
+    app.logger.info(
+        "admin_dashboard_cache_refreshed key=%s elapsed_ms=%d",
+        dashboard_cache_key(args),
+        (time.perf_counter() - started) * 1000,
+    )
+    return created_at
 
 
 def cached_google_ads_report(config, start, end):
@@ -2792,43 +2916,52 @@ def analytics_storage_backend_label(config, storage):
     return storage.get("backend") or "local sqlite"
 
 
-def build_admin_dashboard(config, args=None, previous_admin_visit=""):
+def build_admin_dashboard(config, args=None, previous_admin_visit="", refresh_external=False):
     args = args or {}
+    started_at = time.perf_counter()
+
+    def timed(name, callback):
+        operation_started = time.perf_counter()
+        result = callback()
+        app.logger.info("admin_dashboard_timing operation=%s elapsed_ms=%d", name, (time.perf_counter() - operation_started) * 1000)
+        return result
+
     start, end, range_name = analytics.date_range_from_args(args)
     filters = analytics.filters_from_args(args)
     filters.setdefault("environment", analytics.analytics_environment(config))
     store = analytics.analytics_store(config)
-    storage = analytics.storage_health(config)
+    storage = timed("storage_health", lambda: analytics.storage_health(config))
     try:
-        summary = store.query_summary(start, end, filters)
-        recent = store.query_events(start, end, filters, page=1, page_size=20)
+        summary = timed("query_summary", lambda: store.query_summary(start, end, filters))
+        recent = timed("query_recent_events", lambda: store.query_events(start, end, filters, page=1, page_size=20))
     except Exception as error:
         summary = analytics.build_empty_summary()
         recent = {"events": [], "total": 0, "page": 1, "pages": 1}
         storage = {**storage, "ok": False, "error": str(error)}
-    verified = verified_purchase_summary(config, start, end)
-    google_uploads = google_ads_upload_summary(config, start, end)
-    data_manager_status = data_manager_connection_summary(config)
+    verified = timed("verified_purchase_summary", lambda: verified_purchase_summary(config, start, end))
+    google_uploads = timed("google_ads_upload_summary", lambda: google_ads_upload_summary(config, start, end))
+    data_manager_status = timed("data_manager_connection_summary", lambda: data_manager_connection_summary(config))
     # Never contact third-party reporting APIs during a web request. Heroku's
     # router has a 30-second request limit; cached reports keep /admin usable
     # even if Google is slow or temporarily unavailable.
     google_ads_report = cached_google_ads_report(config, start, end)
     search_console = cached_search_console_report(config, start, end)
-    refresh_external_reports_in_background(config, start, end)
-    google_campaign_rows = google_ads_campaign_rows(google_ads_report, summary, verified)
-    site_audit = latest_site_audit(config)
+    if refresh_external:
+        refresh_external_reports_in_background(config, start, end)
+    google_campaign_rows = timed("google_ads_campaign_rows", lambda: google_ads_campaign_rows(google_ads_report, summary, verified))
+    site_audit = timed("latest_site_audit", lambda: latest_site_audit(config))
     storage["backend_label"] = analytics_storage_backend_label(config, storage)
-    posts = get_posts()
-    editorial_health = editorial_health_summary(posts, summary)
-    annotations = list_annotations(config, start, end, limit=30)
-    recent_annotations = list_annotations(config, limit=6)
+    posts = timed("read_blog_posts", get_posts)
+    editorial_health = timed("editorial_health", lambda: editorial_health_summary(posts, summary))
+    annotations = timed("annotations", lambda: list_annotations(config, start, end, limit=30))
+    recent_annotations = timed("recent_annotations", lambda: list_annotations(config, limit=6))
     totals = summary["totals"]
-    coverage = dashboard_analytics_coverage(storage, start, end)
-    opportunities = dashboard_opportunities(summary, verified, google_uploads)
+    coverage = timed("analytics_coverage", lambda: dashboard_analytics_coverage(storage, start, end))
+    opportunities = timed("opportunities", lambda: dashboard_opportunities(summary, verified, google_uploads))
     what_matters = dashboard_what_matters(summary, verified, opportunities, google_uploads, coverage)
     growth_goals = dashboard_growth_goals(config, summary, verified)
     health_scores = dashboard_health_scores(config, storage, verified, google_uploads, google_ads_report, search_console, site_audit)
-    today = today_pulse(config, store, coverage)
+    today = timed("today_pulse", lambda: today_pulse(config, store, coverage))
     search_page_metrics = {row["page"]: row for row in summary.get("top_content", [])}
     search_console_pages = []
     for row in search_console.get("pages", []):
@@ -2880,11 +3013,11 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
     for event in recent["events"]:
         event["human_label"] = analytics.human_event_label(event["event_name"])
     live_activity = live_activity_feed(recent["events"])
-    return {
+    dashboard = {
         "storage_backend": storage.get("backend_label", storage.get("backend", "local sqlite")),
         "storage": storage,
         "analytics_coverage": coverage,
-        "since_last_visit": dashboard_since_last_visit(config, store, previous_admin_visit),
+        "since_last_visit": dashboard_since_last_visit(config, store, previous_admin_visit) if previous_admin_visit else {"has_previous": False, "previous_visit": "", "items": [], "observations": ["Recent activity loads after the dashboard is visible."]},
         "range_name": range_name,
         "start": start.date().isoformat(),
         "end": (end - timedelta(days=1)).date().isoformat(),
@@ -2971,6 +3104,8 @@ def build_admin_dashboard(config, args=None, previous_admin_visit=""):
             "purchase": analytics.click_rate(verified["count"], totals.get("direct_checkout_starts", 0)),
         },
     }
+    app.logger.info("admin_dashboard_timing operation=total elapsed_ms=%d", (time.perf_counter() - started_at) * 1000)
+    return dashboard
 
 
 def save_blog_revision(post, actor="admin"):
@@ -4209,9 +4344,16 @@ def api_newsletter():
 @login_required
 def admin_dashboard():
     admin_user = os.getenv("ADMIN_USERNAME", "admin")
-    previous_visit = previous_admin_dashboard_visit(app.config, admin_user)
-    dashboard = build_admin_dashboard(app.config, request.args, previous_admin_visit=previous_visit)
+    session["admin_dashboard_previous_visit"] = previous_admin_dashboard_visit(app.config, admin_user)
     record_admin_dashboard_visit(app.config, admin_user)
+    cached = read_dashboard_cache(app.config, request.args, allow_stale=True)
+    if not cached:
+        enqueue_dashboard_refresh(app.config, request.args)
+        return render_template("admin/dashboard_loading.html", title="Command Center", dashboard_args=dict(request.args))
+    if not cached["fresh"]:
+        enqueue_dashboard_refresh(app.config, request.args)
+    dashboard = cached["dashboard"]
+    dashboard["cache_created_at"] = cached["created_at"]
     return render_template("admin/dashboard.html", title="Command Center", dashboard=dashboard, admin_user=admin_user)
 
 
@@ -4406,10 +4548,37 @@ tags: {tags}
 @login_required
 def admin_analytics():
     admin_user = os.getenv("ADMIN_USERNAME", "admin")
-    previous_visit = previous_admin_dashboard_visit(app.config, admin_user)
-    dashboard = build_admin_dashboard(app.config, request.args, previous_admin_visit=previous_visit)
+    session["admin_dashboard_previous_visit"] = previous_admin_dashboard_visit(app.config, admin_user)
     record_admin_dashboard_visit(app.config, admin_user)
+    cached = read_dashboard_cache(app.config, request.args, allow_stale=True)
+    if not cached:
+        enqueue_dashboard_refresh(app.config, request.args)
+        return render_template("admin/dashboard_loading.html", title="Analytics", dashboard_args=dict(request.args))
+    if not cached["fresh"]:
+        enqueue_dashboard_refresh(app.config, request.args)
+    dashboard = cached["dashboard"]
+    dashboard["cache_created_at"] = cached["created_at"]
     return render_template("admin/dashboard.html", title="Analytics", dashboard=dashboard, admin_user=admin_user, analytics_page=True)
+
+
+@app.route("/admin/dashboard/status")
+@login_required
+def admin_dashboard_status():
+    cached = read_dashboard_cache(app.config, request.args, allow_stale=True)
+    if not cached or not cached["fresh"]:
+        enqueue_dashboard_refresh(app.config, request.args)
+    return jsonify({"ready": bool(cached and cached["fresh"]), "updated_at": cached["created_at"] if cached else ""})
+
+
+@app.route("/admin/dashboard/since-last-visit")
+@login_required
+def admin_dashboard_since_last_visit():
+    previous_visit = session.get("admin_dashboard_previous_visit", "")
+    store = analytics.analytics_store(app.config)
+    started = time.perf_counter()
+    payload = dashboard_since_last_visit(app.config, store, previous_visit)
+    app.logger.info("admin_dashboard_timing operation=since_last_visit elapsed_ms=%d", (time.perf_counter() - started) * 1000)
+    return jsonify(payload)
 
 
 @app.route("/admin/analytics/events")

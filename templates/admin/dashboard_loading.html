@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} · {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard" aria-live="polite">
+  <div class="admin-dashboard__header">
+    <div>
+      <p class="eyebrow">JSM Cooperative</p>
+      <h1>{{ title }}</h1>
+      <p class="admin-muted">Preparing the latest analytics summary. The website remains available while this runs in the background.</p>
+    </div>
+    <div class="admin-action-row"><a class="admin-logout" href="{{ url_for('admin_logout') }}">Sign Out</a></div>
+  </div>
+  <section class="admin-panel admin-panel--wide">
+    <h2>Dashboard refresh in progress</h2>
+    <p class="admin-muted">This page will load automatically when the cached summary is ready. It never performs the raw-event aggregation in your browser request.</p>
+  </section>
+</section>
+<script>
+(() => {
+  const query = new URLSearchParams({{ dashboard_args|tojson }}).toString();
+  const statusUrl = {{ url_for('admin_dashboard_status')|tojson }} + (query ? "?" + query : "");
+  const retry = async () => {
+    try {
+      const response = await fetch(statusUrl, { credentials: "same-origin" });
+      const status = await response.json();
+      if (status.ready) { window.location.reload(); return; }
+    } catch (_) {}
+    window.setTimeout(retry, 2000);
+  };
+  window.setTimeout(retry, 1000);
+})();
+</script>
+{% endblock %}

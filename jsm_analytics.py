@@ -254,6 +254,10 @@ class LocalAnalyticsStore:
             )
             for column in ("occurred_at", "event_name", "event_category", "page_path", "landing_page", "anonymous_session_id", "campaign", "source", "medium", "device_category", "environment"):
                 connection.execute(f"CREATE INDEX IF NOT EXISTS idx_jsm_analytics_{column} ON analytics_events ({column})")
+            # Every dashboard query filters by environment and a date range.
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_jsm_analytics_environment_occurred_at ON analytics_events (environment, occurred_at)"
+            )
 
     def store_event(self, event):
         row = {column: event.get(column, "") for column in EVENT_COLUMNS}

@@ -174,6 +174,28 @@ This links to [missing](/missing-internal-page) and references ![Alt](/static/im
         self.assertEqual(response.status_code, 302)
         self.assertEqual(app.list_annotations(app.app.config), [])
 
+    def test_admin_route_queues_a_cache_refresh_instead_of_building_dashboard(self):
+        original_build = app.build_admin_dashboard
+        app.build_admin_dashboard = lambda *_args, **_kwargs: self.fail("web request must not build the dashboard")
+        self.addCleanup(setattr, app, "build_admin_dashboard", original_build)
+        client = app.app.test_client()
+        with client.session_transaction() as session:
+            session["admin_logged_in"] = True
+        response = client.get("/admin")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Dashboard refresh in progress", response.data)
+        self.assertEqual(app.next_dashboard_refresh_job(app.app.config), {})
+
+    def test_dashboard_cache_round_trip_and_request_connection_reuse(self):
+        dashboard = {"summary": {"totals": {"page_views": 2}}, "path": self.root}
+        app.write_dashboard_cache(app.app.config, {"range": "30d"}, dashboard)
+        cached = app.read_dashboard_cache(app.app.config, {"range": "30d"})
+        self.assertEqual(cached["dashboard"]["summary"]["totals"]["page_views"], 2)
+        self.assertEqual(cached["dashboard"]["path"], str(self.root))
+        with app.app.test_request_context("/admin"):
+            with app.admin_db(app.app.config) as first, app.admin_db(app.app.config) as second:
+                self.assertIs(first, second)
+
 
 if __name__ == "__main__":
     unittest.main()
