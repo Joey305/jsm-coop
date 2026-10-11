@@ -176,8 +176,11 @@ This links to [missing](/missing-internal-page) and references ![Alt](/static/im
 
     def test_admin_route_queues_a_cache_refresh_instead_of_building_dashboard(self):
         original_build = app.build_admin_dashboard
+        original_background_refresh = app.refresh_dashboard_cache_in_background
         app.build_admin_dashboard = lambda *_args, **_kwargs: self.fail("web request must not build the dashboard")
+        app.refresh_dashboard_cache_in_background = lambda *_args, **_kwargs: True
         self.addCleanup(setattr, app, "build_admin_dashboard", original_build)
+        self.addCleanup(setattr, app, "refresh_dashboard_cache_in_background", original_background_refresh)
         client = app.app.test_client()
         with client.session_transaction() as session:
             session["admin_logged_in"] = True

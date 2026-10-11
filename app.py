@@ -134,6 +134,7 @@ app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB upload limit
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "svg"}
 ALLOWED_VIDEO_EXTENSIONS = {"mp4", "webm", "mov", "m4v"}
 EXTERNAL_REPORT_REFRESH_LOCK = Lock()
+DASHBOARD_CACHE_REFRESH_LOCK = Lock()
 
 
 # Use the exact Mailchimp POST action URL from your embedded form.
@@ -1479,6 +1480,7 @@ def enqueue_dashboard_refresh(config, args=None):
             """,
             (dashboard_cache_key(args), json.dumps(args, sort_keys=True), analytics.utc_now_iso()),
         )
+    refresh_dashboard_cache_in_background(config)
 
 
 def next_dashboard_refresh_job(config):
@@ -1507,6 +1509,39 @@ def refresh_dashboard_cache(config, args=None):
         (time.perf_counter() - started) * 1000,
     )
     return created_at
+
+
+def refresh_dashboard_cache_in_background(config):
+    """Process queued cache rebuilds without holding up the web request.
+
+    This is deliberately an in-process daemon thread: the Heroku app runs one
+    web dyno only, with no separately billed worker dyno.
+    """
+    if not DASHBOARD_CACHE_REFRESH_LOCK.acquire(blocking=False):
+        return False
+
+    def refresh():
+        try:
+            while True:
+                args = next_dashboard_refresh_job(config)
+                if args is None:
+                    return
+                try:
+                    # Dashboard helpers create internal URLs, which need a
+                    # request context even though this is not a web request.
+                    with app.test_request_context("/admin", query_string=args):
+                        refresh_dashboard_cache(config, args)
+                        start, end, _ = analytics.date_range_from_args(args)
+                        refresh_external_reports_in_background(config, start, end)
+                except Exception:
+                    app.logger.exception("admin dashboard background refresh failed")
+                    enqueue_dashboard_refresh(config, args)
+                    return
+        finally:
+            DASHBOARD_CACHE_REFRESH_LOCK.release()
+
+    Thread(target=refresh, name="admin-dashboard-refresh", daemon=True).start()
+    return True
 
 
 def cached_google_ads_report(config, start, end):
